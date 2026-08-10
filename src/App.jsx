@@ -20,6 +20,7 @@ const NAV = [
   { id: 'cards', label: 'Kaarten', icon: QrCode },
   { id: 'settings', label: 'Instellen', icon: Settings },
 ]
+const APP_VERSION = '0.3.0 — interne player'
 
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')
@@ -209,7 +210,7 @@ function SettingsPage({ collection, setCollection }) {
     <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Experimenteel</span><h2>Spotify koppelen</h2><p>Maak een app aan in het Spotify Developer Dashboard en voeg exact deze Redirect URI toe:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => setClient(event.target.value)} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
     <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
-    <section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Goed om te weten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify vereist normaal zichtbare metadata en staat muziektrivia zonder aparte toestemming niet toe. Voor volledig zelfstandige playback kun je per nummer een eigen, rechtmatig gebruikte audio-URL invullen.</p></div></section>
+    <section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Goed om te weten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify vereist normaal zichtbare metadata en staat muziektrivia zonder aparte toestemming niet toe. Voor volledig zelfstandige playback kun je per nummer een eigen, rechtmatig gebruikte audio-URL invullen.</p><small>Versie {APP_VERSION}</small></div></section>
   </main>
 }
 
