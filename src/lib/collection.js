@@ -97,6 +97,7 @@ export function encodeCard(track, clientId = '') {
     y: track.year,
     l: track.album,
     c: clientId,
+    u: track.audioUrl,
     g: track.genre || 'pop',
     x: track.tags || [],
   })
@@ -116,7 +117,7 @@ export function decodeCard(value) {
     const data = JSON.parse(compressed ? strFromU8(decompressSync(bytes)) : new TextDecoder().decode(bytes))
     if (data.v !== 1 || !data.i || !data.t || !data.a) return null
     return {
-      track: normalizeTrack({ id: data.i, spotifyUri: data.s, title: data.t, artist: data.a, year: data.y, album: data.l, genre: data.g, tags: data.x }),
+      track: normalizeTrack({ id: data.i, spotifyUri: data.s, title: data.t, artist: data.a, year: data.y, album: data.l, audioUrl: data.u, genre: data.g, tags: data.x }),
       clientId: data.c || '',
     }
   } catch { return null }

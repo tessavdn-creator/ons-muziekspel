@@ -19,17 +19,17 @@ import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 
 const ADMIN_NAV = [
   { id: 'home', label: 'Overzicht', icon: Sparkles },
+  { id: 'settings', label: 'Importeren', icon: Import },
   { id: 'collection', label: 'Muziek', icon: Library },
-  { id: 'cards', label: 'Print & deel', icon: QrCode },
-  { id: 'settings', label: 'Spotify', icon: Settings },
+  { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.9.0 — TRACKBACK'
+const APP_VERSION = '0.10.0 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const GAME_MODES = [
-  { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3, steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
-  { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2, steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
-  { id: 'bingo', name: 'Muziekbingo', text: 'Streep decennia, genres en verrassingen af.', icon: Grid3X3, steps: ['Pak een geprinte of digitale bingokaart', 'Scan, luister en onthul het nummer', 'Streep ieder passend vak af'], score: 'Drie vakken op één horizontale, verticale of diagonale rij is bingo.' },
-  { id: 'battle', name: 'Battle of the Hits', text: 'Stem welke guilty pleasure doorgaat.', icon: Trophy, steps: ['De eerste gescande hit wordt kampioen', 'Scan een nieuwe hit als uitdager', 'Iedereen stemt welke hit doorgaat'], score: 'De hit die aan het einde nog kampioen is, wint de avond.' },
+  { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
+  { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', type: 'favoriet', meta: '1–10 spelers · direct spelen', icon: Mic2, setup: 'Speel alleen, in teams of allemaal tegen elkaar. Spreek af wie het antwoord mag geven.', prompt: 'Vul je gok in of roep hem hardop. Onthul daarna pas het antwoord.', steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
+  { id: 'bingo', name: 'Muziekbingo', text: 'Streep decennia, genres en verrassingen af.', type: 'groep', meta: '3+ spelers · bingokaarten nodig', icon: Grid3X3, setup: 'Geef iedere speler een andere geprinte bingokaart. De telefoon kan één digitale kaart bijhouden.', prompt: 'Luister goed en kijk na de onthulling welke vakken je mag afstrepen.', steps: ['Pak een geprinte of digitale bingokaart', 'Scan, luister en onthul het nummer', 'Streep ieder passend vak af'], score: 'Drie vakken op één horizontale, verticale of diagonale rij is bingo.' },
+  { id: 'battle', name: 'Battle of the Hits', text: 'Stem samen welke hit doorgaat.', type: 'groep', meta: '3+ spelers · geen score nodig', icon: Trophy, setup: 'Geen kaarten verdelen en geen scoreformulier: kies alleen samen de beste hit.', prompt: 'Luister naar de uitdager. Na de onthulling stemt iedereen welke hit doorgaat.', steps: ['De eerste gescande hit wordt kampioen', 'Scan een nieuwe hit als uitdager', 'Iedereen stemt welke hit doorgaat'], score: 'De hit die aan het einde nog kampioen is, wint de avond.' },
 ]
 
 const qrPromises = new Map()
@@ -122,7 +122,7 @@ function GiftLanding({ gift, onSelect, onClose }) {
   const editionGrid = (editions, fallbackSubtitle) => <div className="edition-grid">{editions.map((edition, index) => <article key={edition.id || edition.name}>
     <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
     <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
-    <button className="primary-button" onClick={() => onSelect(edition)}>Open editie <ChevronRight /></button>
+    <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
   </article>)}</div>
   return <main className="gift-landing">
     <button className="round-button gift-close" onClick={onClose} aria-label="Terug"><ArrowLeft /></button>
@@ -160,8 +160,9 @@ function BingoResult({ track }) {
 function BattleResult({ track }) {
   const [champion, setChampion] = useState(() => JSON.parse(localStorage.getItem('timepop.battle.champion') || 'null'))
   const choose = winner => { localStorage.setItem('timepop.battle.champion', JSON.stringify(winner)); setChampion(winner) }
-  if (!champion || champion.id === track.id) return <div className="game-result battle-result"><Trophy /><div><strong>{champion ? 'Regerend kampioen' : 'Start de battle'}</strong><span>{track.title}</span></div>{!champion && <button onClick={() => choose(track)}>Maak kampioen</button>}</div>
-  return <div className="game-result"><div className="result-heading"><Trophy /><strong>Wie gaat door?</strong></div><div className="battle-buttons"><button onClick={() => choose(champion)}><small>Kampioen</small>{champion.title}<span>{champion.artist}</span></button><b>VS</b><button onClick={() => choose(track)}><small>Uitdager</small>{track.title}<span>{track.artist}</span></button></div></div>
+  const reset = () => { localStorage.removeItem('timepop.battle.champion'); setChampion(null) }
+  if (!champion || champion.id === track.id) return <div className="game-result battle-result"><Trophy /><div><strong>{champion ? 'Regerend kampioen' : 'Start de battle'}</strong><span>{track.title}</span></div>{champion ? <button className="subtle-action" onClick={reset}>Nieuwe battle</button> : <button onClick={() => choose(track)}>Maak kampioen</button>}</div>
+  return <div className="game-result"><div className="result-heading"><Trophy /><strong>Wie gaat door?</strong><button onClick={reset}>Opnieuw</button></div><div className="battle-buttons"><button onClick={() => choose(champion)}><small>Kampioen</small>{champion.title}<span>{champion.artist}</span></button><b>VS</b><button onClick={() => choose(track)}><small>Uitdager</small>{track.title}<span>{track.artist}</span></button></div></div>
 }
 
 function Player({ track, onBack, onNext, gameMode }) {
@@ -171,6 +172,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   const [titleGuess, setTitleGuess] = useState('')
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
+  const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
@@ -184,6 +186,7 @@ function Player({ track, onBack, onNext, gameMode }) {
       } else if (track.spotifyUri && hasSpotifySession()) {
         await playSpotify(track.spotifyUri, state => state?.error && setMessage(state.error))
       } else if (track.spotifyUri) {
+        if (!getClientId()) throw new Error('Scan eerst een geprinte TRACKBACK-kaart om deze telefoon met Spotify in te stellen.')
         sessionStorage.setItem('giftster.pending-track', JSON.stringify(track))
         setMessage('Je wordt veilig met Spotify verbonden…')
         await loginSpotify()
@@ -200,13 +203,14 @@ function Player({ track, onBack, onNext, gameMode }) {
   }
   return <main className={`player-screen theme-${track.genre || 'pop'} ${revealed ? 'is-revealed' : ''}`}>
     <header className="player-header">
-      <button className="round-button" onClick={onBack}><ArrowLeft /></button>
-      <span>{GAME_MODES.find(game => game.id === gameMode)?.name || 'Kaart gevonden'}</span><span className="status-dot" />
+      <button className="round-button" onClick={onBack} aria-label="Terug naar scannen"><ArrowLeft /></button>
+      <span>{activeGame.name}</span><span className="status-dot" />
     </header>
     {!revealed ? <>
       <div className="secret-art"><div className="record"><Music2 /><span /></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></div>
       <div className="secret-copy"><span className="eyebrow">Geheim nummer</span><h1>Luister goed…</h1><p>{message}</p></div>
-      <button className="play-or-pause" onClick={playing ? pause : start}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
+      <button className="play-or-pause" onClick={playing ? pause : start} aria-label={playing ? 'Muziek pauzeren' : 'Muziek afspelen'}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
+      <p className="round-prompt"><activeGame.icon /> {activeGame.prompt}</p>
       {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
     </> : <>
@@ -217,7 +221,7 @@ function Player({ track, onBack, onNext, gameMode }) {
       {gameMode === 'battle' && <BattleResult track={track} />}
       <div className="player-actions">
         <button className="secondary-button" onClick={() => setRevealed(false)}><RotateCcw /> Verberg</button>
-        <button className="primary-button" onClick={onNext}>Volgende kaart <ChevronRight /></button>
+        <button className="primary-button" onClick={onNext}>Scan volgende kaart <ScanLine /></button>
       </div>
     </>}
   </main>
@@ -227,7 +231,11 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
   const [showAlternatives, setShowAlternatives] = useState(gameMode !== 'timeline')
+  const [showRules, setShowRules] = useState(false)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
+  const practiceTrack = useMemo(() => collection.tracks[Math.floor(Math.random() * collection.tracks.length)], [collection])
+  const practiceReady = Boolean(practiceTrack?.audioUrl || getClientId())
+  const selectGame = id => { setGameMode(id); setShowAlternatives(false); setShowRules(false) }
   const parseScan = text => {
     setScanning(false)
     let id = text
@@ -240,22 +248,27 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
   return <main className="play-home page public-play-home">
     <div className="hero-brand"><div className="brand-mark"><Music2 /></div><span>TRACKBACK</span></div>
     <section className="play-hero">
-      <span className="eyebrow">Het hoofdspel</span>
-      <h1>Luister.<br /><em>Leg de tijdlijn.</em></h1>
-      <p>Hoor een verborgen hit en bepaal of hij vóór, na of tussen de kaarten op tafel hoort.</p>
-      <button className={`main-game-card ${gameMode === 'timeline' ? 'active' : ''}`} onClick={() => { setGameMode('timeline'); setShowAlternatives(false) }}>
-        <div className="main-game-title"><span><Clock3 /></span><div><small>Aanbevolen · hoofdspel</small><strong>Tijdlijn</strong></div>{gameMode === 'timeline' && <Check />}</div>
-        <ol><li><b>1</b> Scan een kaart</li><li><b>2</b> Luister zonder titel</li><li><b>3</b> Leg hem in de tijd</li></ol>
-      </button>
-      <div className="game-switch-bar"><span><activeGame.icon /><small>Je speelt</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Wissel spel'} <ChevronRight /></button></div>
-      {showAlternatives && <div className="alternate-games">{GAME_MODES.map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => { setGameMode(game.id); setShowAlternatives(false) }}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span>{gameMode === game.id && <Check />}</button>)}</div>}
-      <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>Zo speel je</small><strong>{activeGame.name}</strong></div></div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>
-      <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>{gameMode === 'timeline' ? 'Scan voor de tijdlijn' : `Scan voor ${activeGame.name}`}</button>
+      <span className="eyebrow">Klaar voor een ronde?</span>
+      <h1>Luister.<br /><em>{gameMode === 'timeline' ? 'Leg de tijdlijn.' : `Speel ${activeGame.name}.`}</em></h1>
+      <p>Scan een kaart, luister zonder titel en speel samen op één telefoon.</p>
+      <button className="scan-button" onClick={() => { setError(''); setScanning(true) }}><span><ScanLine /></span>Scan een kaart</button>
+      <p className="one-phone-tip"><Check /> Eén telefoon is genoeg voor de hele groep</p>
+      <div className="game-switch-bar"><span><activeGame.icon /><small>Gekozen spel</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Ander spel'} <ChevronRight /></button></div>
+      {showAlternatives && <div className="game-menu">
+        <div className="game-menu-heading"><strong>Snel beginnen</strong><small>De makkelijkste spelvormen</small></div>
+        <div className="alternate-games">{GAME_MODES.filter(game => game.type === 'favoriet').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
+        <div className="game-menu-heading group-heading"><strong>Extra voor groepen</strong><small>Leuk als iedereen het basisspel kent</small></div>
+        <div className="alternate-games">{GAME_MODES.filter(game => game.type === 'groep').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
+      </div>}
+      <button className="rules-toggle" onClick={() => setShowRules(value => !value)}><activeGame.icon /> Hoe speel je {activeGame.name}? <ChevronRight className={showRules ? 'is-open' : ''} /></button>
+      {showRules && <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>In drie stappen</small><strong>{activeGame.name}</strong></div></div><div className="setup-tip"><b>Voor je begint</b>{activeGame.setup}</div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>}
       {error && <div className="inline-error">{error}</div>}
     </section>
-    <section className="quick-test">
-      <span>Snel testen</span>
-      <div>{collection.tracks.slice(0, 3).map((track, index) => <button key={track.id} onClick={() => onOpenTrack(track)}><b>{String(index + 1).padStart(2, '0')}</b><span>Verborgen kaart</span><ChevronRight /></button>)}</div>
+    <section className="quick-test practice-card">
+      <span>Nog geen kaarten bij de hand?</span>
+      <h2>Probeer één oefenronde</h2>
+      <p>{practiceReady ? 'Zo ontdek je zonder QR-kaart eerst rustig hoe luisteren en onthullen werkt.' : 'Scan eerst één geprinte TRACKBACK-kaart. Daarmee wordt deze telefoon automatisch voor Spotify ingesteld.'}</p>
+      <button className="secondary-button" disabled={!practiceTrack || !practiceReady} onClick={() => practiceTrack && onOpenTrack(practiceTrack)}><Play /> {practiceReady ? 'Start oefenronde' : 'Eerst een kaart scannen'} <ChevronRight /></button>
     </section>
   </main>
 }
@@ -264,7 +277,7 @@ function TrackEditor({ initial, onSave, onCancel }) {
   const [track, setTrack] = useState(normalizeTrack(initial || {}))
   const field = (key, label, placeholder) => <label><span>{label}</span><input value={track[key]} placeholder={placeholder} onChange={event => setTrack({ ...track, [key]: event.target.value })} /></label>
   return <div className="modal-layer"><form className="modal-card" onSubmit={event => { event.preventDefault(); onSave(track) }}>
-    <div className="modal-title"><div><span className="eyebrow">Kaartgegevens</span><h2>{initial ? 'Nummer bewerken' : 'Nummer toevoegen'}</h2></div><button type="button" className="round-button" onClick={onCancel}><X /></button></div>
+    <div className="modal-title"><div><span className="eyebrow">Kaartgegevens</span><h2>{initial ? 'Nummer bewerken' : 'Nummer toevoegen'}</h2></div><button type="button" className="round-button" onClick={onCancel} aria-label="Venster sluiten"><X /></button></div>
     <div className="form-grid">{field('title', 'Titel', 'Bijvoorbeeld: Dreams')}{field('artist', 'Artiest', 'The Cranberries')}{field('year', 'Jaar', '1993')}{field('album', 'Album', 'No Need to Argue')}<label><span>Genrethema</span><select value={track.genre} onChange={event => setTrack({ ...track, genre: event.target.value })}><option value="pop">Pop neon</option><option value="disco">Disco fever</option><option value="rock">Rock stage</option><option value="electronic">Electronic club</option><option value="soul">Soul lounge</option></select></label>{field('externalUrl', 'Spotify-link', 'https://open.spotify.com/track/…')}{field('audioUrl', 'Directe audio-URL (optioneel)', 'https://…/nummer.mp3')}</div>
     <button className="primary-button wide" disabled={!track.title || !track.artist}><Check /> Opslaan</button>
   </form></div>
@@ -273,13 +286,12 @@ function TrackEditor({ initial, onSave, onCancel }) {
 function StudioHome({ collection, setTab }) {
   const hasClient = Boolean(getClientId())
   const steps = [
-    { number: '01', title: 'Kies de muziek', text: `${collection.name} · ${collection.tracks.length} nummers actief`, icon: Music2, action: 'Nummers beheren', tab: 'collection', done: collection.tracks.length > 0 },
-    { number: '02', title: 'Maak het persoonlijk', text: 'Geef de editie een naam en vul de ontvanger in.', icon: Gift, action: 'Personaliseren', tab: 'cards', done: Boolean(localStorage.getItem('timepop.recipient')) },
-    { number: '03', title: 'Controleer Spotify', text: hasClient ? 'Client ID staat klaar voor de QR-kaarten.' : 'Client ID ontbreekt nog.', icon: Settings, action: hasClient ? 'Instellingen bekijken' : 'Spotify instellen', tab: 'settings', done: hasClient },
-    { number: '04', title: 'Print en geef cadeau', text: 'Tijdlijn als hoofdspel, met drie bonusvarianten.', icon: Printer, action: 'Naar printstudio', tab: 'cards', done: false },
+    { number: '01', title: 'Koppel & importeer', text: hasClient ? 'Spotify staat klaar. Importeer een playlist of vervang de huidige.' : 'Begin met je Client ID en een Spotify-playlist.', icon: Import, action: hasClient ? 'Playlist importeren' : 'Spotify instellen', tab: 'settings', done: hasClient },
+    { number: '02', title: 'Controleer de muziek', text: `${collection.name} · ${collection.tracks.length} nummers. Check vooral titels en jaartallen.`, icon: Music2, action: 'Nummers controleren', tab: 'collection', done: collection.tracks.length > 3 },
+    { number: '03', title: 'Personaliseer & print', text: 'Geef de editie een naam en print kaarten, regels en scorebladen.', icon: Printer, action: 'Naar de printstudio', tab: 'cards', done: Boolean(localStorage.getItem('timepop.recipient')) },
   ]
   return <main className="page content-page studio-home">
-    <PageTitle eyebrow="TRACKBACK Studio" title="Van playlist naar cadeau" description="Werk de vier stappen af; de studio bewaart alles automatisch op dit toestel." />
+    <PageTitle eyebrow="TRACKBACK Studio" title="Van playlist naar spel" description="Drie duidelijke stappen. Alles wordt automatisch op dit toestel bewaard." />
     <section className="active-edition"><div className="active-record"><Music2 /></div><div><span className="eyebrow">Actieve editie</span><h2>{collection.name}</h2><p>{collection.tracks.length} nummers · klaar om te bewerken</p></div><button className="secondary-button" onClick={() => setTab('collection')}>Open editie <ChevronRight /></button></section>
     <div className="studio-flow">{steps.map(step => <article className={step.done ? 'is-done' : ''} key={step.number}><b>{step.done ? <Check /> : step.number}</b><step.icon /><div><h3>{step.title}</h3><p>{step.text}</p></div><button onClick={() => setTab(step.tab)}>{step.action}<ChevronRight /></button></article>)}</div>
     <section className="studio-gifts"><div><span className="eyebrow">Privé delen</span><h2>Cadeau-edities blijven verborgen</h2><p>Een persoonlijke editie opent alleen via de unieke cadeau-QR of link en verschijnt nooit in de algemene play-app.</p></div><Gift /></section>
@@ -315,12 +327,12 @@ function CollectionPage({ collection, setCollection }) {
     } catch (error) { alert(error.message) } finally { setPresetBusy(false) }
   }
   return <main className="page content-page">
-    <PageTitle eyebrow="Stap 1 van 4" title="Muziek in deze editie" description={`${collection.tracks.length} kaarten klaar voor het spel`} />
+    <PageTitle eyebrow="Stap 2 van 3" title="Controleer je muziek" description={`${collection.tracks.length} kaarten · controleer titels, artiesten en vooral de oorspronkelijke jaartallen`} />
     <div className="toolbar">
       <button className="primary-button" onClick={() => setAdding(true)}><Plus /> Nummer</button>
       <button className="secondary-button" onClick={() => fileRef.current.click()}><FileUp /> CSV / JSON</button>
       <button className="preset-button" onClick={loadGuiltyPleasures} disabled={presetBusy}><Sparkles /> {presetBusy ? 'Laden…' : 'Guilty Pleasures · 100'}</button>
-      <button className="icon-button" onClick={() => exportCollection(collection)} title="Back-up downloaden"><Download /></button>
+      <button className="icon-button" onClick={() => exportCollection(collection)} title="Back-up downloaden" aria-label="JSON-back-up downloaden"><Download /></button>
       <input ref={fileRef} type="file" accept=".csv,.json" hidden onChange={event => importFile(event.target.files[0])} />
     </div>
     <div className="track-list">{collection.tracks.map((track, index) => <article key={track.id} className="track-row">
@@ -328,8 +340,8 @@ function CollectionPage({ collection, setCollection }) {
       <div className="track-thumb">{track.image ? <img src={track.image} alt="" /> : <Music2 />}</div>
       <div className="track-info"><strong>{track.title}</strong><span>{track.artist}</span></div>
       <span className="track-year">{track.year || '—'}</span>
-      <button className="row-button" onClick={() => setEditing(track)}><Pencil /></button>
-      <button className="row-button danger" onClick={() => confirm(`‘${track.title}’ verwijderen?`) && setCollection({ ...collection, tracks: collection.tracks.filter(item => item.id !== track.id) })}><Trash2 /></button>
+      <button className="row-button" onClick={() => setEditing(track)} aria-label={`${track.title} bewerken`}><Pencil /></button>
+      <button className="row-button danger" onClick={() => confirm(`‘${track.title}’ verwijderen?`) && setCollection({ ...collection, tracks: collection.tracks.filter(item => item.id !== track.id) })} aria-label={`${track.title} verwijderen`}><Trash2 /></button>
     </article>)}</div>
     {!collection.tracks.length && <Empty icon={Music2} title="Nog geen nummers" text="Voeg handmatig een nummer toe of importeer een bestand." />}
     {(editing || adding) && <TrackEditor initial={editing} onSave={saveTrack} onCancel={() => { setEditing(null); setAdding(false) }} />}
@@ -341,6 +353,7 @@ function CardsPage({ collection }) {
   const [editionName, setEditionName] = useState(localStorage.getItem('timepop.edition-name') || collection.name || 'Guilty Pleasures')
   const [recipient, setRecipient] = useState(localStorage.getItem('timepop.recipient') || '')
   const clientId = getClientId()
+  const playbackReady = collection.tracks.length > 0 && (Boolean(clientId) || collection.tracks.every(track => track.audioUrl))
   const [printMode, setPrintMode] = useState('cards')
   const [printBusy, setPrintBusy] = useState(false)
   const cardUrl = track => `${baseUrl.replace(/\/$/, '')}?card=${encodeCard(track, clientId)}#play`
@@ -355,20 +368,21 @@ function CardsPage({ collection }) {
     print(); setPrintBusy(false)
   }
   return <main className={`page content-page cards-page print-${printMode}`}>
-    <PageTitle eyebrow="Stap 2 en 4" title="Personaliseren, printen & delen" description="Maak eerst het cadeau persoonlijk en kies daarna wat je wilt afdrukken" />
-    <div className="print-controls no-print"><div className="edition-fields"><label><span>Editienaam</span><input value={editionName} onChange={event => saveEdition('timepop.edition-name', event.target.value, setEditionName)} placeholder="Guilty Pleasures" /></label><label><span>Cadeau voor</span><input value={recipient} onChange={event => saveEdition('timepop.recipient', event.target.value, setRecipient)} placeholder="Bijvoorbeeld Sophie" /></label><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label></div><div className="print-buttons"><button className="primary-button" disabled={!clientId || printBusy} onClick={() => doPrint('cards')}><Printer /> {printBusy ? 'QR-codes maken…' : `${collection.tracks.length} kaarten`}</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('bingo')}><Grid3X3 /> 12 bingokaarten</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('rules')}><FileText /> Cover + regels + score</button></div></div>
-    <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
-    <div className="deck-preview">{collection.tracks.map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
-    <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
+    <PageTitle eyebrow="Stap 3 van 3" title="Personaliseer & print" description="Vul de naam in en kies daarna alleen wat je nodig hebt" />
+    <div className="print-controls no-print"><div><div className="edition-fields"><label><span>Editienaam</span><input value={editionName} onChange={event => saveEdition('timepop.edition-name', event.target.value, setEditionName)} placeholder="Guilty Pleasures" /></label><label><span>Cadeau voor (optioneel)</span><input value={recipient} onChange={event => saveEdition('timepop.recipient', event.target.value, setRecipient)} placeholder="Bijvoorbeeld Sophie" /></label></div><details className="advanced-print"><summary>Geavanceerd: adres van de play-app</summary><label><span>Play-app URL</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label></details></div><div className="print-buttons"><button className="primary-button" disabled={!playbackReady || printBusy} onClick={() => doPrint('cards')}><Printer /> {printBusy ? 'Print klaarmaken…' : `${collection.tracks.length} QR-kaarten`}</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('bingo')}><Grid3X3 /> Bingokaarten</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('rules')}><FileText /> Cover, regels & score</button></div></div>
+    <div className={`print-note no-print ${!playbackReady ? 'is-warning' : ''}`}><QrCode /><p>{playbackReady ? <><strong>Klaar om te printen.</strong> Iedere kaart bevat het nummer en opent direct in de play-app.</> : <><strong>Afspelen is nog niet ingesteld.</strong> Koppel eerst Spotify onder Importeren, of voeg eigen audio-URL's aan alle nummers toe.</>}</p></div>
+    <div className="preview-heading no-print"><div><span className="eyebrow">Voorbeeld</span><h2>Zo zien de eerste kaarten eruit</h2></div><small>Bij printen worden alle {collection.tracks.length} kaarten gemaakt.</small></div>
+    <div className="deck-preview">{collection.tracks.slice(0, 6).map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
+    {printBusy && <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
       <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TRACKBACK</div><div className="card-edition">{editionName || collection.name}</div><div className="card-qr-shell"><CardQr value={cardUrl(track)} size={360} /></div><strong>LISTEN · PLACE · REVEAL</strong><span>KAART {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
       <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><div className="back-brand">{editionName || collection.name}</div><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
-    ])}</div>
-    <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TRACKBACK</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>
-    <div className="rules-print-deck">
+    ])}</div>}
+    {printBusy && <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TRACKBACK</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>}
+    {printBusy && <div className="rules-print-deck">
       <section className="gift-cover"><div className="cover-orbit"><Music2 /></div><span className="cover-label">EEN PERSOONLIJKE TRACKBACK EDITIE</span><h1>{editionName || collection.name}</h1>{recipient && <h2>voor {recipient}</h2>}<p>De tijdlijn · drie bonusspellen · eindeloos veel muziek</p><div className="cover-games">{GAME_MODES.map(game => <span key={game.id}><game.icon />{game.name}</span>)}</div><footer>TRACKBACK · LISTEN · PLACE · REVEAL</footer></section>
-      <section className="rules-page"><header><Music2 /><div><strong>TRACKBACK</strong><span>{editionName || collection.name}</span></div></header><h1>De tijdlijn.<br />Plus drie extra's.</h1><p className="rules-intro">Begin met het Tijdlijnspel: scan, luister en leg de hit op de juiste plek. Zin in afwisseling? Kies daarna een van de compacte bonusspellen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article className={game.id === 'timeline' ? 'main-rule' : ''} key={game.id}><b>{game.id === 'timeline' ? 'HOOFDSPEL' : `0${index + 1}`}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Scan een kaart en luister zonder titel of artiest te zien. Leg hem vóór, na of tussen de hits in jouw tijdlijn. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
+      <section className="rules-page"><header><Music2 /><div><strong>TRACKBACK</strong><span>{editionName || collection.name}</span></div></header><h1>De tijdlijn.<br />Plus drie extra's.</h1><p className="rules-intro">Begin met het Tijdlijnspel: geef iedereen één onthulde startkaart, scan een nieuwe kaart en leg de hit op de juiste plek. Zin in afwisseling? Kies daarna een compact bonusspel.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article className={game.id === 'timeline' ? 'main-rule' : ''} key={game.id}><b>{game.id === 'timeline' ? 'HOOFDSPEL' : `0${index + 1}`}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Iedereen begint met één kaart waarop het jaar zichtbaar is. Scan een nieuwe kaart en luister zonder titel of artiest. Leg hem vóór, na of tussen de hits in jouw tijdlijn. Goed geplaatst? Houd de kaart.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
       <section className="score-page"><header><div><Music2 /><strong>TRACKBACK</strong></div><span>SCOREFORMULIER</span></header><h1>Wie kent de hits?</h1><div className="score-meta"><span>Datum ____________________</span><span>Team ____________________</span></div><table><thead><tr><th>Speler / team</th>{Array.from({ length: 10 }, (_, index) => <th key={index}>{index + 1}</th>)}<th>Totaal</th></tr></thead><tbody>{Array.from({ length: 10 }, (_, row) => <tr key={row}><td>{row + 1}. __________________</td>{Array.from({ length: 11 }, (_, cell) => <td key={cell} />)}</tr>)}</tbody></table><div className="score-notes"><strong>Finale / notities</strong></div><footer>Tijdlijn: 1 punt · Raad de hit: maximaal 2 punten · Bingo en Battle: speel om eeuwige roem</footer></section>
-    </div>
+    </div>}
   </main>
 }
 
@@ -377,19 +391,22 @@ function SettingsPage({ collection, setCollection }) {
   const [playlist, setPlaylist] = useState('')
   const [status, setStatus] = useState(hasSpotifySession() ? 'Spotify is verbonden.' : '')
   const [busy, setBusy] = useState(false)
-  const connect = async () => { setClientId(client); await loginSpotify() }
+  const connect = async () => {
+    if (!client.trim()) { setStatus('Vul eerst je Spotify Client ID in.'); return }
+    try { setClientId(client); setStatus('Spotify-login wordt geopend…'); await loginSpotify() }
+    catch (error) { setStatus(error.message) }
+  }
   const doImport = async () => {
     setBusy(true); setStatus('Playlist wordt opgehaald…')
     try { const result = await importPlaylist(playlist); setCollection({ name: result.name, tracks: result.tracks.map(track => normalizeTrack({ ...track, id: randomId() })) }); setStatus(`${result.tracks.length} nummers geïmporteerd.`) }
     catch (error) { setStatus(error.message) } finally { setBusy(false) }
   }
   return <main className="page content-page settings-page">
-    <PageTitle eyebrow="Stap 3 van 4" title="Spotify & afspelen" description="Koppel Spotify of werk volledig met eigen audiobestanden" />
-    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Gedeelde Spotify-app</span><h2>Spotify koppelen</h2><p>Deze publieke Client ID wordt veilig in iedere nieuwe QR opgenomen. Vrienden loggen daarmee op hun eigen Spotify-account in.</p><p>Voeg exact deze Redirect URI toe in het Spotify Developer Dashboard:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
-    <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
+    <PageTitle eyebrow="Stap 1 van 3" title="Koppel & importeer" description="Dit stel je één keer in; daarna kun je steeds nieuwe playlists omzetten naar een spel" />
+    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Eenmalige instelling</span><h2>{hasSpotifySession() ? 'Spotify is verbonden' : 'Spotify koppelen'}</h2><p>Plak de Client ID uit jouw Spotify Developer Dashboard. Een Client ID is openbaar en mag in de QR-kaarten staan; gebruik hier nooit een Client Secret.</p><details className="setup-help"><summary>Welke Redirect URI moet ik instellen?</summary><p>Voeg in het Spotify Developer Dashboard exact dit adres toe:</p><code>{`${location.origin}${location.pathname}`}</code></details><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" disabled={!client.trim()} onClick={connect}>{hasSpotifySession() ? 'Spotify opnieuw koppelen' : 'Verbinden met Spotify'} <ExternalLink /></button></div></section>
+    <section className="settings-card import-card"><div className="settings-icon"><Import /></div><div className="settings-body"><span className="eyebrow">Maak een nieuwe editie</span><h2>Playlist importeren</h2><p>Plak een Spotify-playlistlink. De huidige muziekcollectie wordt na jouw bevestiging vervangen door de geïmporteerde playlist.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={() => (!collection.tracks.length || confirm(`‘${collection.name}’ vervangen door deze Spotify-playlist?`)) && doImport()}><Import /> {busy ? 'Playlist ophalen…' : 'Importeer hele playlist'}</button>{!hasSpotifySession() ? <small className="field-help">Koppel hierboven eerst Spotify om te kunnen importeren.</small> : <small className="field-help">Spotify laat momenteel alleen playlists van jezelf of playlists waaraan je meewerkt volledig importeren.</small>}</div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
-    <section className="settings-card"><div className="settings-icon"><UserPlus /></div><div className="settings-body"><h2>Vrienden toelaten</h2><p>Open jouw app in het Spotify Developer Dashboard en ga naar <strong>Settings → Users Management → Add new user</strong>. Voeg daar de naam en het Spotify-e-mailadres van je vriend toe. In Development Mode kunnen maximaal vijf Spotify-gebruikers de play-app gebruiken.</p></div></section>
-    <section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Goed om te weten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify vereist normaal zichtbare metadata en staat muziektrivia zonder aparte toestemming niet toe. Voor volledig zelfstandige playback kun je per nummer een eigen, rechtmatig gebruikte audio-URL invullen.</p><small>Versie {APP_VERSION}</small></div></section>
+    <details className="technical-details"><summary><Settings /> Testgebruikers, limieten & techniek</summary><section className="settings-card"><div className="settings-icon"><UserPlus /></div><div className="settings-body"><h2>Vrienden toelaten</h2><p>Voor een gezellige avond is één DJ-telefoon het eenvoudigst. De eigenaar van de Spotify-app heeft Premium nodig. Wil iemand toch op zijn eigen Spotify-account afspelen? Voeg die persoon dan in het Spotify Developer Dashboard toe via <strong>Settings → Users Management</strong>. Development Mode ondersteunt maximaal vijf Spotify-gebruikers.</p></div></section><section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Prototype en muziekrechten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify staat games met Spotify-content niet toe zonder afzonderlijke schriftelijke toestemming. Voor een volwaardige openbare app is daarom een productiegeschikte, rechtmatig gelicentieerde audiobron nodig.</p><small>Versie {APP_VERSION}</small></div></section></details>
   </main>
 }
 
@@ -415,6 +432,8 @@ export default function App() {
   }
   const openEdition = edition => {
     const value = { ...edition, tracks: (edition.tracks || []).map(normalizeTrack) }
+    const sharedClientId = edition.clientId || gift?.clientId
+    if (sharedClientId) setClientId(sharedClientId)
     setCollectionState(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
   }
 

@@ -24,10 +24,11 @@ describe('Spotify playlist links', () => {
 })
 
 describe('zelfstandige speelkaarten', () => {
-  it('bewaart unicode metadata, Spotify URI en publieke Client ID', () => {
-    const original = normalizeTrack({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc', genre: 'electronic', tags: ['2000s', 'duet'] })
+  it('bewaart unicode metadata, afspeelbron en publieke Client ID', () => {
+    const original = normalizeTrack({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc', audioUrl: 'https://audio.example/alors.mp3', genre: 'electronic', tags: ['2000s', 'duet'] })
     const result = decodeCard(encodeCard(original, 'public-client-id'))
     expect(result.track).toMatchObject({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc', genre: 'electronic', tags: ['2000s', 'duet'] })
+    expect(result.track.audioUrl).toBe('https://audio.example/alors.mp3')
     expect(result.clientId).toBe('public-client-id')
   })
 
