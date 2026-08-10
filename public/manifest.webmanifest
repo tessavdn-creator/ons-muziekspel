@@ -1,0 +1,10 @@
+{
+  "name": "Ons Muziekspel",
+  "short_name": "Muziekspel",
+  "description": "Scan geheime muziekkaarten en raad het jaar.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4efe6",
+  "theme_color": "#171411",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
