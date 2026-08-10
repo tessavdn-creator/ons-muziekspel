@@ -4,7 +4,7 @@
   "description": "Scan geheime muziekkaarten en raad het jaar.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f4efe6",
-  "theme_color": "#171411",
+  "background_color": "#07050d",
+  "theme_color": "#07050d",
   "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

@@ -24,6 +24,7 @@ export function normalizeTrack(track) {
     spotifyUri: track.spotifyUri || (spotifyId ? `spotify:track:${spotifyId}` : ''),
     externalUrl,
     audioUrl: track.audioUrl || '',
+    genre: track.genre || 'pop',
   }
 }
 
@@ -67,6 +68,7 @@ export function parseCsv(text) {
       externalUrl: spotify.startsWith('http') ? spotify : '',
       spotifyUri: spotify.startsWith('spotify:') ? spotify : spotify.match(/track\/([\w]+)/)?.[1] ? `spotify:track:${spotify.match(/track\/([\w]+)/)[1]}` : '',
       audioUrl: get('audiourl', 'audio url', 'preview url'),
+      genre: get('genre', 'stijl') || 'pop',
     })
   }).filter(track => track.title && track.artist)
 }
@@ -90,23 +92,27 @@ export function encodeCard(track, clientId = '') {
     y: track.year,
     l: track.album,
     c: clientId,
+    g: track.genre || 'pop',
   })
-  const bytes = new TextEncoder().encode(payload)
+  const bytes = compressSync(strToU8(payload), { level: 9 })
   let binary = ''
   bytes.forEach(byte => { binary += String.fromCharCode(byte) })
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  return `z${btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`
 }
 
 export function decodeCard(value) {
   try {
-    const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+    const compressed = value.startsWith('z')
+    const encoded = compressed ? value.slice(1) : value
+    const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
     const binary = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='))
     const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
-    const data = JSON.parse(new TextDecoder().decode(bytes))
+    const data = JSON.parse(compressed ? strFromU8(decompressSync(bytes)) : new TextDecoder().decode(bytes))
     if (data.v !== 1 || !data.i || !data.t || !data.a) return null
     return {
-      track: normalizeTrack({ id: data.i, spotifyUri: data.s, title: data.t, artist: data.a, year: data.y, album: data.l }),
+      track: normalizeTrack({ id: data.i, spotifyUri: data.s, title: data.t, artist: data.a, year: data.y, album: data.l, genre: data.g }),
       clientId: data.c || '',
     }
   } catch { return null }
 }
+import { compressSync, decompressSync, strToU8, strFromU8 } from 'fflate'

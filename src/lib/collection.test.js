@@ -25,9 +25,15 @@ describe('Spotify playlist links', () => {
 
 describe('zelfstandige speelkaarten', () => {
   it('bewaart unicode metadata, Spotify URI en publieke Client ID', () => {
-    const original = normalizeTrack({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc' })
+    const original = normalizeTrack({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc', genre: 'electronic' })
     const result = decodeCard(encodeCard(original, 'public-client-id'))
-    expect(result.track).toMatchObject({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc' })
+    expect(result.track).toMatchObject({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc', genre: 'electronic' })
     expect(result.clientId).toBe('public-client-id')
+  })
+
+  it('blijft eerder geprinte ongecomprimeerde kaarten lezen', () => {
+    const oldData = { v: 1, i: 'oud', s: 'spotify:track:oud', t: 'Oude kaart', a: 'Artiest', y: '1988', l: '', c: '' }
+    const legacy = btoa(JSON.stringify(oldData)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    expect(decodeCard(legacy)?.track).toMatchObject({ id: 'oud', title: 'Oude kaart', year: '1988' })
   })
 })

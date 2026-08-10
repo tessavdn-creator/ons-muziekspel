@@ -3,7 +3,7 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import QRCode from 'qrcode'
 import {
   ArrowLeft, Camera, Check, ChevronRight, CirclePlay, Download, ExternalLink,
-  FileUp, Gift, Import, Library, Music2, Pause, Pencil, Play, Plus, Printer,
+  FileUp, Gift, ImageUp, Import, Library, Music2, Pause, Pencil, Play, Plus, Printer,
   QrCode, RotateCcw, ScanLine, Settings, Sparkles, Trash2, X,
   UserPlus,
 } from 'lucide-react'
@@ -22,33 +22,53 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Instellen', icon: Settings },
   { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.4.1 — admin + play'
+const APP_VERSION = '0.5.0 — dark disco + scanner'
 
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')
-  useEffect(() => { QRCode.toDataURL(value, { width: size, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#15120f', light: '#fffaf1' } }).then(setSrc) }, [value, size])
+  useEffect(() => { QRCode.toDataURL(value, { width: size, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#050509', light: '#ffffff' } }).then(setSrc) }, [value, size])
   return src ? <img className="qr-image" src={src} alt="QR-code" /> : <div className="qr-placeholder" />
 }
 
 function ScannerView({ onScan, onClose }) {
   const videoRef = useRef(null)
+  const fileRef = useRef(null)
+  const scanCallback = useRef(onScan)
+  const scanned = useRef(false)
   const [error, setError] = useState('')
+  useEffect(() => { scanCallback.current = onScan }, [onScan])
   useEffect(() => {
     const reader = new BrowserQRCodeReader()
     let controls
-    reader.decodeFromVideoDevice(undefined, videoRef.current, result => {
-      if (result) {
+    reader.decodeFromConstraints({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+    }, videoRef.current, result => {
+      if (result && !scanned.current) {
+        scanned.current = true
         controls?.stop()
-        onScan(result.getText())
+        scanCallback.current(result.getText())
       }
     }).then(value => { controls = value }).catch(() => setError('Camera kon niet starten. Geef cameratoegang en probeer opnieuw.'))
     return () => controls?.stop()
-  }, [onScan])
+  }, [])
+  const scanPhoto = async file => {
+    if (!file) return
+    setError('QR-code op de foto zoeken…')
+    const url = URL.createObjectURL(file)
+    try {
+      const result = await new BrowserQRCodeReader().decodeFromImageUrl(url)
+      scanCallback.current(result.getText())
+    } catch { setError('Geen QR-code gevonden. Kies een scherpere foto met de hele code in beeld.') }
+    finally { URL.revokeObjectURL(url) }
+  }
   return <div className="scanner-screen">
     <button className="round-button scanner-close" onClick={onClose} aria-label="Sluiten"><X /></button>
     <div className="scanner-copy"><span>Richt op de kaart</span><small>De muziek blijft geheim</small></div>
     <video ref={videoRef} muted playsInline />
     <div className="scan-frame"><i /><i /><i /><i /><div className="scan-line" /></div>
+    <button className="photo-scan-button" onClick={() => fileRef.current?.click()}><ImageUp /> Scan vanuit foto</button>
+    <input ref={fileRef} hidden type="file" accept="image/*" onChange={event => scanPhoto(event.target.files?.[0])} />
     {error && <div className="toast error">{error}</div>}
   </div>
 }
@@ -85,7 +105,7 @@ function Player({ track, onBack, onNext }) {
     await pauseSpotify().catch(() => {})
     setPlaying(false); setMessage('Gepauzeerd')
   }
-  return <main className={`player-screen ${revealed ? 'is-revealed' : ''}`}>
+  return <main className={`player-screen theme-${track.genre || 'pop'} ${revealed ? 'is-revealed' : ''}`}>
     <header className="player-header">
       <button className="round-button" onClick={onBack}><ArrowLeft /></button>
       <span>Kaart gevonden</span><span className="status-dot" />
@@ -139,7 +159,7 @@ function TrackEditor({ initial, onSave, onCancel }) {
   const field = (key, label, placeholder) => <label><span>{label}</span><input value={track[key]} placeholder={placeholder} onChange={event => setTrack({ ...track, [key]: event.target.value })} /></label>
   return <div className="modal-layer"><form className="modal-card" onSubmit={event => { event.preventDefault(); onSave(track) }}>
     <div className="modal-title"><div><span className="eyebrow">Kaartgegevens</span><h2>{initial ? 'Nummer bewerken' : 'Nummer toevoegen'}</h2></div><button type="button" className="round-button" onClick={onCancel}><X /></button></div>
-    <div className="form-grid">{field('title', 'Titel', 'Bijvoorbeeld: Dreams')}{field('artist', 'Artiest', 'The Cranberries')}{field('year', 'Jaar', '1993')}{field('album', 'Album', 'No Need to Argue')}{field('externalUrl', 'Spotify-link', 'https://open.spotify.com/track/…')}{field('audioUrl', 'Directe audio-URL (optioneel)', 'https://…/nummer.mp3')}</div>
+    <div className="form-grid">{field('title', 'Titel', 'Bijvoorbeeld: Dreams')}{field('artist', 'Artiest', 'The Cranberries')}{field('year', 'Jaar', '1993')}{field('album', 'Album', 'No Need to Argue')}<label><span>Genrethema</span><select value={track.genre} onChange={event => setTrack({ ...track, genre: event.target.value })}><option value="pop">Pop neon</option><option value="disco">Disco fever</option><option value="rock">Rock stage</option><option value="electronic">Electronic club</option><option value="soul">Soul lounge</option></select></label>{field('externalUrl', 'Spotify-link', 'https://open.spotify.com/track/…')}{field('audioUrl', 'Directe audio-URL (optioneel)', 'https://…/nummer.mp3')}</div>
     <button className="primary-button wide" disabled={!track.title || !track.artist}><Check /> Opslaan</button>
   </form></div>
 }
@@ -192,9 +212,9 @@ function CardsPage({ collection }) {
     <PageTitle eyebrow="Klaar om te drukken" title="Speelkaarten" description="Zes kaarten per A4, ingericht voor dubbelzijdig printen" />
     <div className="print-controls no-print"><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><button className="primary-button" disabled={!clientId} onClick={() => print()}><Printer /> Print kaarten</button></div>
     <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
-    <div className="deck-preview">{collection.tracks.map((track, index) => <div className="mini-card" key={track.id}><CardQr value={cardUrl(track)} size={150} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
+    <div className="deck-preview">{collection.tracks.map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
     <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
-      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className="print-card card-front" key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><CardQr value={cardUrl(track)} size={300} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
+      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><CardQr value={cardUrl(track)} size={360} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
       <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
     ])}</div>
   </main>

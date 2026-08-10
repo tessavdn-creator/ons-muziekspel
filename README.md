@@ -23,6 +23,10 @@ Open de getoonde lokale URL. Voor cameratoegang op een echte telefoon moet de ap
 
 Nieuwe QR-codes zijn zelfstandig. Ze bevatten compact gecodeerd de kaart-ID, Spotify URI, onthulgegevens en publieke Spotify Client ID. Een andere telefoon hoeft de collectie dus niet te importeren. Dit is codering voor gebruiksgemak, geen cryptografische beveiliging tegen technisch inspecteren.
 
+De QR-payload wordt gecomprimeerd en met een ruime witte rand geprint. De scanner kiest bij voorkeur de 1080p-achtercamera. Werkt live scannen op een toestel niet goed, gebruik dan **Scan vanuit foto** en kies een scherpe foto van de volledige QR-code.
+
+Per nummer kan in Studio een genrethema worden gekozen: pop, disco, rock, electronic of soul. De play-app gebruikt dit als subtiele kleurhint met bewegende discolichten.
+
 ## Spotify-prototype
 
 1. Maak in het Spotify Developer Dashboard een app aan.
