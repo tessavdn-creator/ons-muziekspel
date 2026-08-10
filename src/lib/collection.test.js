@@ -3,7 +3,7 @@ import { webcrypto } from 'node:crypto'
 import { parseCsv } from './collection.js'
 import { playlistIdFrom } from './spotify.js'
 
-globalThis.crypto = webcrypto
+if (!globalThis.crypto) Object.defineProperty(globalThis, 'crypto', { value: webcrypto })
 
 describe('CSV import', () => {
   it('leest quoted komma’s en Spotify-links', () => {
