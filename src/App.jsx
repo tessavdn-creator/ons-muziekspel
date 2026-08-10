@@ -15,6 +15,7 @@ import {
   activateSpotifyElement, connectPlayer, finishSpotifyLogin, getClientId, hasSpotifySession,
   importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
+import { giftRefFromHash, loadGift, rememberGift, savedGiftRefs } from './lib/gifts.js'
 
 const ADMIN_NAV = [
   { id: 'collection', label: 'Collectie', icon: Library },
@@ -22,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Instellen', icon: Settings },
   { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.6.1 — persoonlijke cadeauprintset'
+const APP_VERSION = '0.7.0 — versleutelde persoonlijke edities'
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
@@ -93,6 +94,23 @@ const BINGO_SPACES = [
 ]
 const shuffle = values => [...values].sort(() => Math.random() - .5)
 const answerKey = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
+
+function GiftLanding({ gift, onSelect, onClose }) {
+  return <main className="gift-landing">
+    <button className="round-button gift-close" onClick={onClose} aria-label="Terug"><ArrowLeft /></button>
+    <div className="gift-stars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+    <header><div className="gift-seal"><Gift /></div><span className="eyebrow">Speciaal samengesteld voor</span><h1>{gift.recipient}</h1><p>{gift.message}</p></header>
+    {gift.taste?.length > 0 && <div className="taste-tags">{gift.taste.map(tag => <span key={tag}>{tag}</span>)}</div>}
+    <section className="edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Jouw platenkast</span><h2>Kies een editie</h2></div><small>{gift.editions.length} {gift.editions.length === 1 ? 'editie' : 'edities'}</small></div>
+      <div className="edition-grid">{gift.editions.map((edition, index) => <article key={edition.id || edition.name}>
+        <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
+        <div className="edition-copy"><span>{edition.subtitle || 'Persoonlijke mix'}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers</small></div>
+        <button className="primary-button" onClick={() => onSelect(edition)}>Open editie <ChevronRight /></button>
+      </article>)}</div>
+      <p className="edition-update"><Sparkles /> Nieuwe edities die voor jou worden gemaakt verschijnen automatisch achter dezelfde persoonlijke QR.</p>
+    </section>
+  </main>
+}
 
 function BingoResult({ track }) {
   const [board] = useState(() => {
@@ -177,7 +195,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   </main>
 }
 
-function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode }) {
+function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode, giftRefs, onOpenGift }) {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
   const parseScan = text => {
@@ -203,6 +221,7 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
       <span>Snel testen</span>
       <div>{collection.tracks.slice(0, 3).map((track, index) => <button key={track.id} onClick={() => onOpenTrack(track)}><b>{String(index + 1).padStart(2, '0')}</b><span>Verborgen kaart</span><ChevronRight /></button>)}</div>
     </section>
+    {giftRefs.length > 0 && <section className="saved-gifts"><span>Mijn persoonlijke edities</span>{giftRefs.map(ref => <button key={ref.id} onClick={() => onOpenGift(ref)}><Gift /><b>{ref.recipient}</b><ChevronRight /></button>)}</section>}
   </main>
 }
 
@@ -331,9 +350,23 @@ export default function App() {
   const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
   const [tab, setTab] = useState('collection')
   const [activeTrack, setActiveTrack] = useState(null)
+  const [gift, setGift] = useState(null)
+  const [giftError, setGiftError] = useState('')
+  const [giftRefs, setGiftRefs] = useState(savedGiftRefs)
   const [gameMode, setGameModeState] = useState(localStorage.getItem('timepop.game-mode') || 'timeline')
   const setGameMode = mode => { localStorage.setItem('timepop.game-mode', mode); setGameModeState(mode) }
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
+  const openGift = async ref => {
+    setGiftError(''); setGift({ loading: true, recipient: 'Jouw cadeau', editions: [] })
+    try {
+      const loaded = await loadGift(ref)
+      setGift(loaded); setGiftRefs(rememberGift(ref, loaded)); setMode('play')
+    } catch (error) { setGift(null); setGiftError(error.message) }
+  }
+  const openEdition = edition => {
+    const value = { ...edition, tracks: (edition.tracks || []).map(normalizeTrack) }
+    setCollection(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
+  }
 
   const resolveCard = value => {
     const decoded = decodeCard(value)
@@ -346,8 +379,14 @@ export default function App() {
   }
 
   useEffect(() => {
-    const route = () => setMode(location.hash === '#admin' ? 'admin' : 'play')
+    const route = () => {
+      setMode(location.hash === '#admin' ? 'admin' : 'play')
+      const giftRef = giftRefFromHash()
+      if (giftRef) openGift(giftRef)
+    }
     addEventListener('hashchange', route)
+    const giftRef = giftRefFromHash()
+    if (giftRef) openGift(giftRef)
     const cardValue = new URLSearchParams(location.search).get('card')
     if (cardValue) {
       const track = resolveCard(cardValue)
@@ -365,8 +404,10 @@ export default function App() {
     return () => removeEventListener('hashchange', route)
   }, [])
 
+  if (gift?.loading) return <main className="gift-loading"><Gift /><h1>Jouw cadeau wordt geopend…</h1></main>
+  if (gift) return <GiftLanding gift={gift} onSelect={openEdition} onClose={() => { setGift(null); history.replaceState({}, '', `${location.pathname}#play`) }} />
   if (activeTrack) return <Player track={activeTrack} gameMode={gameMode} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
-  if (mode === 'play') return <PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} />
+  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} giftRefs={giftRefs} onOpenGift={openGift} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TIMEPOP <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'collection' && <CollectionPage collection={collection} setCollection={setCollection} />}
