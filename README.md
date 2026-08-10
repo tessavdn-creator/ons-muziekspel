@@ -5,6 +5,8 @@ Een muziekspel met twee gescheiden ervaringen. TRACKBACK Studio importeert numme
 - Admin: `https://tessavdn-creator.github.io/ons-muziekspel/#admin`
 - Play: `https://tessavdn-creator.github.io/ons-muziekspel/#play`
 
+De complete Nederlandse documentatie staat in [`docs/`](docs/00-START-HIER.md).
+
 ## Starten
 
 ```bash
@@ -16,10 +18,10 @@ Open de getoonde lokale URL. Voor cameratoegang op een echte telefoon moet de ap
 
 ## Eerste spel maken
 
-1. Open **Collectie** en voeg nummers toe of importeer een CSV/JSON.
-2. Gebruik voor CSV de kolommen `Title, Artist, Year, Spotify URL, Audio URL`.
-3. Open **Kaarten**, vul het definitieve HTTPS-adres van de app in en print eerst één testvel.
-4. Open de play-app op de speltelefoon, kies **Scan een kaart** en geef cameratoegang.
+1. Open **Importeren**, koppel Spotify en importeer een playlist.
+2. Open **Muziek** en controleer titels, artiesten en oorspronkelijke jaartallen.
+3. Open **Printen**, vul de editienaam in en print eerst één testvel.
+4. Open de play-app op de DJ-telefoon, kies **Scan een kaart** en geef cameratoegang.
 
 Nieuwe QR-codes zijn zelfstandig. Ze bevatten compact gecodeerd de kaart-ID, Spotify URI, onthulgegevens en publieke Spotify Client ID. Een andere telefoon hoeft de collectie dus niet te importeren. Dit is codering voor gebruiksgemak, geen cryptografische beveiliging tegen technisch inspecteren.
 
