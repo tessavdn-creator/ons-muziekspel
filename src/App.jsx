@@ -97,18 +97,45 @@ const shuffle = values => [...values].sort(() => Math.random() - .5)
 const answerKey = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
 
 function GiftLanding({ gift, onSelect, onClose }) {
+  const [publicEditions, setPublicEditions] = useState([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
+  useEffect(() => {
+    let active = true
+    const loadCatalog = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}decks/index.json`, { cache: 'no-store' })
+        if (!response.ok) throw new Error('catalogus niet beschikbaar')
+        const catalog = await response.json()
+        const editions = await Promise.all((catalog.editions || []).map(async entry => {
+          const deckResponse = await fetch(`${import.meta.env.BASE_URL}decks/${entry.file}`, { cache: 'no-store' })
+          if (!deckResponse.ok) throw new Error(`editie ${entry.file} niet beschikbaar`)
+          return { ...await deckResponse.json(), ...entry }
+        }))
+        const privateIds = new Set(gift.editions.map(edition => edition.id))
+        if (active) setPublicEditions(editions.filter(edition => !privateIds.has(edition.id)))
+      } catch { /* De persoonlijke editie blijft ook zonder openbare catalogus bruikbaar. */ }
+      finally { if (active) setCatalogLoading(false) }
+    }
+    loadCatalog()
+    return () => { active = false }
+  }, [gift])
+  const editionGrid = (editions, fallbackSubtitle) => <div className="edition-grid">{editions.map((edition, index) => <article key={edition.id || edition.name}>
+    <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
+    <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
+    <button className="primary-button" onClick={() => onSelect(edition)}>Open editie <ChevronRight /></button>
+  </article>)}</div>
   return <main className="gift-landing">
     <button className="round-button gift-close" onClick={onClose} aria-label="Terug"><ArrowLeft /></button>
     <div className="gift-stars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
     <header><div className="gift-seal"><Gift /></div><strong className="gift-brand">TRACKBACK</strong><span className="eyebrow">Speciaal samengesteld voor</span><h1>{gift.recipient}</h1><p>{gift.message}</p></header>
     {gift.taste?.length > 0 && <div className="taste-tags">{gift.taste.map(tag => <span key={tag}>{tag}</span>)}</div>}
-    <section className="edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Jouw platenkast</span><h2>Kies een editie</h2></div><small>{gift.editions.length} {gift.editions.length === 1 ? 'editie' : 'edities'}</small></div>
-      <div className="edition-grid">{gift.editions.map((edition, index) => <article key={edition.id || edition.name}>
-        <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
-        <div className="edition-copy"><span>{edition.subtitle || 'Persoonlijke mix'}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
-        <button className="primary-button" onClick={() => onSelect(edition)}>Open editie <ChevronRight /></button>
-      </article>)}</div>
-      <p className="edition-update"><Sparkles /> Nieuwe edities die voor jou worden gemaakt verschijnen automatisch achter dezelfde persoonlijke QR.</p>
+    <section className="edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Alleen voor jou</span><h2>Persoonlijke edities</h2></div><small>{gift.editions.length} {gift.editions.length === 1 ? 'editie' : 'edities'}</small></div>
+      {editionGrid(gift.editions, 'Persoonlijke mix')}
+      <p className="edition-update"><Sparkles /> Nieuwe persoonlijke edities verschijnen automatisch achter dezelfde QR.</p>
+    </section>
+    <section className="edition-shelf public-edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Voor iedereen</span><h2>Algemene edities</h2></div><small>{catalogLoading ? 'Laden…' : `${publicEditions.length} ${publicEditions.length === 1 ? 'editie' : 'edities'}`}</small></div>
+      {publicEditions.length > 0 ? editionGrid(publicEditions, 'TRACKBACK original') : !catalogLoading && <p className="catalog-empty">Er zijn nog geen algemene edities gepubliceerd.</p>}
+      <p className="edition-update"><Library /> Nieuwe openbare edities komen automatisch in deze bibliotheek.</p>
     </section>
   </main>
 }

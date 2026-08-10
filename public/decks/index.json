@@ -1,0 +1,12 @@
+{
+  "editions": [
+    {
+      "id": "guilty-pleasures",
+      "file": "guilty-pleasures.json",
+      "name": "Guilty Pleasures",
+      "subtitle": "Meezingen zonder schaamte",
+      "description": "Een grote mix vol powerballads, dansvloerhits en nummers waarvan iedereen stiekem ieder woord kent.",
+      "difficulty": "normal"
+    }
+  ]
+}
