@@ -1,6 +1,7 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import QRCode from 'qrcode'
 import { zipSync } from 'fflate'
@@ -16,7 +17,7 @@ if (!/^[A-Za-z0-9]{10,80}$/.test(clientId)) throw new Error('SPOTIFY_CLIENT_ID o
 if (!/^[A-Za-z0-9_-]{20,100}$/.test(giftKey)) throw new Error('IRIS_GIFT_KEY ontbreekt of lijkt niet geldig.')
 
 const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 13).replace('T', '-')
-const output = customOutput ? path.resolve(customOutput) : path.join(root, 'private-output', `trackback-qr-bundle-${stamp}`)
+const output = customOutput ? path.resolve(customOutput) : path.join(os.homedir(), 'Documents', 'TRACKBACK QR-codes', `trackback-qr-bundle-${stamp}`)
 const zipFiles = {}
 const utf8 = value => new TextEncoder().encode(value)
 const fromBase64Url = value => Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64')
