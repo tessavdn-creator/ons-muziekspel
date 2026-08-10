@@ -10,7 +10,7 @@ import {
   exportCollection, loadCollection, normalizeTrack, parseCsv, randomId, saveCollection,
 } from './lib/collection.js'
 import {
-  finishSpotifyLogin, getClientId, getToken, importPlaylist, loginSpotify,
+  finishSpotifyLogin, getClientId, hasSpotifySession, importPlaylist, loginSpotify,
   pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
 
@@ -64,14 +64,14 @@ function Player({ track, onBack, onNext }) {
         audioRef.current = new Audio(track.audioUrl)
         audioRef.current.addEventListener('ended', () => setPlaying(false))
         await audioRef.current.play()
-      } else if (track.spotifyUri && getToken()) {
+      } else if (track.spotifyUri && hasSpotifySession()) {
         await playSpotify(track.spotifyUri, state => state?.error && setMessage(state.error))
       } else if (track.externalUrl) {
         window.open(track.externalUrl, '_blank', 'noopener,noreferrer')
         setMessage('Spotify is geopend — houd het scherm uit zicht')
       } else throw new Error('Deze kaart heeft nog geen afspeelbron.')
       setPlaying(true)
-      if (track.audioUrl || getToken()) setMessage('Nu aan het spelen')
+      if (track.audioUrl || hasSpotifySession()) setMessage('Nu aan het spelen')
     } catch (error) { setMessage(error.message); setPlaying(false) }
   }
   const pause = async () => {
@@ -196,7 +196,7 @@ function CardsPage({ collection }) {
 function SettingsPage({ collection, setCollection }) {
   const [client, setClient] = useState(getClientId())
   const [playlist, setPlaylist] = useState('')
-  const [status, setStatus] = useState(getToken() ? 'Spotify is verbonden.' : '')
+  const [status, setStatus] = useState(hasSpotifySession() ? 'Spotify is verbonden.' : '')
   const [busy, setBusy] = useState(false)
   const connect = async () => { setClientId(client); await loginSpotify() }
   const doImport = async () => {
@@ -207,7 +207,7 @@ function SettingsPage({ collection, setCollection }) {
   return <main className="page content-page settings-page">
     <PageTitle eyebrow="Verbindingen" title="Instellen" description="Koppel Spotify of werk volledig met eigen audiobestanden" />
     <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Experimenteel</span><h2>Spotify koppelen</h2><p>Maak een app aan in het Spotify Developer Dashboard en voeg exact deze Redirect URI toe:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => setClient(event.target.value)} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
-    <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !getToken() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
+    <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
     <section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Goed om te weten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify vereist normaal zichtbare metadata en staat muziektrivia zonder aparte toestemming niet toe. Voor volledig zelfstandige playback kun je per nummer een eigen, rechtmatig gebruikte audio-URL invullen.</p></div></section>
   </main>

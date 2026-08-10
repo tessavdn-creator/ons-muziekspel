@@ -1,24 +1,56 @@
 const TOKEN_KEY = 'giftster.spotify.token.v1'
 const CLIENT_KEY = 'giftster.spotify.client-id'
 const VERIFIER_KEY = 'giftster.spotify.verifier'
+const STATE_KEY = 'giftster.spotify.state'
 
 const base64url = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
 export const getClientId = () => localStorage.getItem(CLIENT_KEY) || ''
 export const setClientId = id => localStorage.setItem(CLIENT_KEY, id.trim())
+const readToken = () => {
+  try { return JSON.parse(localStorage.getItem(TOKEN_KEY)) || {} } catch { return {} }
+}
 export const getToken = () => {
-  try {
-    const token = JSON.parse(localStorage.getItem(TOKEN_KEY))
-    return token?.expiresAt > Date.now() + 30000 ? token.accessToken : ''
-  } catch { return '' }
+  const token = readToken()
+  return token.expiresAt > Date.now() + 30000 ? token.accessToken : ''
+}
+export const hasSpotifySession = () => Boolean(getToken() || readToken().refreshToken)
+
+async function getAccessToken() {
+  const current = getToken()
+  if (current) return current
+  const saved = readToken()
+  if (!saved.refreshToken) throw new Error('Log opnieuw in bij Spotify.')
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token', refresh_token: saved.refreshToken, client_id: getClientId(),
+    }),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    if (data.error === 'invalid_grant') localStorage.removeItem(TOKEN_KEY)
+    throw new Error(data.error === 'invalid_grant' ? 'Je Spotify-koppeling is verlopen. Verbind Spotify opnieuw.' : 'Spotify-token kon niet worden vernieuwd.')
+  }
+  const updated = {
+    ...saved,
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token || saved.refreshToken,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  }
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(updated))
+  return updated.accessToken
 }
 
 export async function loginSpotify() {
   const clientId = getClientId()
   if (!clientId) throw new Error('Vul eerst je Spotify Client ID in.')
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(64)))
+  const state = base64url(crypto.getRandomValues(new Uint8Array(24)))
   const challenge = base64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
   sessionStorage.setItem(VERIFIER_KEY, verifier)
+  sessionStorage.setItem(STATE_KEY, state)
   const redirectUri = `${location.origin}${location.pathname}`
   const params = new URLSearchParams({
     client_id: clientId,
@@ -26,15 +58,19 @@ export async function loginSpotify() {
     redirect_uri: redirectUri,
     code_challenge_method: 'S256',
     code_challenge: challenge,
+    state,
     scope: 'playlist-read-private streaming user-read-email user-read-private user-modify-playback-state',
   })
   location.href = `https://accounts.spotify.com/authorize?${params}`
 }
 
 export async function finishSpotifyLogin() {
-  const code = new URLSearchParams(location.search).get('code')
+  const query = new URLSearchParams(location.search)
+  const code = query.get('code')
   const verifier = sessionStorage.getItem(VERIFIER_KEY)
+  if (query.get('error')) throw new Error('Spotify-koppeling is geannuleerd.')
   if (!code || !verifier) return false
+  if (!query.get('state') || query.get('state') !== sessionStorage.getItem(STATE_KEY)) throw new Error('Spotify-login kon niet veilig worden gecontroleerd.')
   const body = new URLSearchParams({
     client_id: getClientId(), grant_type: 'authorization_code', code,
     redirect_uri: `${location.origin}${location.pathname}`, code_verifier: verifier,
@@ -44,14 +80,20 @@ export async function finishSpotifyLogin() {
   })
   if (!response.ok) throw new Error('Spotify-login kon niet worden afgerond.')
   const data = await response.json()
-  localStorage.setItem(TOKEN_KEY, JSON.stringify({ accessToken: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 }))
+  localStorage.setItem(TOKEN_KEY, JSON.stringify({
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+    authorizedAt: Date.now(),
+  }))
+  sessionStorage.removeItem(VERIFIER_KEY)
+  sessionStorage.removeItem(STATE_KEY)
   history.replaceState({}, '', location.pathname)
   return true
 }
 
 async function spotifyFetch(path, options = {}) {
-  const token = getToken()
-  if (!token) throw new Error('Log opnieuw in bij Spotify.')
+  const token = await getAccessToken()
   const response = await fetch(`https://api.spotify.com/v1${path}`, {
     ...options,
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers },
@@ -95,7 +137,7 @@ export async function importPlaylist(value) {
 let player
 let deviceId
 export async function connectPlayer(onState) {
-  if (!getToken()) throw new Error('Log eerst in bij Spotify.')
+  await getAccessToken()
   if (!window.Spotify) {
     await new Promise((resolve, reject) => {
       window.onSpotifyWebPlaybackSDKReady = resolve
@@ -106,7 +148,11 @@ export async function connectPlayer(onState) {
     })
   }
   if (!player) {
-    player = new window.Spotify.Player({ name: 'Ons muziekspel', getOAuthToken: callback => callback(getToken()), volume: 0.8 })
+    player = new window.Spotify.Player({
+      name: 'Ons muziekspel',
+      getOAuthToken: callback => getAccessToken().then(callback).catch(error => onState?.({ error: error.message })),
+      volume: 0.8,
+    })
     player.addListener('ready', event => { deviceId = event.device_id })
     player.addListener('player_state_changed', state => onState?.(state))
     player.addListener('authentication_error', event => onState?.({ error: event.message }))

@@ -28,6 +28,8 @@ De QR-code bevat alleen een willekeurige kaart-ID. De bijbehorende collectie sta
 3. Plak de Client ID, verbind Spotify en importeer een playlist waarvan je eigenaar/collaborator bent.
 4. Een Premium-account is nodig voor playback in de webapp.
 
+Plak nooit handmatig een access token of Client Secret in de app of broncode. De browser gebruikt Authorization Code met PKCE, bewaart de refresh token lokaal en vernieuwt access tokens automatisch. Spotify vraagt na het verlopen of intrekken van de koppeling opnieuw om toestemming.
+
 De Spotify-adapter is een privé technisch prototype. De actuele Spotify-policy verbiedt muziektrivia en vereist bij streaming zichtbare metadata. Gebruik dit niet als publiek of commercieel Spotify-product zonder afzonderlijke toestemming.
 
 ## Controle
