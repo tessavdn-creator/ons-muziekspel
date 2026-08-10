@@ -4,7 +4,9 @@
 * { box-sizing: border-box; }
 body { margin:0; min-width:320px; min-height:100vh; background:var(--cream); overflow-x:hidden; }
 button,input { font:inherit; }
-button { cursor:pointer; }
+/* Reset the browser's white default button surface. Several TRACKBACK controls are
+   intentionally transparent and otherwise become white-on-white on iOS/Safari. */
+button { cursor:pointer; color:inherit; background:transparent; border:0; }
 .app-shell { min-height:100vh; padding-bottom:90px; }
 .page { width:min(1080px,100%); margin:0 auto; padding:42px 28px 70px; }
 .content-page { padding-top:62px; }
@@ -152,8 +154,10 @@ select { width:100%;height:48px;border:1px solid #d8cfc4;border-radius:12px;back
   .app-shell>.page { position:relative;z-index:1; }
   .page-title h1,.track-info strong,.empty h3 { color:#fff; }
   .page-title p,.track-info span,.settings-body p,.play-hero>p { color:#aaa3b5; }
-  .primary-button { background:linear-gradient(135deg,var(--pink),var(--orange));color:white;box-shadow:0 6px 24px rgba(255,39,139,.2); }
-  .secondary-button,.icon-button { background:#211c2b;color:#f8f4ff;border:1px solid rgba(255,255,255,.08); }
+  .primary-button { background:linear-gradient(135deg,#d90068,#b52c18);color:#fff;box-shadow:0 6px 24px rgba(255,39,139,.2); }
+  .primary-button svg { color:#fff; }
+  .secondary-button,.icon-button { background:#211c2b;color:#f8f4ff;border:1px solid rgba(255,255,255,.16); }
+  .secondary-button svg,.icon-button svg { color:#f8f4ff; }
   .track-list { border-color:rgba(255,255,255,.12); }.track-row { border-color:rgba(255,255,255,.1); }.track-thumb { background:#211c2b; }.row-button { color:#eee; }.row-button:hover { background:#282132; }.row-button.danger { color:#ff6f7b; }
   .modal-card,.settings-card,.mini-card { background:#13101b;color:#f8f4ff;border-color:rgba(255,255,255,.1); }
   .modal-layer { background:rgba(0,0,0,.8); }.modal-title .round-button { background:#282132; }.settings-icon { background:#282132; }
