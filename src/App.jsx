@@ -23,12 +23,12 @@ const ADMIN_NAV = [
   { id: 'cards', label: 'Print & deel', icon: QrCode },
   { id: 'settings', label: 'Spotify', icon: Settings },
 ]
-const APP_VERSION = '0.8.1 — Tijdlijn als duidelijk hoofdspel'
+const APP_VERSION = '0.8.2 — speluitleg + snelle wissel'
 const GAME_MODES = [
-  { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
-  { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
-  { id: 'bingo', name: 'Muziekbingo', text: 'Streep decennia, genres en verrassingen af.', icon: Grid3X3 },
-  { id: 'battle', name: 'Battle of the Hits', text: 'Stem welke guilty pleasure doorgaat.', icon: Trophy },
+  { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3, steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
+  { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2, steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
+  { id: 'bingo', name: 'Muziekbingo', text: 'Streep decennia, genres en verrassingen af.', icon: Grid3X3, steps: ['Pak een geprinte of digitale bingokaart', 'Scan, luister en onthul het nummer', 'Streep ieder passend vak af'], score: 'Drie vakken op één horizontale, verticale of diagonale rij is bingo.' },
+  { id: 'battle', name: 'Battle of the Hits', text: 'Stem welke guilty pleasure doorgaat.', icon: Trophy, steps: ['De eerste gescande hit wordt kampioen', 'Scan een nieuwe hit als uitdager', 'Iedereen stemt welke hit doorgaat'], score: 'De hit die aan het einde nog kampioen is, wint de avond.' },
 ]
 
 const qrPromises = new Map()
@@ -215,14 +215,14 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode,
       <span className="eyebrow">Het hoofdspel</span>
       <h1>Luister.<br /><em>Leg de tijdlijn.</em></h1>
       <p>Hoor een verborgen hit en bepaal of hij vóór, na of tussen de kaarten op tafel hoort.</p>
-      <button className={`main-game-card ${gameMode === 'timeline' ? 'active' : ''}`} onClick={() => setGameMode('timeline')}>
+      <button className={`main-game-card ${gameMode === 'timeline' ? 'active' : ''}`} onClick={() => { setGameMode('timeline'); setShowAlternatives(false) }}>
         <div className="main-game-title"><span><Clock3 /></span><div><small>Aanbevolen · hoofdspel</small><strong>Tijdlijn</strong></div>{gameMode === 'timeline' && <Check />}</div>
         <ol><li><b>1</b> Scan een kaart</li><li><b>2</b> Luister zonder titel</li><li><b>3</b> Leg hem in de tijd</li></ol>
       </button>
-      {gameMode !== 'timeline' && <div className="alternate-active"><activeGame.icon /><span><small>Je speelt nu</small><strong>{activeGame.name}</strong></span><button onClick={() => setGameMode('timeline')}>Terug naar Tijdlijn</button></div>}
+      <div className="game-switch-bar"><span><activeGame.icon /><small>Je speelt</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Wissel spel'} <ChevronRight /></button></div>
+      {showAlternatives && <div className="alternate-games">{GAME_MODES.map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => { setGameMode(game.id); setShowAlternatives(false) }}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span>{gameMode === game.id && <Check />}</button>)}</div>}
+      <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>Zo speel je</small><strong>{activeGame.name}</strong></div></div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>
       <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>{gameMode === 'timeline' ? 'Scan voor de tijdlijn' : `Scan voor ${activeGame.name}`}</button>
-      <button className="more-games-toggle" onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Verberg extra spelvormen' : 'Andere spelvorm proberen'} <ChevronRight /></button>
-      {showAlternatives && <div className="alternate-games">{GAME_MODES.slice(1).map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => setGameMode(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span>{gameMode === game.id && <Check />}</button>)}</div>}
       {error && <div className="inline-error">{error}</div>}
     </section>
     <section className="quick-test">
