@@ -10,8 +10,8 @@ import {
   exportCollection, loadCollection, normalizeTrack, parseCsv, randomId, saveCollection,
 } from './lib/collection.js'
 import {
-  finishSpotifyLogin, getClientId, hasSpotifySession, importPlaylist, loginSpotify,
-  pauseSpotify, playSpotify, setClientId,
+  activateSpotifyElement, connectPlayer, finishSpotifyLogin, getClientId, hasSpotifySession,
+  importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
 
 const NAV = [
@@ -58,6 +58,7 @@ function Player({ track, onBack, onNext }) {
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
+    activateSpotifyElement()?.catch(() => {})
     try {
       setMessage('Muziek wordt gestart…')
       if (track.audioUrl) {
@@ -66,10 +67,9 @@ function Player({ track, onBack, onNext }) {
         await audioRef.current.play()
       } else if (track.spotifyUri && hasSpotifySession()) {
         await playSpotify(track.spotifyUri, state => state?.error && setMessage(state.error))
-      } else if (track.externalUrl) {
-        window.open(track.externalUrl, '_blank', 'noopener,noreferrer')
-        setMessage('Spotify is geopend — houd het scherm uit zicht')
-      } else throw new Error('Deze kaart heeft nog geen afspeelbron.')
+      } else if (track.spotifyUri) {
+        throw new Error('Spotify is nog niet verbonden. Ga terug naar Instellen en kies “Verbinden met Spotify”.')
+      } else throw new Error('Deze kaart heeft nog geen interne afspeelbron.')
       setPlaying(true)
       if (track.audioUrl || hasSpotifySession()) setMessage('Nu aan het spelen')
     } catch (error) { setMessage(error.message); setPlaying(false) }
@@ -223,7 +223,9 @@ export default function App() {
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
 
   useEffect(() => {
-    finishSpotifyLogin().catch(error => alert(error.message))
+    finishSpotifyLogin().then(connected => {
+      if (connected || hasSpotifySession()) connectPlayer().catch(() => {})
+    }).catch(error => alert(error.message))
     const card = new URLSearchParams(location.search).get('card')
     if (card) {
       const track = collection.tracks.find(item => item.id === card)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { webcrypto } from 'node:crypto'
-import { parseCsv } from './collection.js'
+import { normalizeTrack, parseCsv } from './collection.js'
 import { playlistIdFrom } from './spotify.js'
 
 if (!globalThis.crypto) Object.defineProperty(globalThis, 'crypto', { value: webcrypto })
@@ -9,6 +9,10 @@ describe('CSV import', () => {
   it('leest quoted komma’s en Spotify-links', () => {
     const [track] = parseCsv('Title,Artist,Year,Spotify URL\n"Song, Part 2",Blur,1997,https://open.spotify.com/track/abc123')
     expect(track).toMatchObject({ title: 'Song, Part 2', artist: 'Blur', year: '1997', spotifyUri: 'spotify:track:abc123' })
+  })
+
+  it('maakt van een handmatige Spotify-link een interne track-URI', () => {
+    expect(normalizeTrack({ title: 'Test', artist: 'Test', externalUrl: 'https://open.spotify.com/track/abc123?si=xyz' }).spotifyUri).toBe('spotify:track:abc123')
   })
 })
 

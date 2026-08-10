@@ -165,6 +165,10 @@ export async function connectPlayer(onState) {
   return deviceId
 }
 
+export function activateSpotifyElement() {
+  return player?.activateElement()
+}
+
 export async function playSpotify(uri, onState) {
   const id = await connectPlayer(onState)
   await spotifyFetch(`/me/player/play?device_id=${id}`, { method: 'PUT', body: JSON.stringify({ uris: [uri] }) })

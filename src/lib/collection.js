@@ -12,6 +12,8 @@ export function randomId() {
 }
 
 export function normalizeTrack(track) {
+  const externalUrl = track.externalUrl || ''
+  const spotifyId = externalUrl.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/)?.[1]
   return {
     id: track.id || randomId(),
     title: String(track.title || '').trim(),
@@ -19,8 +21,8 @@ export function normalizeTrack(track) {
     year: String(track.year || '').slice(0, 4),
     album: String(track.album || '').trim(),
     image: track.image || '',
-    spotifyUri: track.spotifyUri || '',
-    externalUrl: track.externalUrl || '',
+    spotifyUri: track.spotifyUri || (spotifyId ? `spotify:track:${spotifyId}` : ''),
+    externalUrl,
     audioUrl: track.audioUrl || '',
   }
 }
