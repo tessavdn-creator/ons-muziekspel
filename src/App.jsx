@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import QRCode from 'qrcode'
 import {
-  ArrowLeft, Camera, Check, ChevronRight, CirclePlay, Clock3, Download, ExternalLink,
+  ArrowLeft, Check, ChevronRight, Clock3, Download, ExternalLink,
   FileText, FileUp, Gift, Grid3X3, ImageUp, Import, Library, Mic2, Music2, Pause, Pencil, Play,
   Plus, Printer, QrCode, RotateCcw, ScanLine, Settings, Sparkles, Trash2, Trophy, X,
   UserPlus,
@@ -18,12 +18,12 @@ import {
 import { giftRefFromHash, loadGift, rememberGift, savedGiftRefs } from './lib/gifts.js'
 
 const ADMIN_NAV = [
-  { id: 'collection', label: 'Collectie', icon: Library },
-  { id: 'cards', label: 'Kaarten', icon: QrCode },
-  { id: 'settings', label: 'Instellen', icon: Settings },
-  { id: 'preview', label: 'Play-app', icon: CirclePlay },
+  { id: 'home', label: 'Overzicht', icon: Sparkles },
+  { id: 'collection', label: 'Muziek', icon: Library },
+  { id: 'cards', label: 'Print & deel', icon: QrCode },
+  { id: 'settings', label: 'Spotify', icon: Settings },
 ]
-const APP_VERSION = '0.7.0 — versleutelde persoonlijke edities'
+const APP_VERSION = '0.8.0 — studioflow + drie expertedities'
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
@@ -104,7 +104,7 @@ function GiftLanding({ gift, onSelect, onClose }) {
     <section className="edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Jouw platenkast</span><h2>Kies een editie</h2></div><small>{gift.editions.length} {gift.editions.length === 1 ? 'editie' : 'edities'}</small></div>
       <div className="edition-grid">{gift.editions.map((edition, index) => <article key={edition.id || edition.name}>
         <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
-        <div className="edition-copy"><span>{edition.subtitle || 'Persoonlijke mix'}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers</small></div>
+        <div className="edition-copy"><span>{edition.subtitle || 'Persoonlijke mix'}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
         <button className="primary-button" onClick={() => onSelect(edition)}>Open editie <ChevronRight /></button>
       </article>)}</div>
       <p className="edition-update"><Sparkles /> Nieuwe edities die voor jou worden gemaakt verschijnen automatisch achter dezelfde persoonlijke QR.</p>
@@ -235,6 +235,22 @@ function TrackEditor({ initial, onSave, onCancel }) {
   </form></div>
 }
 
+function StudioHome({ collection, giftRefs, setTab }) {
+  const hasClient = Boolean(getClientId())
+  const steps = [
+    { number: '01', title: 'Kies de muziek', text: `${collection.name} · ${collection.tracks.length} nummers actief`, icon: Music2, action: 'Nummers beheren', tab: 'collection', done: collection.tracks.length > 0 },
+    { number: '02', title: 'Maak het persoonlijk', text: 'Geef de editie een naam en vul de ontvanger in.', icon: Gift, action: 'Personaliseren', tab: 'cards', done: Boolean(localStorage.getItem('timepop.recipient')) },
+    { number: '03', title: 'Controleer Spotify', text: hasClient ? 'Client ID staat klaar voor de QR-kaarten.' : 'Client ID ontbreekt nog.', icon: Settings, action: hasClient ? 'Instellingen bekijken' : 'Spotify instellen', tab: 'settings', done: hasClient },
+    { number: '04', title: 'Print en geef cadeau', text: 'Kaarten, bingo, cover, spelregels en score.', icon: Printer, action: 'Naar printstudio', tab: 'cards', done: false },
+  ]
+  return <main className="page content-page studio-home">
+    <PageTitle eyebrow="TIMEPOP Studio" title="Van playlist naar cadeau" description="Werk de vier stappen af; de studio bewaart alles automatisch op dit toestel." />
+    <section className="active-edition"><div className="active-record"><Music2 /></div><div><span className="eyebrow">Actieve editie</span><h2>{collection.name}</h2><p>{collection.tracks.length} nummers · klaar om te bewerken</p></div><button className="secondary-button" onClick={() => setTab('collection')}>Open editie <ChevronRight /></button></section>
+    <div className="studio-flow">{steps.map(step => <article className={step.done ? 'is-done' : ''} key={step.number}><b>{step.done ? <Check /> : step.number}</b><step.icon /><div><h3>{step.title}</h3><p>{step.text}</p></div><button onClick={() => setTab(step.tab)}>{step.action}<ChevronRight /></button></article>)}</div>
+    <section className="studio-gifts"><div><span className="eyebrow">Persoonlijke bibliotheek</span><h2>Cadeau-edities</h2><p>Een versleuteld cadeau verschijnt hier nadat je de persoonlijke QR één keer op dit toestel hebt geopend.</p></div><strong>{giftRefs.length}</strong></section>
+  </main>
+}
+
 function CollectionPage({ collection, setCollection }) {
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
@@ -264,7 +280,7 @@ function CollectionPage({ collection, setCollection }) {
     } catch (error) { alert(error.message) } finally { setPresetBusy(false) }
   }
   return <main className="page content-page">
-    <PageTitle eyebrow="Jouw muziek" title="Collectie" description={`${collection.tracks.length} kaarten klaar voor het spel`} />
+    <PageTitle eyebrow="Stap 1 van 4" title="Muziek in deze editie" description={`${collection.tracks.length} kaarten klaar voor het spel`} />
     <div className="toolbar">
       <button className="primary-button" onClick={() => setAdding(true)}><Plus /> Nummer</button>
       <button className="secondary-button" onClick={() => fileRef.current.click()}><FileUp /> CSV / JSON</button>
@@ -304,7 +320,7 @@ function CardsPage({ collection }) {
     print(); setPrintBusy(false)
   }
   return <main className={`page content-page cards-page print-${printMode}`}>
-    <PageTitle eyebrow="Klaar om te drukken" title="Speelkaarten" description="Zes kaarten per A4, ingericht voor dubbelzijdig printen" />
+    <PageTitle eyebrow="Stap 2 en 4" title="Personaliseren, printen & delen" description="Maak eerst het cadeau persoonlijk en kies daarna wat je wilt afdrukken" />
     <div className="print-controls no-print"><div className="edition-fields"><label><span>Editienaam</span><input value={editionName} onChange={event => saveEdition('timepop.edition-name', event.target.value, setEditionName)} placeholder="Guilty Pleasures" /></label><label><span>Cadeau voor</span><input value={recipient} onChange={event => saveEdition('timepop.recipient', event.target.value, setRecipient)} placeholder="Bijvoorbeeld Sophie" /></label><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label></div><div className="print-buttons"><button className="primary-button" disabled={!clientId || printBusy} onClick={() => doPrint('cards')}><Printer /> {printBusy ? 'QR-codes maken…' : `${collection.tracks.length} kaarten`}</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('bingo')}><Grid3X3 /> 12 bingokaarten</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('rules')}><FileText /> Cover + regels + score</button></div></div>
     <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
     <div className="deck-preview">{collection.tracks.map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
@@ -333,7 +349,7 @@ function SettingsPage({ collection, setCollection }) {
     catch (error) { setStatus(error.message) } finally { setBusy(false) }
   }
   return <main className="page content-page settings-page">
-    <PageTitle eyebrow="Verbindingen" title="Instellen" description="Koppel Spotify of werk volledig met eigen audiobestanden" />
+    <PageTitle eyebrow="Stap 3 van 4" title="Spotify & afspelen" description="Koppel Spotify of werk volledig met eigen audiobestanden" />
     <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Gedeelde Spotify-app</span><h2>Spotify koppelen</h2><p>Deze publieke Client ID wordt veilig in iedere nieuwe QR opgenomen. Vrienden loggen daarmee op hun eigen Spotify-account in.</p><p>Voeg exact deze Redirect URI toe in het Spotify Developer Dashboard:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
     <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
@@ -348,7 +364,7 @@ function Empty({ icon: Icon, title, text }) { return <div className="empty"><Ico
 export default function App() {
   const [collection, setCollectionState] = useState(loadCollection)
   const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
-  const [tab, setTab] = useState('collection')
+  const [tab, setTab] = useState('home')
   const [activeTrack, setActiveTrack] = useState(null)
   const [gift, setGift] = useState(null)
   const [giftError, setGiftError] = useState('')
@@ -410,9 +426,10 @@ export default function App() {
   if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} giftRefs={giftRefs} onOpenGift={openGift} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TIMEPOP <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
+    {tab === 'home' && <StudioHome collection={collection} giftRefs={giftRefs} setTab={setTab} />}
     {tab === 'collection' && <CollectionPage collection={collection} setCollection={setCollection} />}
     {tab === 'cards' && <CardsPage collection={collection} />}
     {tab === 'settings' && <SettingsPage collection={collection} setCollection={setCollection} />}
-    <nav className="bottom-nav admin-nav no-print">{ADMIN_NAV.map(item => <button className={tab === item.id ? 'active' : ''} onClick={() => item.id === 'preview' ? location.hash = '#play' : setTab(item.id)} key={item.id}><item.icon /><span>{item.label}</span></button>)}</nav>
+    <nav className="bottom-nav admin-nav no-print">{ADMIN_NAV.map(item => <button className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)} key={item.id}><item.icon /><span>{item.label}</span></button>)}</nav>
   </div>
 }
