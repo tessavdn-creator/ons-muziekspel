@@ -22,7 +22,7 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Instellen', icon: Settings },
   { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.6.0 — vier spellen + Guilty Pleasures'
+const APP_VERSION = '0.6.1 — persoonlijke cadeauprintset'
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
@@ -30,9 +30,16 @@ const GAME_MODES = [
   { id: 'battle', name: 'Battle of the Hits', text: 'Stem welke guilty pleasure doorgaat.', icon: Trophy },
 ]
 
+const qrPromises = new Map()
+const createQr = (value, size) => {
+  const key = `${size}:${value}`
+  if (!qrPromises.has(key)) qrPromises.set(key, QRCode.toDataURL(value, { width: size, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#050509', light: '#ffffff' } }))
+  return qrPromises.get(key)
+}
+
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')
-  useEffect(() => { QRCode.toDataURL(value, { width: size, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#050509', light: '#ffffff' } }).then(setSrc) }, [value, size])
+  useEffect(() => { createQr(value, size).then(setSrc) }, [value, size])
   return src ? <img className="qr-image" src={src} alt="QR-code" /> : <div className="qr-placeholder" />
 }
 
@@ -261,25 +268,35 @@ function CollectionPage({ collection, setCollection }) {
 
 function CardsPage({ collection }) {
   const [baseUrl, setBaseUrl] = useState(localStorage.getItem('giftster.base-url') || `${location.origin}${location.pathname}`)
+  const [editionName, setEditionName] = useState(localStorage.getItem('timepop.edition-name') || collection.name || 'Guilty Pleasures')
+  const [recipient, setRecipient] = useState(localStorage.getItem('timepop.recipient') || '')
   const clientId = getClientId()
   const [printMode, setPrintMode] = useState('cards')
+  const [printBusy, setPrintBusy] = useState(false)
   const cardUrl = track => `${baseUrl.replace(/\/$/, '')}?card=${encodeCard(track, clientId)}#play`
   const sheets = useMemo(() => Array.from({ length: Math.ceil(collection.tracks.length / 6) }, (_, i) => collection.tracks.slice(i * 6, i * 6 + 6)), [collection])
   const saveBase = value => { setBaseUrl(value); localStorage.setItem('giftster.base-url', value) }
   const bingoBoards = useMemo(() => Array.from({ length: 12 }, (_, board) => Array.from({ length: 9 }, (_, cell) => BINGO_SPACES[(board * 4 + cell * 7) % BINGO_SPACES.length])), [])
-  const doPrint = mode => { setPrintMode(mode); setTimeout(() => print(), 80) }
+  const saveEdition = (key, value, setter) => { setter(value); localStorage.setItem(key, value) }
+  const doPrint = async mode => {
+    setPrintBusy(true); setPrintMode(mode)
+    if (mode === 'cards') await Promise.all(collection.tracks.map(track => createQr(cardUrl(track), 360)))
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    print(); setPrintBusy(false)
+  }
   return <main className={`page content-page cards-page print-${printMode}`}>
     <PageTitle eyebrow="Klaar om te drukken" title="Speelkaarten" description="Zes kaarten per A4, ingericht voor dubbelzijdig printen" />
-    <div className="print-controls no-print"><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><div className="print-buttons"><button className="primary-button" disabled={!clientId} onClick={() => doPrint('cards')}><Printer /> {collection.tracks.length} kaarten</button><button className="secondary-button" onClick={() => doPrint('bingo')}><Grid3X3 /> 12 bingokaarten</button><button className="secondary-button" onClick={() => doPrint('rules')}><FileText /> Spelregels + score</button></div></div>
+    <div className="print-controls no-print"><div className="edition-fields"><label><span>Editienaam</span><input value={editionName} onChange={event => saveEdition('timepop.edition-name', event.target.value, setEditionName)} placeholder="Guilty Pleasures" /></label><label><span>Cadeau voor</span><input value={recipient} onChange={event => saveEdition('timepop.recipient', event.target.value, setRecipient)} placeholder="Bijvoorbeeld Sophie" /></label><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label></div><div className="print-buttons"><button className="primary-button" disabled={!clientId || printBusy} onClick={() => doPrint('cards')}><Printer /> {printBusy ? 'QR-codes maken…' : `${collection.tracks.length} kaarten`}</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('bingo')}><Grid3X3 /> 12 bingokaarten</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('rules')}><FileText /> Cover + regels + score</button></div></div>
     <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
     <div className="deck-preview">{collection.tracks.map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
     <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
-      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><CardQr value={cardUrl(track)} size={360} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
-      <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
+      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><div className="card-edition">{editionName || collection.name}</div><div className="card-qr-shell"><CardQr value={cardUrl(track)} size={360} /></div><strong>SCAN · LUISTER · RAAD</strong><span>KAART {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
+      <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><div className="back-brand">{editionName || collection.name}</div><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
     ])}</div>
     <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TIMEPOP</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>
     <div className="rules-print-deck">
-      <section className="rules-page"><header><Music2 /><div><strong>TIMEPOP</strong><span>GUILTY PLEASURES</span></div></header><h1>Vier spellen.<br />Honderd hits.</h1><p className="rules-intro">Kies op de telefoon een spel, scan de voorkant van een kaart en speel het nummer af. Draai of onthul de kaart pas nadat iedereen heeft gekozen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article key={game.id}><b>0{index + 1}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Leg de kaart vóór, na of tussen je eerdere hits. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
+      <section className="gift-cover"><div className="cover-orbit"><Music2 /></div><span className="cover-label">EEN PERSOONLIJKE MUZIEKEDITIE</span><h1>{editionName || collection.name}</h1>{recipient && <h2>voor {recipient}</h2>}<p>100 hits · 4 spellen · heel veel foute meezingers</p><div className="cover-games">{GAME_MODES.map(game => <span key={game.id}><game.icon />{game.name}</span>)}</div><footer>TIMEPOP · SCAN DE MUZIEK, BEWAAR DE HERINNERING</footer></section>
+      <section className="rules-page"><header><Music2 /><div><strong>TIMEPOP</strong><span>{editionName || collection.name}</span></div></header><h1>Vier spellen.<br />Honderd hits.</h1><p className="rules-intro">Kies op de telefoon een spel, scan de voorkant van een kaart en speel het nummer af. Draai of onthul de kaart pas nadat iedereen heeft gekozen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article key={game.id}><b>0{index + 1}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Leg de kaart vóór, na of tussen je eerdere hits. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
       <section className="score-page"><header><div><Music2 /><strong>TIMEPOP</strong></div><span>SCOREFORMULIER</span></header><h1>Wie kent de hits?</h1><div className="score-meta"><span>Datum ____________________</span><span>Team ____________________</span></div><table><thead><tr><th>Speler / team</th>{Array.from({ length: 10 }, (_, index) => <th key={index}>{index + 1}</th>)}<th>Totaal</th></tr></thead><tbody>{Array.from({ length: 10 }, (_, row) => <tr key={row}><td>{row + 1}. __________________</td>{Array.from({ length: 11 }, (_, cell) => <td key={cell} />)}</tr>)}</tbody></table><div className="score-notes"><strong>Finale / notities</strong></div><footer>Tijdlijn: 1 punt · Raad de hit: maximaal 2 punten · Bingo en Battle: speel om eeuwige roem</footer></section>
     </div>
   </main>
