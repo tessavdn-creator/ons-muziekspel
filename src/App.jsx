@@ -8,14 +8,14 @@ import {
   UserPlus,
 } from 'lucide-react'
 import {
-  decodeCard, encodeCard, exportCollection, loadCollection, normalizeTrack, parseCsv,
+  clearCollection, decodeCard, encodeCard, exportCollection, loadCollection, normalizeTrack, parseCsv,
   randomId, saveCollection,
 } from './lib/collection.js'
 import {
   activateSpotifyElement, connectPlayer, finishSpotifyLogin, getClientId, hasSpotifySession,
   importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
-import { giftRefFromHash, loadGift, rememberGift, savedGiftRefs } from './lib/gifts.js'
+import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 
 const ADMIN_NAV = [
   { id: 'home', label: 'Overzicht', icon: Sparkles },
@@ -24,6 +24,7 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Spotify', icon: Settings },
 ]
 const APP_VERSION = '0.9.0 — TRACKBACK'
+const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3, steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2, steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
@@ -195,7 +196,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   </main>
 }
 
-function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode, giftRefs, onOpenGift }) {
+function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode }) {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
   const [showAlternatives, setShowAlternatives] = useState(gameMode !== 'timeline')
@@ -229,7 +230,6 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode,
       <span>Snel testen</span>
       <div>{collection.tracks.slice(0, 3).map((track, index) => <button key={track.id} onClick={() => onOpenTrack(track)}><b>{String(index + 1).padStart(2, '0')}</b><span>Verborgen kaart</span><ChevronRight /></button>)}</div>
     </section>
-    {giftRefs.length > 0 && <section className="saved-gifts"><span>Mijn persoonlijke edities</span>{giftRefs.map(ref => <button key={ref.id} onClick={() => onOpenGift(ref)}><Gift /><b>{ref.recipient}</b><ChevronRight /></button>)}</section>}
   </main>
 }
 
@@ -243,7 +243,7 @@ function TrackEditor({ initial, onSave, onCancel }) {
   </form></div>
 }
 
-function StudioHome({ collection, giftRefs, setTab }) {
+function StudioHome({ collection, setTab }) {
   const hasClient = Boolean(getClientId())
   const steps = [
     { number: '01', title: 'Kies de muziek', text: `${collection.name} · ${collection.tracks.length} nummers actief`, icon: Music2, action: 'Nummers beheren', tab: 'collection', done: collection.tracks.length > 0 },
@@ -255,7 +255,7 @@ function StudioHome({ collection, giftRefs, setTab }) {
     <PageTitle eyebrow="TRACKBACK Studio" title="Van playlist naar cadeau" description="Werk de vier stappen af; de studio bewaart alles automatisch op dit toestel." />
     <section className="active-edition"><div className="active-record"><Music2 /></div><div><span className="eyebrow">Actieve editie</span><h2>{collection.name}</h2><p>{collection.tracks.length} nummers · klaar om te bewerken</p></div><button className="secondary-button" onClick={() => setTab('collection')}>Open editie <ChevronRight /></button></section>
     <div className="studio-flow">{steps.map(step => <article className={step.done ? 'is-done' : ''} key={step.number}><b>{step.done ? <Check /> : step.number}</b><step.icon /><div><h3>{step.title}</h3><p>{step.text}</p></div><button onClick={() => setTab(step.tab)}>{step.action}<ChevronRight /></button></article>)}</div>
-    <section className="studio-gifts"><div><span className="eyebrow">Persoonlijke bibliotheek</span><h2>Cadeau-edities</h2><p>Een versleuteld cadeau verschijnt hier nadat je de persoonlijke QR één keer op dit toestel hebt geopend.</p></div><strong>{giftRefs.length}</strong></section>
+    <section className="studio-gifts"><div><span className="eyebrow">Privé delen</span><h2>Cadeau-edities blijven verborgen</h2><p>Een persoonlijke editie opent alleen via de unieke cadeau-QR of link en verschijnt nooit in de algemene play-app.</p></div><Gift /></section>
   </main>
 }
 
@@ -376,7 +376,6 @@ export default function App() {
   const [activeTrack, setActiveTrack] = useState(null)
   const [gift, setGift] = useState(null)
   const [giftError, setGiftError] = useState('')
-  const [giftRefs, setGiftRefs] = useState(savedGiftRefs)
   const [gameMode, setGameModeState] = useState(localStorage.getItem('timepop.game-mode') || 'timeline')
   const setGameMode = mode => { localStorage.setItem('timepop.game-mode', mode); setGameModeState(mode) }
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
@@ -384,12 +383,12 @@ export default function App() {
     setGiftError(''); setGift({ loading: true, recipient: 'Jouw cadeau', editions: [] })
     try {
       const loaded = await loadGift(ref)
-      setGift(loaded); setGiftRefs(rememberGift(ref, loaded)); setMode('play')
+      setGift(loaded); setMode('play')
     } catch (error) { setGift(null); setGiftError(error.message) }
   }
   const openEdition = edition => {
     const value = { ...edition, tracks: (edition.tracks || []).map(normalizeTrack) }
-    setCollection(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
+    setCollectionState(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
   }
 
   const resolveCard = value => {
@@ -403,6 +402,11 @@ export default function App() {
   }
 
   useEffect(() => {
+    const hadLegacyGift = clearSavedGiftRefs()
+    if (hadLegacyGift && LEGACY_PRIVATE_EDITION_IDS.has(collection.id)) {
+      clearCollection()
+      setCollectionState(loadCollection())
+    }
     const route = () => {
       setMode(location.hash === '#admin' ? 'admin' : 'play')
       const giftRef = giftRefFromHash()
@@ -431,10 +435,10 @@ export default function App() {
   if (gift?.loading) return <main className="gift-loading"><Gift /><h1>Jouw cadeau wordt geopend…</h1></main>
   if (gift) return <GiftLanding gift={gift} onSelect={openEdition} onClose={() => { setGift(null); history.replaceState({}, '', `${location.pathname}#play`) }} />
   if (activeTrack) return <Player track={activeTrack} gameMode={gameMode} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
-  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} giftRefs={giftRefs} onOpenGift={openGift} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
+  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TRACKBACK <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
-    {tab === 'home' && <StudioHome collection={collection} giftRefs={giftRefs} setTab={setTab} />}
+    {tab === 'home' && <StudioHome collection={collection} setTab={setTab} />}
     {tab === 'collection' && <CollectionPage collection={collection} setCollection={setCollection} />}
     {tab === 'cards' && <CardsPage collection={collection} />}
     {tab === 'settings' && <SettingsPage collection={collection} setCollection={setCollection} />}

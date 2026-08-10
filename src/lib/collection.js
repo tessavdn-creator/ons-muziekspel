@@ -41,6 +41,10 @@ export function saveCollection(collection) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(collection))
 }
 
+export function clearCollection() {
+  localStorage.removeItem(STORAGE_KEY)
+}
+
 export function parseCsv(text) {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean)
   if (!lines.length) return []

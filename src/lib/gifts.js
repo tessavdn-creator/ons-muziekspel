@@ -12,15 +12,10 @@ export function giftRefFromHash(hash = location.hash) {
   return /^[a-z0-9-]{3,80}$/i.test(id || '') && key ? { id, key } : null
 }
 
-export function savedGiftRefs() {
-  try { return JSON.parse(localStorage.getItem(ACCESS_KEY) || '[]') } catch { return [] }
-}
-
-export function rememberGift(ref, gift) {
-  const saved = savedGiftRefs().filter(item => item.id !== ref.id)
-  saved.unshift({ ...ref, recipient: gift.recipient || gift.title || 'Persoonlijke editie' })
-  localStorage.setItem(ACCESS_KEY, JSON.stringify(saved.slice(0, 12)))
-  return saved.slice(0, 12)
+export function clearSavedGiftRefs() {
+  const hadSavedRefs = Boolean(localStorage.getItem(ACCESS_KEY))
+  localStorage.removeItem(ACCESS_KEY)
+  return hadSavedRefs
 }
 
 export async function loadGift(ref) {
