@@ -5,22 +5,24 @@ import {
   ArrowLeft, Camera, Check, ChevronRight, CirclePlay, Download, ExternalLink,
   FileUp, Gift, Import, Library, Music2, Pause, Pencil, Play, Plus, Printer,
   QrCode, RotateCcw, ScanLine, Settings, Sparkles, Trash2, X,
+  UserPlus,
 } from 'lucide-react'
 import {
-  exportCollection, loadCollection, normalizeTrack, parseCsv, randomId, saveCollection,
+  decodeCard, encodeCard, exportCollection, loadCollection, normalizeTrack, parseCsv,
+  randomId, saveCollection,
 } from './lib/collection.js'
 import {
   activateSpotifyElement, connectPlayer, finishSpotifyLogin, getClientId, hasSpotifySession,
   importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
 
-const NAV = [
-  { id: 'play', label: 'Spelen', icon: CirclePlay },
+const ADMIN_NAV = [
   { id: 'collection', label: 'Collectie', icon: Library },
   { id: 'cards', label: 'Kaarten', icon: QrCode },
   { id: 'settings', label: 'Instellen', icon: Settings },
+  { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.3.0 — interne player'
+const APP_VERSION = '0.4.0 — admin + play'
 
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')
@@ -69,7 +71,10 @@ function Player({ track, onBack, onNext }) {
       } else if (track.spotifyUri && hasSpotifySession()) {
         await playSpotify(track.spotifyUri, state => state?.error && setMessage(state.error))
       } else if (track.spotifyUri) {
-        throw new Error('Spotify is nog niet verbonden. Ga terug naar Instellen en kies “Verbinden met Spotify”.')
+        sessionStorage.setItem('giftster.pending-track', JSON.stringify(track))
+        setMessage('Je wordt veilig met Spotify verbonden…')
+        await loginSpotify()
+        return
       } else throw new Error('Deze kaart heeft nog geen interne afspeelbron.')
       setPlaying(true)
       if (track.audioUrl || hasSpotifySession()) setMessage('Nu aan het spelen')
@@ -101,22 +106,22 @@ function Player({ track, onBack, onNext }) {
   </main>
 }
 
-function PlayHome({ collection, onOpenTrack }) {
+function PlayHome({ collection, onOpenTrack, resolveCard }) {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
   const parseScan = text => {
     setScanning(false)
     let id = text
-    try { id = new URL(text).searchParams.get('card') || text.split('/').pop() } catch { /* raw id */ }
-    const track = collection.tracks.find(item => item.id === id)
+    try { id = new URL(text).searchParams.get('card') || text } catch { /* raw id */ }
+    const track = resolveCard(id)
     if (track) onOpenTrack(track)
     else setError('Deze kaart hoort niet bij de collectie op dit toestel.')
   }
   if (scanning) return <ScannerView onScan={parseScan} onClose={() => setScanning(false)} />
-  return <main className="play-home page">
-    <div className="hero-brand"><div className="brand-mark"><Music2 /></div><span>ONS MUZIEKSPEL</span></div>
+  return <main className="play-home page public-play-home">
+    <div className="hero-brand"><div className="brand-mark"><Music2 /></div><span>TIMEPOP</span></div>
     <section className="play-hero">
-      <span className="eyebrow">{collection.name}</span>
+      <span className="eyebrow">Muziek door de jaren</span>
       <h1>Scan. Luister.<br /><em>Raad de tijd.</em></h1>
       <p>Scan een kaart zonder te verklappen welk nummer er speelt.</p>
       <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan een kaart</button>
@@ -179,16 +184,17 @@ function CollectionPage({ collection, setCollection }) {
 
 function CardsPage({ collection }) {
   const [baseUrl, setBaseUrl] = useState(localStorage.getItem('giftster.base-url') || `${location.origin}${location.pathname}`)
-  const cardUrl = id => `${baseUrl.replace(/\/$/, '')}?card=${id}`
+  const clientId = getClientId()
+  const cardUrl = track => `${baseUrl.replace(/\/$/, '')}?card=${encodeCard(track, clientId)}#play`
   const sheets = useMemo(() => Array.from({ length: Math.ceil(collection.tracks.length / 6) }, (_, i) => collection.tracks.slice(i * 6, i * 6 + 6)), [collection])
   const saveBase = value => { setBaseUrl(value); localStorage.setItem('giftster.base-url', value) }
   return <main className="page content-page cards-page">
     <PageTitle eyebrow="Klaar om te drukken" title="Speelkaarten" description="Zes kaarten per A4, ingericht voor dubbelzijdig printen" />
-    <div className="print-controls no-print"><label><span>Adres van de gepubliceerde app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><button className="primary-button" onClick={() => print()}><Printer /> Print kaarten</button></div>
-    <div className="print-note no-print"><QrCode /><p><strong>Test eerst één QR.</strong> De collectie moet ook op het scannende toestel zijn geïmporteerd. De QR zelf bevat uitsluitend de geheime kaartcode.</p></div>
-    <div className="deck-preview">{collection.tracks.map((track, index) => <div className="mini-card" key={track.id}><CardQr value={cardUrl(track.id)} size={150} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
+    <div className="print-controls no-print"><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><button className="primary-button" disabled={!clientId} onClick={() => print()}><Printer /> Print kaarten</button></div>
+    <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
+    <div className="deck-preview">{collection.tracks.map((track, index) => <div className="mini-card" key={track.id}><CardQr value={cardUrl(track)} size={150} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
     <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
-      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className="print-card card-front" key={track.id}><div className="card-brand"><Music2 /> ONS MUZIEKSPEL</div><CardQr value={cardUrl(track.id)} size={300} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
+      <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className="print-card card-front" key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><CardQr value={cardUrl(track)} size={300} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
       <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
     ])}</div>
   </main>
@@ -207,9 +213,10 @@ function SettingsPage({ collection, setCollection }) {
   }
   return <main className="page content-page settings-page">
     <PageTitle eyebrow="Verbindingen" title="Instellen" description="Koppel Spotify of werk volledig met eigen audiobestanden" />
-    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Experimenteel</span><h2>Spotify koppelen</h2><p>Maak een app aan in het Spotify Developer Dashboard en voeg exact deze Redirect URI toe:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => setClient(event.target.value)} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
+    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Gedeelde Spotify-app</span><h2>Spotify koppelen</h2><p>Deze publieke Client ID wordt veilig in iedere nieuwe QR opgenomen. Vrienden loggen daarmee op hun eigen Spotify-account in.</p><p>Voeg exact deze Redirect URI toe in het Spotify Developer Dashboard:</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" onClick={connect}>Verbinden met Spotify <ExternalLink /></button></div></section>
     <section className="settings-card"><div className="settings-icon"><Import /></div><div className="settings-body"><h2>Playlist importeren</h2><p>Onder development mode werkt dit voor een playlist waarvan jouw Spotify-account eigenaar of collaborator is.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={doImport}><Import /> {busy ? 'Bezig…' : 'Hele playlist importeren'}</button></div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
+    <section className="settings-card"><div className="settings-icon"><UserPlus /></div><div className="settings-body"><h2>Vrienden toelaten</h2><p>Open jouw app in het Spotify Developer Dashboard en ga naar <strong>Settings → Users Management → Add new user</strong>. Voeg daar de naam en het Spotify-e-mailadres van je vriend toe. In Development Mode kunnen maximaal vijf Spotify-gebruikers de play-app gebruiken.</p></div></section>
     <section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Goed om te weten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify vereist normaal zichtbare metadata en staat muziektrivia zonder aparte toestemming niet toe. Voor volledig zelfstandige playback kun je per nummer een eigen, rechtmatig gebruikte audio-URL invullen.</p><small>Versie {APP_VERSION}</small></div></section>
   </main>
 }
@@ -219,28 +226,48 @@ function Empty({ icon: Icon, title, text }) { return <div className="empty"><Ico
 
 export default function App() {
   const [collection, setCollectionState] = useState(loadCollection)
-  const [tab, setTab] = useState('play')
+  const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
+  const [tab, setTab] = useState('collection')
   const [activeTrack, setActiveTrack] = useState(null)
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
 
+  const resolveCard = value => {
+    const decoded = decodeCard(value)
+    if (decoded) {
+      if (decoded.clientId) setClientId(decoded.clientId)
+      return decoded.track
+    }
+    const spotifyId = value.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/)?.[1]
+    return collection.tracks.find(item => item.id === value || (spotifyId && item.spotifyUri === `spotify:track:${spotifyId}`))
+  }
+
   useEffect(() => {
+    const route = () => setMode(location.hash === '#admin' ? 'admin' : 'play')
+    addEventListener('hashchange', route)
+    const cardValue = new URLSearchParams(location.search).get('card')
+    if (cardValue) {
+      const track = resolveCard(cardValue)
+      if (track) setActiveTrack(track)
+    }
     finishSpotifyLogin().then(connected => {
       if (connected || hasSpotifySession()) connectPlayer().catch(() => {})
+      const pending = sessionStorage.getItem('giftster.pending-track')
+      if (connected && pending) {
+        sessionStorage.removeItem('giftster.pending-track')
+        setActiveTrack(normalizeTrack(JSON.parse(pending)))
+        history.replaceState({}, '', `${location.pathname}#play`)
+      }
     }).catch(error => alert(error.message))
-    const card = new URLSearchParams(location.search).get('card')
-    if (card) {
-      const track = collection.tracks.find(item => item.id === card)
-      if (track) setActiveTrack(track)
-      history.replaceState({}, '', location.pathname)
-    }
+    return () => removeEventListener('hashchange', route)
   }, [])
 
   if (activeTrack) return <Player track={activeTrack} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
+  if (mode === 'play') return <PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} />
   return <div className="app-shell">
-    {tab === 'play' && <PlayHome collection={collection} onOpenTrack={setActiveTrack} />}
+    <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TIMEPOP <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'collection' && <CollectionPage collection={collection} setCollection={setCollection} />}
     {tab === 'cards' && <CardsPage collection={collection} />}
     {tab === 'settings' && <SettingsPage collection={collection} setCollection={setCollection} />}
-    <nav className="bottom-nav no-print">{NAV.map(item => <button className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)} key={item.id}><item.icon /><span>{item.label}</span></button>)}</nav>
+    <nav className="bottom-nav admin-nav no-print">{ADMIN_NAV.map(item => <button className={tab === item.id ? 'active' : ''} onClick={() => item.id === 'preview' ? location.hash = '#play' : setTab(item.id)} key={item.id}><item.icon /><span>{item.label}</span></button>)}</nav>
   </div>
 }

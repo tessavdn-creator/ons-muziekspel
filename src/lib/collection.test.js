@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { webcrypto } from 'node:crypto'
-import { normalizeTrack, parseCsv } from './collection.js'
+import { decodeCard, encodeCard, normalizeTrack, parseCsv } from './collection.js'
 import { playlistIdFrom } from './spotify.js'
 
 if (!globalThis.crypto) Object.defineProperty(globalThis, 'crypto', { value: webcrypto })
@@ -20,5 +20,14 @@ describe('Spotify playlist links', () => {
   it('haalt het id uit URL en URI', () => {
     expect(playlistIdFrom('https://open.spotify.com/playlist/37i9dQZF1DX')).toBe('37i9dQZF1DX')
     expect(playlistIdFrom('spotify:playlist:37i9dQZF1DX')).toBe('37i9dQZF1DX')
+  })
+})
+
+describe('zelfstandige speelkaarten', () => {
+  it('bewaart unicode metadata, Spotify URI en publieke Client ID', () => {
+    const original = normalizeTrack({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc' })
+    const result = decodeCard(encodeCard(original, 'public-client-id'))
+    expect(result.track).toMatchObject({ id: 'kaart-1', title: 'Alors on danse', artist: 'Stromae & Zoë', year: '2009', spotifyUri: 'spotify:track:abc' })
+    expect(result.clientId).toBe('public-client-id')
   })
 })

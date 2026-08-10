@@ -79,3 +79,34 @@ export function exportCollection(collection) {
   link.click()
   URL.revokeObjectURL(link.href)
 }
+
+export function encodeCard(track, clientId = '') {
+  const payload = JSON.stringify({
+    v: 1,
+    i: track.id,
+    s: track.spotifyUri,
+    t: track.title,
+    a: track.artist,
+    y: track.year,
+    l: track.album,
+    c: clientId,
+  })
+  const bytes = new TextEncoder().encode(payload)
+  let binary = ''
+  bytes.forEach(byte => { binary += String.fromCharCode(byte) })
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export function decodeCard(value) {
+  try {
+    const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+    const binary = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='))
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+    const data = JSON.parse(new TextDecoder().decode(bytes))
+    if (data.v !== 1 || !data.i || !data.t || !data.a) return null
+    return {
+      track: normalizeTrack({ id: data.i, spotifyUri: data.s, title: data.t, artist: data.a, year: data.y, album: data.l }),
+      clientId: data.c || '',
+    }
+  } catch { return null }
+}

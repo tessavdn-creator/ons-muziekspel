@@ -1,4 +1,4 @@
-const CACHE = 'muziekspel-v3-no-external-spotify'
+const CACHE = 'timepop-v4-admin-play-split'
 const scoped = path => new URL(path, self.registration.scope).toString()
 const APP = ['./', './index.html', './manifest.webmanifest', './icon.svg'].map(scoped)
 self.addEventListener('install', event => event.waitUntil(

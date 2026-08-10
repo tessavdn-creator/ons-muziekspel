@@ -1,6 +1,6 @@
 {
-  "name": "Ons Muziekspel",
-  "short_name": "Muziekspel",
+  "name": "Timepop Muziekspel",
+  "short_name": "Timepop",
   "description": "Scan geheime muziekkaarten en raad het jaar.",
   "start_url": "./",
   "display": "standalone",
