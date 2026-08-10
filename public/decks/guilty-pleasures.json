@@ -1,0 +1,1854 @@
+{
+  "id": "guilty-pleasures",
+  "name": "Guilty Pleasures",
+  "creator": "Tamy",
+  "source": "https://open.spotify.com/playlist/2QRsBvib65NIjRSfr6zI0W",
+  "importedAt": "2026-08-10T18:48:31.642Z",
+  "tracks": [
+    {
+      "id": "gp-001-54b8qP",
+      "title": "Alone",
+      "artist": "Heart",
+      "year": "1987",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273e6db88b395f063ee1ca6e0d5",
+      "spotifyUri": "spotify:track:54b8qPFqYqIndfdxiLApea",
+      "externalUrl": "https://open.spotify.com/track/54b8qPFqYqIndfdxiLApea",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "1980s"
+      ],
+      "spotifyYear": "1987",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-002-1NOeZ7",
+      "title": "Because You Loved Me (Theme from \"Up Close and Personal\")",
+      "artist": "Céline Dion",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273c6aebd89b2dcda3348649633",
+      "spotifyUri": "spotify:track:1NOeZ7ZIVKMebuza26rofd",
+      "externalUrl": "https://open.spotify.com/track/1NOeZ7ZIVKMebuza26rofd",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-003-5kK1Ir",
+      "title": "The Power of Love",
+      "artist": "Céline Dion",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27363e07c2dbc7450974a146e96",
+      "spotifyUri": "spotify:track:5kK1Iru9ogP3Iy1zsANU1n",
+      "externalUrl": "https://open.spotify.com/track/5kK1Iru9ogP3Iy1zsANU1n",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-004-2JRicL",
+      "title": "It's All Coming Back to Me Now",
+      "artist": "Céline Dion",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273c6aebd89b2dcda3348649633",
+      "spotifyUri": "spotify:track:2JRicL2f8tJl9TiQlH7vbJ",
+      "externalUrl": "https://open.spotify.com/track/2JRicL2f8tJl9TiQlH7vbJ",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-005-2aBxt2",
+      "title": "Always Be My Baby",
+      "artist": "Mariah Carey",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273749e9bfa78277f30ad2c9a9c",
+      "spotifyUri": "spotify:track:2aBxt229cbLDOvtL7Xbb9x",
+      "externalUrl": "https://open.spotify.com/track/2aBxt229cbLDOvtL7Xbb9x",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1995",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-006-1kMOJB",
+      "title": "Without You",
+      "artist": "Mariah Carey",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2734b509947e48d592bfd0d237b",
+      "spotifyUri": "spotify:track:1kMOJBmpfWD9fir6st9uqS",
+      "externalUrl": "https://open.spotify.com/track/1kMOJBmpfWD9fir6st9uqS",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-007-2oLTdu",
+      "title": "When You Believe (from The Prince of Egypt)",
+      "artist": "Mariah Carey, Whitney Houston",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b27384b84d08fdbaebb99098890c",
+      "spotifyUri": "spotify:track:2oLTduMsJyF68JdcjXjChK",
+      "externalUrl": "https://open.spotify.com/track/2oLTduMsJyF68JdcjXjChK",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "1990s"
+      ],
+      "spotifyYear": "2001",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-008-7cCf8v",
+      "title": "You're Still The One",
+      "artist": "Shania Twain",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273f4fc5ce3068e340f35037770",
+      "spotifyUri": "spotify:track:7cCf8vPXJw4e7e2CQYyYgi",
+      "externalUrl": "https://open.spotify.com/track/7cCf8vPXJw4e7e2CQYyYgi",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-009-5VqyLZ",
+      "title": "From This Moment On - Pop On-Tour Version",
+      "artist": "Shania Twain",
+      "year": "1999",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273d6b990be6c62b02231d8e544",
+      "spotifyUri": "spotify:track:5VqyLZrIifflQc5k0vfhFf",
+      "externalUrl": "https://open.spotify.com/track/5VqyLZrIifflQc5k0vfhFf",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2004",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-010-7gPJwA",
+      "title": "Come On Over",
+      "artist": "Shania Twain",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273f4fc5ce3068e340f35037770",
+      "spotifyUri": "spotify:track:7gPJwAeQt9ravXvTTjhhHO",
+      "externalUrl": "https://open.spotify.com/track/7gPJwAeQt9ravXvTTjhhHO",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-011-0mnnwY",
+      "title": "Vlieg met me mee (het avontuur)",
+      "artist": "Trijntje Oosterhuis",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273869be68be67251eb71a9a2ee",
+      "spotifyUri": "spotify:track:0mnnwYxlg3DOVtSUPB53tt",
+      "externalUrl": "https://open.spotify.com/track/0mnnwYxlg3DOVtSUPB53tt",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "2008",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-012-1f4VAm",
+      "title": "Wereld Zonder Jou",
+      "artist": "Marco Borsato, Trijntje Oosterhuis",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b27396b55ed8f820021bea33b752",
+      "spotifyUri": "spotify:track:1f4VAmKMduljFaWtRGGweZ",
+      "externalUrl": "https://open.spotify.com/track/1f4VAmKMduljFaWtRGGweZ",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-013-2DjWsD",
+      "title": "Baby Can I Hold You",
+      "artist": "Tracy Chapman",
+      "year": "1988",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27390b8a540137ee2a718a369f9",
+      "spotifyUri": "spotify:track:2DjWsDGgL1xNbhnr7f6t5F",
+      "externalUrl": "https://open.spotify.com/track/2DjWsDGgL1xNbhnr7f6t5F",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1980s"
+      ],
+      "spotifyYear": "1988",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-014-2M9ro2",
+      "title": "Fast Car",
+      "artist": "Tracy Chapman",
+      "year": "1988",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b27390b8a540137ee2a718a369f9",
+      "spotifyUri": "spotify:track:2M9ro2krNb7nr7HSprkEgo",
+      "externalUrl": "https://open.spotify.com/track/2M9ro2krNb7nr7HSprkEgo",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1980s"
+      ],
+      "spotifyYear": "1988",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-015-2H3ZUS",
+      "title": "Ain't No Mountain High Enough",
+      "artist": "Marvin Gaye, Tammi Terrell",
+      "year": "1967",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2739173e50e99bdea2400222f02",
+      "spotifyUri": "spotify:track:2H3ZUSE54pST4ubRd5FzFR",
+      "externalUrl": "https://open.spotify.com/track/2H3ZUSE54pST4ubRd5FzFR",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "classic",
+        "1960s"
+      ],
+      "spotifyYear": "1967",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-016-6RrXd9",
+      "title": "My Girl",
+      "artist": "The Temptations",
+      "year": "1964",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2731a5b6271ae1c8497df20916e",
+      "spotifyUri": "spotify:track:6RrXd9Hph4hYR4bf3dbM6H",
+      "externalUrl": "https://open.spotify.com/track/6RrXd9Hph4hYR4bf3dbM6H",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "classic",
+        "1960s"
+      ],
+      "spotifyYear": "1965",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-017-57Y3Uc",
+      "title": "Upside Down",
+      "artist": "Diana Ross",
+      "year": "1980",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2733e58082f362590e07334fbbd",
+      "spotifyUri": "spotify:track:57Y3UccJEJqT8w8RWkUAz0",
+      "externalUrl": "https://open.spotify.com/track/57Y3UccJEJqT8w8RWkUAz0",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1980s"
+      ],
+      "spotifyYear": "1980",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-018-5p34sF",
+      "title": "Total Eclipse of the Heart",
+      "artist": "Bonnie Tyler",
+      "year": "1983",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2738cefe8e2f2cfd63ce073fa96",
+      "spotifyUri": "spotify:track:5p34sF7EskpzTuW3RGy9fs",
+      "externalUrl": "https://open.spotify.com/track/5p34sF7EskpzTuW3RGy9fs",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "2009",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-019-4T5cqe",
+      "title": "Sunday Morning",
+      "artist": "Maroon 5",
+      "year": "2004",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27392f2d790c6a97b195f66d51e",
+      "spotifyUri": "spotify:track:4T5cqerbDXueYSVfXkIITo",
+      "externalUrl": "https://open.spotify.com/track/4T5cqerbDXueYSVfXkIITo",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2002",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-020-7iYvpj",
+      "title": "True Colors (American Tune)",
+      "artist": "Eva Cassidy",
+      "year": "2003",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2730182a85d1a32d968075d4597",
+      "spotifyUri": "spotify:track:7iYvpjSQ9OuXTAMGSRiLJZ",
+      "externalUrl": "https://open.spotify.com/track/7iYvpjSQ9OuXTAMGSRiLJZ",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-021-1t2Hq2",
+      "title": "Save Tonight",
+      "artist": "Eagle-Eye Cherry",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b27395127975447a26eb7e31668b",
+      "spotifyUri": "spotify:track:1t2Hq2WIBcZINOEnK6mdJG",
+      "externalUrl": "https://open.spotify.com/track/1t2Hq2WIBcZINOEnK6mdJG",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1998",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-022-3nvuPQ",
+      "title": "Nothing Compares 2 U",
+      "artist": "Sinéad O'Connor",
+      "year": "1990",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273919c02d20d8634f96ccd75ae",
+      "spotifyUri": "spotify:track:3nvuPQTw2zuFAVuLsC9IYQ",
+      "externalUrl": "https://open.spotify.com/track/3nvuPQTw2zuFAVuLsC9IYQ",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1990",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-023-3VTBfa",
+      "title": "I'd Do Anything for Love (But I Won't Do That) - Radio Edit",
+      "artist": "Meat Loaf",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273a7bb29f5107b7c2734b26c08",
+      "spotifyUri": "spotify:track:3VTBfa6YBDgBxsZ5o2Pyas",
+      "externalUrl": "https://open.spotify.com/track/3VTBfa6YBDgBxsZ5o2Pyas",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "2012",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-024-0z5E34",
+      "title": "Kiss from a Rose",
+      "artist": "Seal",
+      "year": "1994",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27333d4866ed921300e8ef50808",
+      "spotifyUri": "spotify:track:0z5E34e7ZT3XKMYQNXh6tH",
+      "externalUrl": "https://open.spotify.com/track/0z5E34e7ZT3XKMYQNXh6tH",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2004",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-025-27ncbK",
+      "title": "My Heart Will Go On - Love Theme from \"Titanic\"",
+      "artist": "Céline Dion",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273def7146ca744f3b1bf838404",
+      "spotifyUri": "spotify:track:27ncbKwESFYzgBo9RN9IXe",
+      "externalUrl": "https://open.spotify.com/track/27ncbKwESFYzgBo9RN9IXe",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "liefde",
+        "1990s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-026-4FCb4C",
+      "title": "Hero",
+      "artist": "Mariah Carey",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2734b509947e48d592bfd0d237b",
+      "spotifyUri": "spotify:track:4FCb4CUbFCMNRkI6lYc1zI",
+      "externalUrl": "https://open.spotify.com/track/4FCb4CUbFCMNRkI6lYc1zI",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-027-6HcQZf",
+      "title": "Dreamlover",
+      "artist": "Mariah Carey",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2734b509947e48d592bfd0d237b",
+      "spotifyUri": "spotify:track:6HcQZfMrw3KwGyzrKw1Pjy",
+      "externalUrl": "https://open.spotify.com/track/6HcQZfMrw3KwGyzrKw1Pjy",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-028-5NaOWL",
+      "title": "Honey",
+      "artist": "Mariah Carey",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27398ed501c6a838b2244ebaf75",
+      "spotifyUri": "spotify:track:5NaOWLOmVjcA3M5spRATN9",
+      "externalUrl": "https://open.spotify.com/track/5NaOWLOmVjcA3M5spRATN9",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-029-5Ihd9H",
+      "title": "Un-Break My Heart",
+      "artist": "Toni Braxton",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2735bc7429f54c5f6745c225fc6",
+      "spotifyUri": "spotify:track:5Ihd9HrPvOADyVoonH9ZjB",
+      "externalUrl": "https://open.spotify.com/track/5Ihd9HrPvOADyVoonH9ZjB",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-030-7f1Dmr",
+      "title": "He Wasn't Man Enough",
+      "artist": "Toni Braxton",
+      "year": "2000",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273126720399a6b06e1c6bd46c6",
+      "spotifyUri": "spotify:track:7f1Dmr246cJ9uQYdbplTbh",
+      "externalUrl": "https://open.spotify.com/track/7f1Dmr246cJ9uQYdbplTbh",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "2000s"
+      ],
+      "spotifyYear": "2000",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-031-1Grikf",
+      "title": "Together Again",
+      "artist": "Janet Jackson",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2732416d363e4220c21c5454efe",
+      "spotifyUri": "spotify:track:1GrikfH0jDejDvrxo84n4P",
+      "externalUrl": "https://open.spotify.com/track/1GrikfH0jDejDvrxo84n4P",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-032-31er9I",
+      "title": "I Have Nothing",
+      "artist": "Whitney Houston",
+      "year": "1992",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273456c0b5d0316a80dc600802e",
+      "spotifyUri": "spotify:track:31er9IGsfFbwqy1pH4aiTP",
+      "externalUrl": "https://open.spotify.com/track/31er9IGsfFbwqy1pH4aiTP",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "1992",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-033-1lx8dd",
+      "title": "Saving All My Love for You",
+      "artist": "Whitney Houston",
+      "year": "1985",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2739015296f9afabfc102989521",
+      "spotifyUri": "spotify:track:1lx8ddGT5wCD6W2xmLeRKG",
+      "externalUrl": "https://open.spotify.com/track/1lx8ddGT5wCD6W2xmLeRKG",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1985",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-034-5tdKaK",
+      "title": "How Will I Know",
+      "artist": "Whitney Houston",
+      "year": "1985",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2739015296f9afabfc102989521",
+      "spotifyUri": "spotify:track:5tdKaKLnC4SgtDZ6RlWeal",
+      "externalUrl": "https://open.spotify.com/track/5tdKaKLnC4SgtDZ6RlWeal",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1980s"
+      ],
+      "spotifyYear": "1985",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-035-3yOzDX",
+      "title": "Greatest Love of All",
+      "artist": "Whitney Houston",
+      "year": "1985",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27396a7cfeb4684f97e41135b79",
+      "spotifyUri": "spotify:track:3yOzDXX8cTz25jid6uKTFD",
+      "externalUrl": "https://open.spotify.com/track/3yOzDXX8cTz25jid6uKTFD",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1985",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-036-3ZxhEG",
+      "title": "End Of The Road",
+      "artist": "Boyz II Men",
+      "year": "1992",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27373d0d8625dcf1e48043cfbf9",
+      "spotifyUri": "spotify:track:3ZxhEGcEmCuwyBzwqCa7oW",
+      "externalUrl": "https://open.spotify.com/track/3ZxhEGcEmCuwyBzwqCa7oW",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "2009",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-037-7dfl9X",
+      "title": "I'll Make Love To You",
+      "artist": "Boyz II Men",
+      "year": "1994",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273a94a1672a1fc0373b3e9aa7b",
+      "spotifyUri": "spotify:track:7dfl9X38RhIvB3oSmmneq3",
+      "externalUrl": "https://open.spotify.com/track/7dfl9X38RhIvB3oSmmneq3",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1994",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-038-3XVBdL",
+      "title": "If I Ain't Got You",
+      "artist": "Alicia Keys",
+      "year": "2003",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27356ff19308ebeb48e2ba6094b",
+      "spotifyUri": "spotify:track:3XVBdLihbNbxUwZosxcGuJ",
+      "externalUrl": "https://open.spotify.com/track/3XVBdLihbNbxUwZosxcGuJ",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "2000s"
+      ],
+      "spotifyYear": "2003",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-039-0KQx6H",
+      "title": "Fallin'",
+      "artist": "Alicia Keys",
+      "year": "2001",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2736d684b553a40e4a11e1db96d",
+      "spotifyUri": "spotify:track:0KQx6HOpJueiSkztcS0r7D",
+      "externalUrl": "https://open.spotify.com/track/0KQx6HOpJueiSkztcS0r7D",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "2000s"
+      ],
+      "spotifyYear": "2001",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-040-0vaFch",
+      "title": "All My Life - Radio Edit",
+      "artist": "K-Ci & JoJo",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2736aea74f401afea0131351d98",
+      "spotifyUri": "spotify:track:0vaFchxYRlvpaf3T7dnyIg",
+      "externalUrl": "https://open.spotify.com/track/0vaFchxYRlvpaf3T7dnyIg",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "1999",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-041-6qB7Yc",
+      "title": "It Must Have Been Love - From the Film \"Pretty Woman\"",
+      "artist": "Roxette",
+      "year": "1990",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273a8285c7b813141d18e98ebac",
+      "spotifyUri": "spotify:track:6qB7YcFpeBEQa0D6QO482y",
+      "externalUrl": "https://open.spotify.com/track/6qB7YcFpeBEQa0D6QO482y",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "2016",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-042-6FcQD1",
+      "title": "What's Love Got to Do with It",
+      "artist": "Tina Turner",
+      "year": "1984",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273885426f7a6ef11b1cd483279",
+      "spotifyUri": "spotify:track:6FcQD1qOpqV8NdhY45sKyI",
+      "externalUrl": "https://open.spotify.com/track/6FcQD1qOpqV8NdhY45sKyI",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1991",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-043-6gJdDn",
+      "title": "Proud Mary",
+      "artist": "Tina Turner",
+      "year": "1971",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273e9c361da971c6e81b51ef06b",
+      "spotifyUri": "spotify:track:6gJdDnF2TzfA1WPMXuCa3x",
+      "externalUrl": "https://open.spotify.com/track/6gJdDnF2TzfA1WPMXuCa3x",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1970s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-044-1DapqO",
+      "title": "All Around the World - Remastered",
+      "artist": "Lisa Stansfield, Ian Devaney, Andy Morris",
+      "year": "1989",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2732a604708f8cc63898ea5e660",
+      "spotifyUri": "spotify:track:1DapqOfkDAQCiKnvfwKo0g",
+      "externalUrl": "https://open.spotify.com/track/1DapqOfkDAQCiKnvfwKo0g",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "1980s"
+      ],
+      "spotifyYear": "1989",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-045-7DFawV",
+      "title": "If You Don't Know Me by Now - 2008 Remaster",
+      "artist": "Simply Red",
+      "year": "1989",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2738f8dc242b396ddc31c01d36c",
+      "spotifyUri": "spotify:track:7DFawVSjI88xR9mjnWwURg",
+      "externalUrl": "https://open.spotify.com/track/7DFawVSjI88xR9mjnWwURg",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1980s"
+      ],
+      "spotifyYear": "1989",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-046-5pDRIx",
+      "title": "Get Here",
+      "artist": "Oleta Adams",
+      "year": "1990",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273b958417815e6b486637f76ad",
+      "spotifyUri": "spotify:track:5pDRIxiUZ9Sz9XKKFfKSsJ",
+      "externalUrl": "https://open.spotify.com/track/5pDRIxiUZ9Sz9XKKFfKSsJ",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "2003",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-047-2M55R2",
+      "title": "I'm Every Woman",
+      "artist": "Chaka Khan",
+      "year": "1978",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273895ac2862b5c06e058fa09c8",
+      "spotifyUri": "spotify:track:2M55R2A9IAhLdsCGFj8r8k",
+      "externalUrl": "https://open.spotify.com/track/2M55R2A9IAhLdsCGFj8r8k",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1970s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-048-4qjrCk",
+      "title": "Colors Of The Wind - End Title",
+      "artist": "Vanessa Williams",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273281dfd7af2ee99a124404623",
+      "spotifyUri": "spotify:track:4qjrCkcVbsYlitCqbBkeKe",
+      "externalUrl": "https://open.spotify.com/track/4qjrCkcVbsYlitCqbBkeKe",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1995",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-049-1qR8sa",
+      "title": "We Belong Together",
+      "artist": "Mariah Carey",
+      "year": "2005",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273006adc0cc250c8f9c5494aec",
+      "spotifyUri": "spotify:track:1qR8saLKsf4oIGdpt4QUQc",
+      "externalUrl": "https://open.spotify.com/track/1qR8saLKsf4oIGdpt4QUQc",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2005",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-050-6aZTCZ",
+      "title": "More Than Words - Edit",
+      "artist": "Extreme",
+      "year": "1991",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2731906efe659ae0615317eb5a4",
+      "spotifyUri": "spotify:track:6aZTCZfKhFcUk0RLGV94RJ",
+      "externalUrl": "https://open.spotify.com/track/6aZTCZfKhFcUk0RLGV94RJ",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-051-3ts4EJ",
+      "title": "How Come, How Long - Radio Edit",
+      "artist": "Babyface",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273fc6fd1cefdb7ebe269f15594",
+      "spotifyUri": "spotify:track:3ts4EJOJi9w0Ypo7Z6iAmM",
+      "externalUrl": "https://open.spotify.com/track/3ts4EJOJi9w0Ypo7Z6iAmM",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-052-2DX3Vx",
+      "title": "Baby Don't Go - Radio Mix",
+      "artist": "Close II You",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273726d591c03adc6ec36bd5880",
+      "spotifyUri": "spotify:track:2DX3VxRTiWljuDk0x1AMFw",
+      "externalUrl": "https://open.spotify.com/track/2DX3VxRTiWljuDk0x1AMFw",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-053-5OcMDs",
+      "title": "I Need You",
+      "artist": "3T",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27363ec8bb2492f23f458f2a9d4",
+      "spotifyUri": "spotify:track:5OcMDsVt8IsOk6N8Ruq6fR",
+      "externalUrl": "https://open.spotify.com/track/5OcMDsVt8IsOk6N8Ruq6fR",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-054-1vzXXD",
+      "title": "Think Twice",
+      "artist": "Céline Dion",
+      "year": "1994",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27363e07c2dbc7450974a146e96",
+      "spotifyUri": "spotify:track:1vzXXDmc1uo3Yk1bz1lPaY",
+      "externalUrl": "https://open.spotify.com/track/1vzXXDmc1uo3Yk1bz1lPaY",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-055-3V0PeM",
+      "title": "I Swear",
+      "artist": "All-4-One",
+      "year": "1994",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273a48cc02c718f9ab73709fbfb",
+      "spotifyUri": "spotify:track:3V0PeMg2mhbYRtk9bioAwF",
+      "externalUrl": "https://open.spotify.com/track/3V0PeMg2mhbYRtk9bioAwF",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2005",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-056-1MAqR8",
+      "title": "Killing Me Softly With His Song",
+      "artist": "Fugees",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2735b7865be7f7fcc05faec6137",
+      "spotifyUri": "spotify:track:1MAqR81Tz28IIqMJ2KUDAO",
+      "externalUrl": "https://open.spotify.com/track/1MAqR81Tz28IIqMJ2KUDAO",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-057-1JLn8R",
+      "title": "I Want to Know What Love Is - 1999 Remaster",
+      "artist": "Foreigner",
+      "year": "1984",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2733e030a7e606959674643d274",
+      "spotifyUri": "spotify:track:1JLn8RhQzHz3qDqsChcmBl",
+      "externalUrl": "https://open.spotify.com/track/1JLn8RhQzHz3qDqsChcmBl",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1984",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-058-7okbmg",
+      "title": "Save The Best For Last",
+      "artist": "Vanessa Williams",
+      "year": "1991",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27339eaaca9a95fc2492994a778",
+      "spotifyUri": "spotify:track:7okbmgA8lRBGl5limZ7LFM",
+      "externalUrl": "https://open.spotify.com/track/7okbmgA8lRBGl5limZ7LFM",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1991",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-059-7s25TH",
+      "title": "Respect",
+      "artist": "Aretha Franklin",
+      "year": "1967",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273eac6b999cde838c810943737",
+      "spotifyUri": "spotify:track:7s25THrKz86DM225dOYwnr",
+      "externalUrl": "https://open.spotify.com/track/7s25THrKz86DM225dOYwnr",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "classic",
+        "1960s"
+      ],
+      "spotifyYear": "1967",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-060-1OzrlK",
+      "title": "That's What Friends Are For (with Elton John, Gladys Knight & Stevie Wonder)",
+      "artist": "Dionne Warwick, Elton John, Gladys Knight, Stevie Wonder",
+      "year": "1985",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2732c65840d117b54c8d2a6cd2a",
+      "spotifyUri": "spotify:track:1OzrlK57iLTIjmbZC1ppWM",
+      "externalUrl": "https://open.spotify.com/track/1OzrlK57iLTIjmbZC1ppWM",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "1980s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-061-17Vege",
+      "title": "Your Song",
+      "artist": "Elton John",
+      "year": "1970",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2734b292ed7c7360a04d3d6b74a",
+      "spotifyUri": "spotify:track:17VegeBoHvMlIByrdu64KR",
+      "externalUrl": "https://open.spotify.com/track/17VegeBoHvMlIByrdu64KR",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "classic",
+        "1970s"
+      ],
+      "spotifyYear": "1970",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-062-6M1M6c",
+      "title": "Run to You",
+      "artist": "Whitney Houston",
+      "year": "1992",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273456c0b5d0316a80dc600802e",
+      "spotifyUri": "spotify:track:6M1M6cRtVkm5d0qTzkSEuK",
+      "externalUrl": "https://open.spotify.com/track/6M1M6cRtVkm5d0qTzkSEuK",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "1992",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-063-4OnZR9",
+      "title": "I Can Love You Like That",
+      "artist": "All-4-One",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273efe9c020aa222f0b71c886d6",
+      "spotifyUri": "spotify:track:4OnZR9U5JRFGF1Yza9j579",
+      "externalUrl": "https://open.spotify.com/track/4OnZR9U5JRFGF1Yza9j579",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "2005",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-064-20EpQj",
+      "title": "All By Myself",
+      "artist": "Céline Dion",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273c6aebd89b2dcda3348649633",
+      "spotifyUri": "spotify:track:20EpQjfV7B4ZQJkIdHO1Tw",
+      "externalUrl": "https://open.spotify.com/track/20EpQjfV7B4ZQJkIdHO1Tw",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-065-4r6ms4",
+      "title": "Tyrone - Live Version",
+      "artist": "Erykah Badu",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273e0ea9746f6d9b5132f2f4e2a",
+      "spotifyUri": "spotify:track:4r6ms4FegpNMmdCKTGAjKy",
+      "externalUrl": "https://open.spotify.com/track/4r6ms4FegpNMmdCKTGAjKy",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-066-2VjXGu",
+      "title": "Ex-Factor",
+      "artist": "Ms. Lauryn Hill",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273e08b1250db5f75643f1508c9",
+      "spotifyUri": "spotify:track:2VjXGuPVVxyhMgER3Uz2Fe",
+      "externalUrl": "https://open.spotify.com/track/2VjXGuPVVxyhMgER3Uz2Fe",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-067-6otqZi",
+      "title": "Doo Wop (That Thing) - Edit",
+      "artist": "Ms. Lauryn Hill",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2734a3b9645bc9cb46c40741e4b",
+      "spotifyUri": "spotify:track:6otqZiIqqzzzggZdd1rKgO",
+      "externalUrl": "https://open.spotify.com/track/6otqZiIqqzzzggZdd1rKgO",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "1990s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-068-1tEs4P",
+      "title": "I'll Say Goodbye - Radio Edit",
+      "artist": "Total Touch",
+      "year": "1998",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273f3c6cf446913c2eedaff590b",
+      "spotifyUri": "spotify:track:1tEs4PKHFLcAUcthGp4uW3",
+      "externalUrl": "https://open.spotify.com/track/1tEs4PKHFLcAUcthGp4uW3",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "1998",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-069-5JyIck",
+      "title": "Somebody Else's Lover",
+      "artist": "Total Touch",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273f3c6cf446913c2eedaff590b",
+      "spotifyUri": "spotify:track:5JyIcktAtMpANKqCtEaX6y",
+      "externalUrl": "https://open.spotify.com/track/5JyIcktAtMpANKqCtEaX6y",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1996",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-070-0FK2Df",
+      "title": "Blijf Bij Mij",
+      "artist": "Ruth Jacott, Paul de Leeuw",
+      "year": "1993",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273226744b5ac1127aad697bb73",
+      "spotifyUri": "spotify:track:0FK2Df3QM8sXfNGghddAaC",
+      "externalUrl": "https://open.spotify.com/track/0FK2Df3QM8sXfNGghddAaC",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "1993",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-071-2yZsKC",
+      "title": "Alles Of Niets",
+      "artist": "Linda Roos & Jessica",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273eadf932fba8bf38eba3947a1",
+      "spotifyUri": "spotify:track:2yZsKCORtOmuEa5GpNnORo",
+      "externalUrl": "https://open.spotify.com/track/2yZsKCORtOmuEa5GpNnORo",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "2006",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-072-6SAxgT",
+      "title": "Vivo per lei",
+      "artist": "Andrea Bocelli, Giorgia",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2737e69f0cf9685328522e66e14",
+      "spotifyUri": "spotify:track:6SAxgT3O2W5Ucmv60H8Lus",
+      "externalUrl": "https://open.spotify.com/track/6SAxgT3O2W5Ucmv60H8Lus",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "1990s"
+      ],
+      "spotifyYear": "1995",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-073-0lhD98",
+      "title": "'k Heb Je Lief",
+      "artist": "Paul de Leeuw",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27328d70ca1f570c2b2e1434cc2",
+      "spotifyUri": "spotify:track:0lhD98JGwGzR16lJTERuO3",
+      "externalUrl": "https://open.spotify.com/track/0lhD98JGwGzR16lJTERuO3",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-074-4eHbdr",
+      "title": "I Will Always Love You",
+      "artist": "Whitney Houston",
+      "year": "1992",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273456c0b5d0316a80dc600802e",
+      "spotifyUri": "spotify:track:4eHbdreAnSOrDDsFfc4Fpm",
+      "externalUrl": "https://open.spotify.com/track/4eHbdreAnSOrDDsFfc4Fpm",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1992",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-075-6lo9Df",
+      "title": "How Do I Live",
+      "artist": "LeAnn Rimes",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273b5c069553e819c0aebb1c2c9",
+      "spotifyUri": "spotify:track:6lo9DfMREEeZaWWU6KSYp5",
+      "externalUrl": "https://open.spotify.com/track/6lo9DfMREEeZaWWU6KSYp5",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2015",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-076-75sAhp",
+      "title": "Nu Dat Jij Er Bent",
+      "artist": "Trijntje Oosterhuis, Carel Kraayenhof, Janine Jansen",
+      "year": "2004",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273d5270335fd9be384c234868b",
+      "spotifyUri": "spotify:track:75sAhpLlLUpjevjUiWXTXG",
+      "externalUrl": "https://open.spotify.com/track/75sAhpLlLUpjevjUiWXTXG",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "nederlands",
+        "2000s"
+      ],
+      "spotifyYear": "2015",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-077-06TuMC",
+      "title": "Don't Let Go (Love)",
+      "artist": "En Vogue",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273b3f0da6220b1c2bc11876f76",
+      "spotifyUri": "spotify:track:06TuMCjDEYjTOJScCRzmjf",
+      "externalUrl": "https://open.spotify.com/track/06TuMCjDEYjTOJScCRzmjf",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "liefde",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-078-0XvOoN",
+      "title": "I Wanna Be the Only One (feat. Bebe Winans)",
+      "artist": "Eternal, Bebe Winans",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2738720ccf30a96ef19222ce16a",
+      "spotifyUri": "spotify:track:0XvOoNb9zZOwFIOM0mwbiq",
+      "externalUrl": "https://open.spotify.com/track/0XvOoNb9zZOwFIOM0mwbiq",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-079-78TnMT",
+      "title": "Listen To Your Heart",
+      "artist": "Roxette",
+      "year": "1988",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b27315c293b9489fa5f5fdad4607",
+      "spotifyUri": "spotify:track:78TnMTAFmWUWWCgNXR7D3K",
+      "externalUrl": "https://open.spotify.com/track/78TnMTAFmWUWWCgNXR7D3K",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1988",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-080-3lyLqI",
+      "title": "Home",
+      "artist": "Michael Bublé",
+      "year": "2005",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2734baba2a420140005081a91f2",
+      "spotifyUri": "spotify:track:3lyLqIn8mybyEFTs8JJaLf",
+      "externalUrl": "https://open.spotify.com/track/3lyLqIn8mybyEFTs8JJaLf",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2005",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-081-35luOb",
+      "title": "After Tonight",
+      "artist": "Justin Nozuka",
+      "year": "2007",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273a69776780a11220f19370248",
+      "spotifyUri": "spotify:track:35luObqv9v32UKEnc61l8d",
+      "externalUrl": "https://open.spotify.com/track/35luObqv9v32UKEnc61l8d",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2006",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-082-7cLkQk",
+      "title": "Working My Way Back to You",
+      "artist": "The Spinners",
+      "year": "1979",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2732715e2ac1071bb7bb50a91a0",
+      "spotifyUri": "spotify:track:7cLkQkC9Z7hnN767rfRl5G",
+      "externalUrl": "https://open.spotify.com/track/7cLkQkC9Z7hnN767rfRl5G",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1970s"
+      ],
+      "spotifyYear": "2007",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-083-2X52Kr",
+      "title": "The Message Is Love",
+      "artist": "Arthur Baker And The Backbeat Disciples, Al Green",
+      "year": "1989",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2738a6bd2ebdc47b7049ea0b36e",
+      "spotifyUri": "spotify:track:2X52KrYNzuCRhzXoW4u8QU",
+      "externalUrl": "https://open.spotify.com/track/2X52KrYNzuCRhzXoW4u8QU",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "liefde",
+        "1980s"
+      ],
+      "spotifyYear": "1994",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-084-1EK5Z3",
+      "title": "What If",
+      "artist": "Kate Winslet",
+      "year": "2001",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273480336438f37918e75db4b7e",
+      "spotifyUri": "spotify:track:1EK5Z3jnZh1nHXPUXpaLhK",
+      "externalUrl": "https://open.spotify.com/track/1EK5Z3jnZh1nHXPUXpaLhK",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2001",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-085-6h2Tl2",
+      "title": "Adore U",
+      "artist": "Lil Rain",
+      "year": "2015",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273ae444a171b330360251cda52",
+      "spotifyUri": "spotify:track:6h2Tl2kUxljW3XXqbbhpXN",
+      "externalUrl": "https://open.spotify.com/track/6h2Tl2kUxljW3XXqbbhpXN",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2010s"
+      ],
+      "spotifyYear": "2015",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-086-63zkqt",
+      "title": "Heel Even",
+      "artist": "Gerard Joling, Shirley Zwerus",
+      "year": "1994",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273dc706fac89d94196f23ba81d",
+      "spotifyUri": "spotify:track:63zkqt9bSFndv7J7OXslLE",
+      "externalUrl": "https://open.spotify.com/track/63zkqt9bSFndv7J7OXslLE",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "1995",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-087-4VZDv8",
+      "title": "Hold On",
+      "artist": "Wilson Phillips",
+      "year": "1990",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2733168e1f416b81862ccc83594",
+      "spotifyUri": "spotify:track:4VZDv8sASBS8UruUBGTFdk",
+      "externalUrl": "https://open.spotify.com/track/4VZDv8sASBS8UruUBGTFdk",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "1990s"
+      ],
+      "spotifyYear": "1990",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-088-1ZczOo",
+      "title": "Say a Little Prayer - Live",
+      "artist": "Lianne La Havas",
+      "year": "2016",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273703a8f0973fa969379c5f3db",
+      "spotifyUri": "spotify:track:1ZczOoLuCyDO5dKUPndxf5",
+      "externalUrl": "https://open.spotify.com/track/1ZczOoLuCyDO5dKUPndxf5",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2010s"
+      ],
+      "spotifyYear": "2016",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-089-0p4jIp",
+      "title": "Ain't That Just the Way",
+      "artist": "Lutricia McNeal",
+      "year": "1996",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2734fc60f28e813aa58f8d79732",
+      "spotifyUri": "spotify:track:0p4jIpQNJthUQYWgLzldBv",
+      "externalUrl": "https://open.spotify.com/track/0p4jIpQNJthUQYWgLzldBv",
+      "audioUrl": "",
+      "genre": "disco",
+      "tags": [
+        "disco",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-090-5MoDQW",
+      "title": "Eternal Flame",
+      "artist": "The Bangles, Susanna Hoffs",
+      "year": "1988",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b27307c7dc36219c76b42b37951e",
+      "spotifyUri": "spotify:track:5MoDQWMDMaAGDEiWsJfeCi",
+      "externalUrl": "https://open.spotify.com/track/5MoDQWMDMaAGDEiWsJfeCi",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "duet",
+        "1980s"
+      ],
+      "spotifyYear": "2004",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-091-5fZEza",
+      "title": "Manic Monday",
+      "artist": "The Bangles",
+      "year": "1986",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2737aa1185818db499b687b6ba7",
+      "spotifyUri": "spotify:track:5fZEzaBQnVr2kIom4DOrK1",
+      "externalUrl": "https://open.spotify.com/track/5fZEzaBQnVr2kIom4DOrK1",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "1980s"
+      ],
+      "spotifyYear": "2004",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-092-3Bhin3",
+      "title": "Show Me Heaven - From \"Days Of Thunder\"",
+      "artist": "Maria McKee",
+      "year": "1990",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2731868daec86c76081e11d98a2",
+      "spotifyUri": "spotify:track:3Bhin3aPey7pJbBP7Gr6xX",
+      "externalUrl": "https://open.spotify.com/track/3Bhin3aPey7pJbBP7Gr6xX",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-093-3690IF",
+      "title": "Up Where We Belong (feat. Jennifer Warnes) - From \"An Officer And A Gentleman\"",
+      "artist": "Joe Cocker, Jennifer Warnes",
+      "year": "1982",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2731868daec86c76081e11d98a2",
+      "spotifyUri": "spotify:track:3690IFzTbQka9unRN9P2lc",
+      "externalUrl": "https://open.spotify.com/track/3690IFzTbQka9unRN9P2lc",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "1980s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-094-5BMUVy",
+      "title": "Save The Best For Last",
+      "artist": "Vanessa Williams",
+      "year": "1991",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b2731868daec86c76081e11d98a2",
+      "spotifyUri": "spotify:track:5BMUVy6s8LtqLsfggX5wKj",
+      "externalUrl": "https://open.spotify.com/track/5BMUVy6s8LtqLsfggX5wKj",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "2018",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-095-0vWOq4",
+      "title": "Kon Ik Maar Even Bij Je Zijn",
+      "artist": "Gordon",
+      "year": "1991",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b2732e4e50bf08049c5cbd9dac46",
+      "spotifyUri": "spotify:track:0vWOq4z0mDYs0GSs7imUEd",
+      "externalUrl": "https://open.spotify.com/track/0vWOq4z0mDYs0GSs7imUEd",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "nederlands",
+        "1990s"
+      ],
+      "spotifyYear": "1992",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-096-69hwHd",
+      "title": "Truly Madly Deeply",
+      "artist": "Savage Garden",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273aa5ebc681f9b8a07fd8274e6",
+      "spotifyUri": "spotify:track:69hwHdKl4Y1HusAutt3W6q",
+      "externalUrl": "https://open.spotify.com/track/69hwHdKl4Y1HusAutt3W6q",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "1990s"
+      ],
+      "spotifyYear": "1997",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-097-73ckFK",
+      "title": "She Goes Nana",
+      "artist": "The Radios",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273c3c2762ffe78fed218331be1",
+      "spotifyUri": "spotify:track:73ckFKYD8ydiDRnazoGGDE",
+      "externalUrl": "https://open.spotify.com/track/73ckFKYD8ydiDRnazoGGDE",
+      "audioUrl": "",
+      "genre": "rock",
+      "tags": [
+        "rock",
+        "1990s"
+      ],
+      "spotifyYear": "2004",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-098-1vmdrR",
+      "title": "A New Day Has Come - Radio Remix",
+      "artist": "Céline Dion",
+      "year": "2002",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273e6f6bba4ab1cfc30edd32631",
+      "spotifyUri": "spotify:track:1vmdrRKK1sY1pyzbMeoPwq",
+      "externalUrl": "https://open.spotify.com/track/1vmdrRKK1sY1pyzbMeoPwq",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "2000s"
+      ],
+      "spotifyYear": "2002",
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-099-1jeWrS",
+      "title": "Tell Him (Duet with Barbra Streisand)",
+      "artist": "Barbra Streisand, Céline Dion",
+      "year": "1997",
+      "album": "",
+      "image": "https://image-cdn-fa.spotifycdn.com/image/ab67616d0000b273f1c1fecfe63709ff6676f889",
+      "spotifyUri": "spotify:track:1jeWrScZZuhw3b55T1fv4O",
+      "externalUrl": "https://open.spotify.com/track/1jeWrScZZuhw3b55T1fv4O",
+      "audioUrl": "",
+      "genre": "pop",
+      "tags": [
+        "pop",
+        "duet",
+        "1990s"
+      ],
+      "yearSource": "Handmatig gecontroleerd"
+    },
+    {
+      "id": "gp-100-7ySbfL",
+      "title": "One Sweet Day",
+      "artist": "Mariah Carey, Boyz II Men",
+      "year": "1995",
+      "album": "",
+      "image": "https://image-cdn-ak.spotifycdn.com/image/ab67616d0000b273749e9bfa78277f30ad2c9a9c",
+      "spotifyUri": "spotify:track:7ySbfLwdCwl1EM0zNCJZ38",
+      "externalUrl": "https://open.spotify.com/track/7ySbfLwdCwl1EM0zNCJZ38",
+      "audioUrl": "",
+      "genre": "soul",
+      "tags": [
+        "soul",
+        "duet",
+        "1990s"
+      ],
+      "spotifyYear": "1995",
+      "yearSource": "Handmatig gecontroleerd"
+    }
+  ]
+}

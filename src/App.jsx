@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import QRCode from 'qrcode'
 import {
-  ArrowLeft, Camera, Check, ChevronRight, CirclePlay, Download, ExternalLink,
-  FileUp, Gift, ImageUp, Import, Library, Music2, Pause, Pencil, Play, Plus, Printer,
-  QrCode, RotateCcw, ScanLine, Settings, Sparkles, Trash2, X,
+  ArrowLeft, Camera, Check, ChevronRight, CirclePlay, Clock3, Download, ExternalLink,
+  FileText, FileUp, Gift, Grid3X3, ImageUp, Import, Library, Mic2, Music2, Pause, Pencil, Play,
+  Plus, Printer, QrCode, RotateCcw, ScanLine, Settings, Sparkles, Trash2, Trophy, X,
   UserPlus,
 } from 'lucide-react'
 import {
@@ -22,7 +22,13 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Instellen', icon: Settings },
   { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.5.0 — dark disco + scanner'
+const APP_VERSION = '0.6.0 — vier spellen + Guilty Pleasures'
+const GAME_MODES = [
+  { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
+  { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
+  { id: 'bingo', name: 'Muziekbingo', text: 'Streep decennia, genres en verrassingen af.', icon: Grid3X3 },
+  { id: 'battle', name: 'Battle of the Hits', text: 'Stem welke guilty pleasure doorgaat.', icon: Trophy },
+]
 
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')
@@ -73,10 +79,44 @@ function ScannerView({ onScan, onClose }) {
   </div>
 }
 
-function Player({ track, onBack, onNext }) {
+const BINGO_SPACES = [
+  ['1960s', 'Jaren 60'], ['1970s', 'Jaren 70'], ['1980s', 'Jaren 80'], ['1990s', 'Jaren 90'], ['2000s', 'Jaren 00'], ['2010s', 'Jaren 10'],
+  ['pop', 'Pop'], ['rock', 'Rock'], ['soul', 'Soul'], ['disco', 'Disco'], ['duet', 'Duet'], ['nederlands', 'Nederlands'],
+  ['liefde', 'Liefde in titel'], ['classic', 'Klassieker'], ['multi', 'Meerdere artiesten'],
+]
+const shuffle = values => [...values].sort(() => Math.random() - .5)
+const answerKey = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
+
+function BingoResult({ track }) {
+  const [board] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem('timepop.bingo.board') || 'null')
+    if (saved?.length === 9) return saved
+    const created = shuffle(BINGO_SPACES).slice(0, 9)
+    localStorage.setItem('timepop.bingo.board', JSON.stringify(created))
+    return created
+  })
+  const [marked, setMarked] = useState(() => JSON.parse(localStorage.getItem('timepop.bingo.marked') || '[]'))
+  const traits = new Set([...(track.tags || []), track.genre, `${Math.floor(Number(track.year) / 10) * 10}s`, ...(track.artist.includes(',') ? ['multi', 'duet'] : [])])
+  useEffect(() => {
+    const next = [...new Set([...marked, ...board.filter(([id]) => traits.has(id)).map(([id]) => id)])]
+    setMarked(next); localStorage.setItem('timepop.bingo.marked', JSON.stringify(next))
+  }, [track.id])
+  return <div className="game-result bingo-result"><div className="result-heading"><Grid3X3 /><strong>Jouw bingokaart</strong><button onClick={() => { const next = shuffle(BINGO_SPACES).slice(0, 9); localStorage.setItem('timepop.bingo.board', JSON.stringify(next)); localStorage.removeItem('timepop.bingo.marked'); location.reload() }}>Nieuwe kaart</button></div><div className="bingo-grid">{board.map(([id, label]) => <span className={marked.includes(id) ? 'marked' : ''} key={id}>{marked.includes(id) && <Check />}{label}</span>)}</div></div>
+}
+
+function BattleResult({ track }) {
+  const [champion, setChampion] = useState(() => JSON.parse(localStorage.getItem('timepop.battle.champion') || 'null'))
+  const choose = winner => { localStorage.setItem('timepop.battle.champion', JSON.stringify(winner)); setChampion(winner) }
+  if (!champion || champion.id === track.id) return <div className="game-result battle-result"><Trophy /><div><strong>{champion ? 'Regerend kampioen' : 'Start de battle'}</strong><span>{track.title}</span></div>{!champion && <button onClick={() => choose(track)}>Maak kampioen</button>}</div>
+  return <div className="game-result"><div className="result-heading"><Trophy /><strong>Wie gaat door?</strong></div><div className="battle-buttons"><button onClick={() => choose(champion)}><small>Kampioen</small>{champion.title}<span>{champion.artist}</span></button><b>VS</b><button onClick={() => choose(track)}><small>Uitdager</small>{track.title}<span>{track.artist}</span></button></div></div>
+}
+
+function Player({ track, onBack, onNext, gameMode }) {
   const [revealed, setRevealed] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [message, setMessage] = useState('Klaar om af te spelen')
+  const [titleGuess, setTitleGuess] = useState('')
+  const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
@@ -108,16 +148,20 @@ function Player({ track, onBack, onNext }) {
   return <main className={`player-screen theme-${track.genre || 'pop'} ${revealed ? 'is-revealed' : ''}`}>
     <header className="player-header">
       <button className="round-button" onClick={onBack}><ArrowLeft /></button>
-      <span>Kaart gevonden</span><span className="status-dot" />
+      <span>{GAME_MODES.find(game => game.id === gameMode)?.name || 'Kaart gevonden'}</span><span className="status-dot" />
     </header>
     {!revealed ? <>
       <div className="secret-art"><div className="record"><Music2 /><span /></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></div>
       <div className="secret-copy"><span className="eyebrow">Geheim nummer</span><h1>Luister goed…</h1><p>{message}</p></div>
       <button className="play-or-pause" onClick={playing ? pause : start}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
+      {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
     </> : <>
       <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{track.year || '????'}</span></div>
       <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}</div>
+      {gameMode === 'guess' && <div className="game-result guess-result"><strong>{Number(answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2) + Number(answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2)} / 2 punten</strong><span>Titel {answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2 ? '✓' : '✕'} · Artiest {answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2 ? '✓' : '✕'}</span></div>}
+      {gameMode === 'bingo' && <BingoResult track={track} />}
+      {gameMode === 'battle' && <BattleResult track={track} />}
       <div className="player-actions">
         <button className="secondary-button" onClick={() => setRevealed(false)}><RotateCcw /> Verberg</button>
         <button className="primary-button" onClick={onNext}>Volgende kaart <ChevronRight /></button>
@@ -126,7 +170,7 @@ function Player({ track, onBack, onNext }) {
   </main>
 }
 
-function PlayHome({ collection, onOpenTrack, resolveCard }) {
+function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode }) {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
   const parseScan = text => {
@@ -144,6 +188,7 @@ function PlayHome({ collection, onOpenTrack, resolveCard }) {
       <span className="eyebrow">Muziek door de jaren</span>
       <h1>Scan. Luister.<br /><em>Raad de tijd.</em></h1>
       <p>Scan een kaart zonder te verklappen welk nummer er speelt.</p>
+      <div className="game-picker">{GAME_MODES.map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => setGameMode(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span></button>)}</div>
       <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan een kaart</button>
       {error && <div className="inline-error">{error}</div>}
     </section>
@@ -168,6 +213,7 @@ function CollectionPage({ collection, setCollection }) {
   const [editing, setEditing] = useState(null)
   const [adding, setAdding] = useState(false)
   const fileRef = useRef(null)
+  const [presetBusy, setPresetBusy] = useState(false)
   const saveTrack = track => {
     const exists = collection.tracks.some(item => item.id === track.id)
     setCollection({ ...collection, tracks: exists ? collection.tracks.map(item => item.id === track.id ? normalizeTrack(track) : item) : [...collection.tracks, normalizeTrack(track)] })
@@ -181,11 +227,22 @@ function CollectionPage({ collection, setCollection }) {
       setCollection({ name: data.name || collection.name, tracks: data.tracks.map(normalizeTrack) })
     } else setCollection({ ...collection, tracks: [...collection.tracks, ...parseCsv(text)] })
   }
+  const loadGuiltyPleasures = async () => {
+    if (collection.tracks.length > 3 && !confirm('Huidige collectie vervangen door Guilty Pleasures (100 nummers)? Download eventueel eerst een JSON-back-up.')) return
+    setPresetBusy(true)
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}decks/guilty-pleasures.json`)
+      if (!response.ok) throw new Error('Deck kon niet worden geladen')
+      const deck = await response.json()
+      setCollection({ ...deck, tracks: deck.tracks.map(normalizeTrack) })
+    } catch (error) { alert(error.message) } finally { setPresetBusy(false) }
+  }
   return <main className="page content-page">
     <PageTitle eyebrow="Jouw muziek" title="Collectie" description={`${collection.tracks.length} kaarten klaar voor het spel`} />
     <div className="toolbar">
       <button className="primary-button" onClick={() => setAdding(true)}><Plus /> Nummer</button>
       <button className="secondary-button" onClick={() => fileRef.current.click()}><FileUp /> CSV / JSON</button>
+      <button className="preset-button" onClick={loadGuiltyPleasures} disabled={presetBusy}><Sparkles /> {presetBusy ? 'Laden…' : 'Guilty Pleasures · 100'}</button>
       <button className="icon-button" onClick={() => exportCollection(collection)} title="Back-up downloaden"><Download /></button>
       <input ref={fileRef} type="file" accept=".csv,.json" hidden onChange={event => importFile(event.target.files[0])} />
     </div>
@@ -205,18 +262,26 @@ function CollectionPage({ collection, setCollection }) {
 function CardsPage({ collection }) {
   const [baseUrl, setBaseUrl] = useState(localStorage.getItem('giftster.base-url') || `${location.origin}${location.pathname}`)
   const clientId = getClientId()
+  const [printMode, setPrintMode] = useState('cards')
   const cardUrl = track => `${baseUrl.replace(/\/$/, '')}?card=${encodeCard(track, clientId)}#play`
   const sheets = useMemo(() => Array.from({ length: Math.ceil(collection.tracks.length / 6) }, (_, i) => collection.tracks.slice(i * 6, i * 6 + 6)), [collection])
   const saveBase = value => { setBaseUrl(value); localStorage.setItem('giftster.base-url', value) }
-  return <main className="page content-page cards-page">
+  const bingoBoards = useMemo(() => Array.from({ length: 12 }, (_, board) => Array.from({ length: 9 }, (_, cell) => BINGO_SPACES[(board * 4 + cell * 7) % BINGO_SPACES.length])), [])
+  const doPrint = mode => { setPrintMode(mode); setTimeout(() => print(), 80) }
+  return <main className={`page content-page cards-page print-${printMode}`}>
     <PageTitle eyebrow="Klaar om te drukken" title="Speelkaarten" description="Zes kaarten per A4, ingericht voor dubbelzijdig printen" />
-    <div className="print-controls no-print"><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><button className="primary-button" disabled={!clientId} onClick={() => print()}><Printer /> Print kaarten</button></div>
+    <div className="print-controls no-print"><label><span>Adres van de play-app</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label><div className="print-buttons"><button className="primary-button" disabled={!clientId} onClick={() => doPrint('cards')}><Printer /> {collection.tracks.length} kaarten</button><button className="secondary-button" onClick={() => doPrint('bingo')}><Grid3X3 /> 12 bingokaarten</button><button className="secondary-button" onClick={() => doPrint('rules')}><FileText /> Spelregels + score</button></div></div>
     <div className={`print-note no-print ${!clientId ? 'is-warning' : ''}`}><QrCode /><p>{clientId ? <><strong>Zelfstandige QR-kaarten.</strong> Je vriend hoeft de collectie niet te importeren; de kaart opent direct in de play-app.</> : <><strong>Client ID ontbreekt.</strong> Vul die eerst in onder Instellen, anders kunnen andere telefoons Spotify niet koppelen.</>}</p></div>
     <div className="deck-preview">{collection.tracks.map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
     <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
       <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TIMEPOP</div><CardQr value={cardUrl(track)} size={360} /><strong>SCAN OM TE SPELEN</strong><span>Kaart {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
       <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
     ])}</div>
+    <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TIMEPOP</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>
+    <div className="rules-print-deck">
+      <section className="rules-page"><header><Music2 /><div><strong>TIMEPOP</strong><span>GUILTY PLEASURES</span></div></header><h1>Vier spellen.<br />Honderd hits.</h1><p className="rules-intro">Kies op de telefoon een spel, scan de voorkant van een kaart en speel het nummer af. Draai of onthul de kaart pas nadat iedereen heeft gekozen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article key={game.id}><b>0{index + 1}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Leg de kaart vóór, na of tussen je eerdere hits. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
+      <section className="score-page"><header><div><Music2 /><strong>TIMEPOP</strong></div><span>SCOREFORMULIER</span></header><h1>Wie kent de hits?</h1><div className="score-meta"><span>Datum ____________________</span><span>Team ____________________</span></div><table><thead><tr><th>Speler / team</th>{Array.from({ length: 10 }, (_, index) => <th key={index}>{index + 1}</th>)}<th>Totaal</th></tr></thead><tbody>{Array.from({ length: 10 }, (_, row) => <tr key={row}><td>{row + 1}. __________________</td>{Array.from({ length: 11 }, (_, cell) => <td key={cell} />)}</tr>)}</tbody></table><div className="score-notes"><strong>Finale / notities</strong></div><footer>Tijdlijn: 1 punt · Raad de hit: maximaal 2 punten · Bingo en Battle: speel om eeuwige roem</footer></section>
+    </div>
   </main>
 }
 
@@ -249,6 +314,8 @@ export default function App() {
   const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
   const [tab, setTab] = useState('collection')
   const [activeTrack, setActiveTrack] = useState(null)
+  const [gameMode, setGameModeState] = useState(localStorage.getItem('timepop.game-mode') || 'timeline')
+  const setGameMode = mode => { localStorage.setItem('timepop.game-mode', mode); setGameModeState(mode) }
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
 
   const resolveCard = value => {
@@ -281,8 +348,8 @@ export default function App() {
     return () => removeEventListener('hashchange', route)
   }, [])
 
-  if (activeTrack) return <Player track={activeTrack} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
-  if (mode === 'play') return <PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} />
+  if (activeTrack) return <Player track={activeTrack} gameMode={gameMode} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
+  if (mode === 'play') return <PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} />
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TIMEPOP <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'collection' && <CollectionPage collection={collection} setCollection={setCollection} />}
