@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'cards', label: 'Print & deel', icon: QrCode },
   { id: 'settings', label: 'Spotify', icon: Settings },
 ]
-const APP_VERSION = '0.8.0 — studioflow + drie expertedities'
+const APP_VERSION = '0.8.1 — Tijdlijn als duidelijk hoofdspel'
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', icon: Clock3 },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', icon: Mic2 },
@@ -198,6 +198,8 @@ function Player({ track, onBack, onNext, gameMode }) {
 function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode, giftRefs, onOpenGift }) {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
+  const [showAlternatives, setShowAlternatives] = useState(gameMode !== 'timeline')
+  const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
   const parseScan = text => {
     setScanning(false)
     let id = text
@@ -210,11 +212,17 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode,
   return <main className="play-home page public-play-home">
     <div className="hero-brand"><div className="brand-mark"><Music2 /></div><span>TIMEPOP</span></div>
     <section className="play-hero">
-      <span className="eyebrow">Muziek door de jaren</span>
-      <h1>Scan. Luister.<br /><em>Raad de tijd.</em></h1>
-      <p>Scan een kaart zonder te verklappen welk nummer er speelt.</p>
-      <div className="game-picker">{GAME_MODES.map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => setGameMode(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span></button>)}</div>
-      <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan een kaart</button>
+      <span className="eyebrow">Het hoofdspel</span>
+      <h1>Luister.<br /><em>Leg de tijdlijn.</em></h1>
+      <p>Hoor een verborgen hit en bepaal of hij vóór, na of tussen de kaarten op tafel hoort.</p>
+      <button className={`main-game-card ${gameMode === 'timeline' ? 'active' : ''}`} onClick={() => setGameMode('timeline')}>
+        <div className="main-game-title"><span><Clock3 /></span><div><small>Aanbevolen · hoofdspel</small><strong>Tijdlijn</strong></div>{gameMode === 'timeline' && <Check />}</div>
+        <ol><li><b>1</b> Scan een kaart</li><li><b>2</b> Luister zonder titel</li><li><b>3</b> Leg hem in de tijd</li></ol>
+      </button>
+      {gameMode !== 'timeline' && <div className="alternate-active"><activeGame.icon /><span><small>Je speelt nu</small><strong>{activeGame.name}</strong></span><button onClick={() => setGameMode('timeline')}>Terug naar Tijdlijn</button></div>}
+      <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>{gameMode === 'timeline' ? 'Scan voor de tijdlijn' : `Scan voor ${activeGame.name}`}</button>
+      <button className="more-games-toggle" onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Verberg extra spelvormen' : 'Andere spelvorm proberen'} <ChevronRight /></button>
+      {showAlternatives && <div className="alternate-games">{GAME_MODES.slice(1).map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => setGameMode(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small></span>{gameMode === game.id && <Check />}</button>)}</div>}
       {error && <div className="inline-error">{error}</div>}
     </section>
     <section className="quick-test">
@@ -241,7 +249,7 @@ function StudioHome({ collection, giftRefs, setTab }) {
     { number: '01', title: 'Kies de muziek', text: `${collection.name} · ${collection.tracks.length} nummers actief`, icon: Music2, action: 'Nummers beheren', tab: 'collection', done: collection.tracks.length > 0 },
     { number: '02', title: 'Maak het persoonlijk', text: 'Geef de editie een naam en vul de ontvanger in.', icon: Gift, action: 'Personaliseren', tab: 'cards', done: Boolean(localStorage.getItem('timepop.recipient')) },
     { number: '03', title: 'Controleer Spotify', text: hasClient ? 'Client ID staat klaar voor de QR-kaarten.' : 'Client ID ontbreekt nog.', icon: Settings, action: hasClient ? 'Instellingen bekijken' : 'Spotify instellen', tab: 'settings', done: hasClient },
-    { number: '04', title: 'Print en geef cadeau', text: 'Kaarten, bingo, cover, spelregels en score.', icon: Printer, action: 'Naar printstudio', tab: 'cards', done: false },
+    { number: '04', title: 'Print en geef cadeau', text: 'Tijdlijn als hoofdspel, met drie bonusvarianten.', icon: Printer, action: 'Naar printstudio', tab: 'cards', done: false },
   ]
   return <main className="page content-page studio-home">
     <PageTitle eyebrow="TIMEPOP Studio" title="Van playlist naar cadeau" description="Werk de vier stappen af; de studio bewaart alles automatisch op dit toestel." />
@@ -331,7 +339,7 @@ function CardsPage({ collection }) {
     <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TIMEPOP</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>
     <div className="rules-print-deck">
       <section className="gift-cover"><div className="cover-orbit"><Music2 /></div><span className="cover-label">EEN PERSOONLIJKE MUZIEKEDITIE</span><h1>{editionName || collection.name}</h1>{recipient && <h2>voor {recipient}</h2>}<p>100 hits · 4 spellen · heel veel foute meezingers</p><div className="cover-games">{GAME_MODES.map(game => <span key={game.id}><game.icon />{game.name}</span>)}</div><footer>TIMEPOP · SCAN DE MUZIEK, BEWAAR DE HERINNERING</footer></section>
-      <section className="rules-page"><header><Music2 /><div><strong>TIMEPOP</strong><span>{editionName || collection.name}</span></div></header><h1>Vier spellen.<br />Honderd hits.</h1><p className="rules-intro">Kies op de telefoon een spel, scan de voorkant van een kaart en speel het nummer af. Draai of onthul de kaart pas nadat iedereen heeft gekozen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article key={game.id}><b>0{index + 1}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Leg de kaart vóór, na of tussen je eerdere hits. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
+      <section className="rules-page"><header><Music2 /><div><strong>TIMEPOP</strong><span>{editionName || collection.name}</span></div></header><h1>De tijdlijn.<br />Plus drie extra's.</h1><p className="rules-intro">Begin met het Tijdlijnspel: scan, luister en leg de hit op de juiste plek. Zin in afwisseling? Kies daarna een van de compacte bonusspellen.</p><div className="rules-grid">{GAME_MODES.map((game, index) => <article className={game.id === 'timeline' ? 'main-rule' : ''} key={game.id}><b>{game.id === 'timeline' ? 'HOOFDSPEL' : `0${index + 1}`}</b><game.icon /><h2>{game.name}</h2><p>{game.id === 'timeline' ? 'Scan een kaart en luister zonder titel of artiest te zien. Leg hem vóór, na of tussen de hits in jouw tijdlijn. Goed geplaatst? Houd de kaart en verdien 1 punt.' : game.id === 'guess' ? 'Schrijf of noem titel en artiest vóór de onthulling. Ieder goed antwoord is 1 punt.' : game.id === 'bingo' ? 'Iedereen pakt een bingokaart. Streep na iedere onthulling passende vakken af. Drie op een rij wint.' : 'De eerste hit is kampioen. Stem bij iedere nieuwe uitdager. De laatste overgebleven hit wint de avond.'}</p></article>)}</div><footer>TIP · Eén telefoon kan DJ zijn; de overige spelers hoeven dan niets te koppelen.</footer></section>
       <section className="score-page"><header><div><Music2 /><strong>TIMEPOP</strong></div><span>SCOREFORMULIER</span></header><h1>Wie kent de hits?</h1><div className="score-meta"><span>Datum ____________________</span><span>Team ____________________</span></div><table><thead><tr><th>Speler / team</th>{Array.from({ length: 10 }, (_, index) => <th key={index}>{index + 1}</th>)}<th>Totaal</th></tr></thead><tbody>{Array.from({ length: 10 }, (_, row) => <tr key={row}><td>{row + 1}. __________________</td>{Array.from({ length: 11 }, (_, cell) => <td key={cell} />)}</tr>)}</tbody></table><div className="score-notes"><strong>Finale / notities</strong></div><footer>Tijdlijn: 1 punt · Raad de hit: maximaal 2 punten · Bingo en Battle: speel om eeuwige roem</footer></section>
     </div>
   </main>
