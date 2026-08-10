@@ -22,7 +22,7 @@ const ADMIN_NAV = [
   { id: 'settings', label: 'Instellen', icon: Settings },
   { id: 'preview', label: 'Play-app', icon: CirclePlay },
 ]
-const APP_VERSION = '0.4.0 — admin + play'
+const APP_VERSION = '0.4.1 — admin + play'
 
 function CardQr({ value, size = 220 }) {
   const [src, setSrc] = useState('')

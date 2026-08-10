@@ -7,6 +7,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode><App /></React.StrictMode>,
 )
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).then(registration => registration.update()))
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map(registration => registration.unregister()))
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.filter(key => key.startsWith('muziekspel-') || key.startsWith('timepop-')).map(key => caches.delete(key)))
+    }
+  })
 }
