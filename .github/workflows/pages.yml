@@ -1,4 +1,4 @@
-name: Publiceer muziekspel
+name: Publiceer TRACKBACK
 
 on:
   push:

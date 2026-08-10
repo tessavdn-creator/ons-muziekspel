@@ -137,6 +137,8 @@ select { width:100%;height:48px;border:1px solid #d8cfc4;border-radius:12px;back
 .preview-link { color:white;text-decoration:none;display:flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid rgba(255,255,255,.2);border-radius:11px;font-size:.78rem;font-weight:700; }.preview-link svg { width:15px;fill:currentColor; }
 .admin-nav { border-color:rgba(255,255,255,.12);box-shadow:0 16px 50px rgba(0,0,0,.22),0 -2px 0 var(--pink); }
 
+.gift-brand { display:block;margin:0 0 9px;font-family:'Archivo Black';font-size:1rem;letter-spacing:.18em;color:#fff; }
+
 @media screen {
   body { background:#07050d;color:#f8f4ff; }
   .app-shell { position:relative;isolation:isolate;background:

@@ -1,6 +1,6 @@
-# Ons Muziekspel
+# TRACKBACK
 
-Een muziekspel met twee gescheiden ervaringen. Timepop Studio importeert nummers en maakt kaarten; de openbare play-app scant en speelt ze af zonder titel, artiest of jaartal vooraf te tonen.
+Een muziekspel met twee gescheiden ervaringen. TRACKBACK Studio importeert nummers en maakt kaarten; de openbare play-app scant en speelt ze af zonder titel, artiest of jaartal vooraf te tonen.
 
 - Admin: `https://tessavdn-creator.github.io/ons-muziekspel/#admin`
 - Play: `https://tessavdn-creator.github.io/ons-muziekspel/#play`

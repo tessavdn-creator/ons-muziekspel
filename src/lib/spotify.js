@@ -149,7 +149,7 @@ export async function connectPlayer(onState) {
   }
   if (!player) {
     player = new window.Spotify.Player({
-      name: 'Ons muziekspel',
+      name: 'TRACKBACK',
       getOAuthToken: callback => getAccessToken().then(callback).catch(error => onState?.({ error: error.message })),
       volume: 0.8,
     })
