@@ -17,11 +17,12 @@ De gegevens zijn gecodeerd voor gebruiksgemak, niet cryptografisch geheim. Een t
 
 Het commando `npm run generate:qrs` maakt:
 
-- 60 kaarten voor Hidden Corners;
-- 60 kaarten voor The Crooked Timeline;
-- 60 kaarten voor After Dark;
+- 100 kaarten voor Hidden Corners;
+- 100 kaarten voor The Crooked Timeline;
+- 100 kaarten voor After Dark;
+- 300 kaarten voor Nikki's Full Throttle;
 - 100 kaarten voor Guilty Pleasures;
-- Iris’ bibliotheek-QR;
+- Iris’ en Nikki's bibliotheek-QR;
 - een CSV- en JSON-inhoudsopgave;
 - één ZIP-bestand.
 
@@ -29,13 +30,16 @@ Benodigde invoer:
 
 ```bash
 SPOTIFY_CLIENT_ID='jouw-publieke-client-id' \
-IRIS_GIFT_KEY='de-sleutel-uit-de-persoonlijke-link' \
 npm run generate:qrs
 ```
+
+Op de beheercomputer leest de generator de twee cadeausleutels automatisch uit `.private/gifts/`. Op een andere computer kunnen `IRIS_GIFT_KEY` en `NIKKI_GIFT_KEY` als omgevingsvariabelen worden meegegeven.
 
 De definitieve uitvoer komt standaard in `Documenten/TRACKBACK QR-codes/trackback-qr-bundle-...`.
 
 Gebruik hier nooit een Spotify Client Secret of access token.
+
+De losse cadeau-uitnodigingen staan in `Documenten/TRACKBACK QR-codes/Persoonlijke edities/`. Iedere ontvangersmap bevat een QR-PNG, een printbare A5-PDF, een HTML-versie en een klikbare `.webloc`.
 
 ## Printadvies
 
@@ -44,4 +48,3 @@ Gebruik hier nooit een Spotify Client Secret of access token.
 - Test op zowel iPhone als Android als dat mogelijk is.
 - Houd glanzend papier uit direct licht tijdens het scannen.
 - Bewaar de CSV-inhoudsopgave apart; daarop staan de kaartnummers en antwoorden.
-

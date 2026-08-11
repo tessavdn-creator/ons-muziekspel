@@ -1,7 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 const playlistId = process.argv[2]
 const slug = process.argv[3] || 'spotify-deck'
+const outputDir = resolve(process.env.SPOTIFY_DECK_DIR || 'public/decks')
 if (!playlistId) throw new Error('Gebruik: node scripts/import-spotify-embed.mjs PLAYLIST_ID [slug]')
 
 const extract = html => {
@@ -46,7 +48,7 @@ await Promise.all(Array.from({ length: 8 }, async () => {
     const artist = detail.artists?.map(item => item.name).join(', ') || source.subtitle
     const classification = classify(artist, year, detail.title)
     details[index] = {
-      id: `gp-${String(index + 1).padStart(3, '0')}-${id.slice(0, 6)}`,
+      id: `${slug}-${String(index + 1).padStart(3, '0')}-${id.slice(0, 6)}`,
       title: detail.title,
       artist,
       year,
@@ -70,6 +72,6 @@ const deck = {
   tracks: details,
 }
 
-await mkdir('public/decks', { recursive: true })
-await writeFile(`public/decks/${slug}.json`, `${JSON.stringify(deck, null, 2)}\n`)
-console.log(`\npublic/decks/${slug}.json geschreven`)
+await mkdir(outputDir, { recursive: true })
+await writeFile(`${outputDir}/${slug}.json`, `${JSON.stringify(deck, null, 2)}\n`)
+console.log(`\n${outputDir}/${slug}.json geschreven`)

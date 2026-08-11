@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.10.0 — TRACKBACK'
+const APP_VERSION = '0.11.0 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
@@ -97,6 +97,7 @@ const shuffle = values => [...values].sort(() => Math.random() - .5)
 const answerKey = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
 
 function GiftLanding({ gift, onSelect, onClose }) {
+  const [celebrating, setCelebrating] = useState(true)
   const [publicEditions, setPublicEditions] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(true)
   useEffect(() => {
@@ -125,6 +126,18 @@ function GiftLanding({ gift, onSelect, onClose }) {
     <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
   </article>)}</div>
   return <main className="gift-landing">
+    {celebrating && <section className="gift-celebration" role="dialog" aria-modal="true" aria-labelledby="gift-congratulations">
+      <div className="confetti" aria-hidden="true">{Array.from({ length: 36 }, (_, index) => <i key={index} style={{ '--i': index, '--x': `${(index * 29) % 100}%`, '--delay': `${(index % 11) * -.27}s`, '--duration': `${2.8 + (index % 7) * .25}s`, '--drift': `${index % 2 ? 25 : -20}px` }} />)}</div>
+      <div className="celebration-glow" aria-hidden="true" />
+      <div className="celebration-card">
+        <div className="celebration-icon"><Gift /></div>
+        <span className="eyebrow">Een muzikale verrassing voor jou</span>
+        <h1 id="gift-congratulations">Gefeliciteerd,<br />{gift.recipient}!</h1>
+        <p>{gift.celebrationMessage || 'Je hebt je eigen TRACKBACK-editie gekregen. Een persoonlijk muziekspel, speciaal voor jou samengesteld.'}</p>
+        <button className="celebration-button" onClick={() => setCelebrating(false)}>Pak je cadeau uit <Sparkles /></button>
+        <small>Zet je geluid aan — hierna begint de muziek.</small>
+      </div>
+    </section>}
     <button className="round-button gift-close" onClick={onClose} aria-label="Terug"><ArrowLeft /></button>
     <div className="gift-stars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
     <header><div className="gift-seal"><Gift /></div><strong className="gift-brand">TRACKBACK</strong><span className="eyebrow">Speciaal samengesteld voor</span><h1>{gift.recipient}</h1><p>{gift.message}</p></header>

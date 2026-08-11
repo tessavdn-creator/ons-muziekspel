@@ -10,14 +10,16 @@
 - playlistimport voor eigenaar/collaborator;
 - kaart-, bingo-, cover-, regel- en scoreprintables;
 - algemene editiecatalogus;
-- versleutelde persoonlijke cadeaupagina;
-- drie persoonlijke Iris-edities en één algemene editie;
+- versleutelde persoonlijke cadeaupagina's met felicitatie en confetti;
+- 300 persoonlijke kaarten voor Iris en 300 voor Nikki;
+- één algemene editie;
+- persoonlijke A5-uitnodigingen, QR-codes en klikbare links in Documenten;
 - volledige QR-bundelgenerator;
 - automatische tests, build en GitHub Pages-publicatie.
 
 ## Nog nodig voor de definitieve QR-bundel
 
-De publieke Spotify Client ID moet één keer aan de QR-generator worden doorgegeven. Daarna kunnen de 280 definitieve speelkaartcodes en de ZIP in Documenten worden gemaakt.
+De publieke Spotify Client ID moet één keer aan de QR-generator worden doorgegeven. Daarna kunnen de 700 definitieve speelkaartcodes — 300 voor Iris, 300 voor Nikki en 100 algemeen — plus de ZIP in Documenten worden gemaakt.
 
 ## Logische volgende productstappen
 
@@ -30,4 +32,3 @@ De publieke Spotify Client ID moet één keer aan de QR-generator worden doorgeg
 7. Automatische end-to-endtests voor camera-, print- en loginroutes uitbreiden.
 
 Zonder backend is de huidige versie bewust een statische, lokale Studio met een openbare play-app. Dat is geschikt voor privéproeven en cadeaus, maar nog niet voor een zelfstandig commercieel platform.
-

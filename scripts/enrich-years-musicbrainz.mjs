@@ -1,7 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises'
 
 const file = process.argv[2] || 'public/decks/guilty-pleasures.json'
-const deck = JSON.parse(await readFile(file, 'utf8'))
+const document = JSON.parse(await readFile(file, 'utf8'))
+const tracks = Array.isArray(document) ? document.flatMap(edition => edition.tracks || []) : document.tracks
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const clean = value => value
   .replace(/\s+-\s+(\d{4} )?(Remaster|Radio|Edit|Live|From |Pop On-).*/i, '')
@@ -14,8 +15,12 @@ const normalize = value => clean(value)
   .trim()
   .toLowerCase()
 
-for (let index = 0; index < deck.tracks.length; index += 1) {
-  const track = deck.tracks[index]
+for (let index = 0; index < tracks.length; index += 1) {
+  const track = tracks[index]
+  if (track.yearSource === 'MusicBrainz first release' || track.yearSource === 'Handmatig gecontroleerd') {
+    process.stdout.write(`\r${index + 1}/${tracks.length}`)
+    continue
+  }
   if (track.spotifyYear) track.year = track.spotifyYear
   const title = clean(track.title)
   const artist = track.artist.split(',')[0].trim()
@@ -50,9 +55,10 @@ for (let index = 0; index < deck.tracks.length; index += 1) {
   } catch (error) {
     track.yearSource = `Spotify (${error.message})`
   }
-  process.stdout.write(`\r${index + 1}/${deck.tracks.length}`)
+  process.stdout.write(`\r${index + 1}/${tracks.length}`)
+  if ((index + 1) % 10 === 0) await writeFile(file, `${JSON.stringify(document, null, 2)}\n`)
   await wait(1050)
 }
 
-await writeFile(file, `${JSON.stringify(deck, null, 2)}\n`)
+await writeFile(file, `${JSON.stringify(document, null, 2)}\n`)
 console.log(`\n${file} verrijkt`)
