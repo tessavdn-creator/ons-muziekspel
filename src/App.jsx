@@ -23,25 +23,45 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.1 — TRACKBACK'
+const APP_VERSION = '0.13.2 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
+const ARTIST_GIMMICKS = [
+  { match: /little willie john/i, label: 'Little Willie John', image: 'assets/artists/iris/01-little-willie-john.png', kind: 'Artiest' },
+  { match: /paul rodgers|\bfree\b/i, label: 'Paul Rodgers · Free', image: 'assets/artists/iris/02-paul-rodgers-free.png', kind: 'Artiest' },
+  { match: /ry cooder/i, label: 'Ry Cooder', image: 'assets/artists/iris/03-ry-cooder.png', kind: 'Artiest' },
+  { match: /sidney bechet/i, label: 'Sidney Bechet', image: 'assets/artists/iris/04-sidney-bechet.png', kind: 'Artiest' },
+  { match: /alvin lee|ten years after/i, label: 'Alvin Lee · Ten Years After', image: 'assets/artists/iris/05-alvin-lee-ten-years-after.png', kind: 'Artiest' },
+  { match: /john mayall/i, label: 'John Mayall', image: 'assets/artists/iris/06-john-mayall.png', kind: 'Artiest' },
+  { match: /hildegard von bingen/i, label: 'Hildegard von Bingen', image: 'assets/artists/iris/07-hildegard-von-bingen.png', kind: 'Artiest' },
+  { match: /le trio joubran/i, label: 'Le Trio Joubran', image: 'assets/artists/iris/08-le-trio-joubran.png', kind: 'Artiest' },
+  { match: /elvis presley/i, label: 'Elvis Presley', image: 'assets/artists/retro/01-elvis-presley.png', kind: 'Artiest' },
+  { match: /aretha franklin/i, label: 'Aretha Franklin', image: 'assets/artists/retro/02-aretha-franklin.png', kind: 'Artiest' },
+  { match: /diana ross/i, label: 'Diana Ross', image: 'assets/artists/retro/03-diana-ross.png', kind: 'Artiest' },
+  { match: /david bowie/i, label: 'David Bowie', image: 'assets/artists/retro/04-david-bowie.png', kind: 'Artiest' },
+  { match: /michael jackson/i, label: 'Michael Jackson', image: 'assets/artists/retro/05-michael-jackson.png', kind: 'Artiest' },
+  { match: /kurt cobain|nirvana/i, label: 'Kurt Cobain · Nirvana', image: 'assets/artists/retro/06-kurt-cobain.png', kind: 'Artiest' },
+  { match: /britney spears/i, label: 'Britney Spears', image: 'assets/artists/retro/07-britney-spears.png', kind: 'Artiest' },
+  { match: /daft punk/i, label: 'Daft Punk', image: 'assets/artists/retro/08-daft-punk.png', kind: 'Artiest' },
+]
 const GENRE_GIMMICKS = {
-  pop: { label: 'Pop', image: 'assets/genres/pop.png' },
-  rock: { label: 'Rock', image: 'assets/genres/rock.png' },
-  soul: { label: 'Soul & blues', image: 'assets/genres/soul.png' },
-  disco: { label: 'Disco', image: 'assets/genres/disco.png' },
-  electronic: { label: 'Electronic', image: 'assets/genres/electronic.png' },
-  nederlands: { label: 'Nederlands', image: 'assets/genres/nederlands.png' },
-  classic: { label: 'Classic', image: 'assets/genres/classic.png' },
+  pop: { label: 'Pop', image: 'assets/genres/pop.png', kind: 'Genre' },
+  rock: { label: 'Rock', image: 'assets/genres/rock.png', kind: 'Genre' },
+  soul: { label: 'Soul & blues', image: 'assets/genres/soul.png', kind: 'Genre' },
+  disco: { label: 'Disco', image: 'assets/genres/disco.png', kind: 'Genre' },
+  electronic: { label: 'Electronic', image: 'assets/genres/electronic.png', kind: 'Genre' },
+  nederlands: { label: 'Nederlands', image: 'assets/genres/nederlands.png', kind: 'Genre' },
+  classic: { label: 'Classic', image: 'assets/genres/classic.png', kind: 'Genre' },
 }
 const EDITION_GIMMICKS = {
-  'hidden-corners-01': GENRE_GIMMICKS.soul,
-  'time-warp-01': GENRE_GIMMICKS.rock,
-  'after-dark-01': GENRE_GIMMICKS.electronic,
-  'iris-crowd-pleasers-01': GENRE_GIMMICKS.pop,
+  'hidden-corners-01': ARTIST_GIMMICKS[0],
+  'time-warp-01': ARTIST_GIMMICKS[2],
+  'after-dark-01': ARTIST_GIMMICKS[7],
+  'iris-crowd-pleasers-01': ARTIST_GIMMICKS[8],
 }
 const genreGimmick = track => GENRE_GIMMICKS[track?.genre] || GENRE_GIMMICKS.pop
+const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
+const visualGimmick = track => artistGimmick(track) || genreGimmick(track)
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', type: 'favoriet', meta: '1–10 spelers · direct spelen', icon: Mic2, setup: 'Speel alleen, in teams of allemaal tegen elkaar. Spreek af wie het antwoord mag geven.', prompt: 'Vul je gok in of roep hem hardop. Onthul daarna pas het antwoord.', steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
@@ -215,7 +235,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
-  const gimmick = genreGimmick(track)
+  const gimmick = visualGimmick(track)
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
@@ -257,8 +277,8 @@ function Player({ track, onBack, onNext, gameMode }) {
       {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
     </> : <>
-      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}<span className="genre-gimmick" title={gimmick.label}><img src={assetUrl(gimmick.image)} alt="" /></span><span className="year-stamp">{track.year || '????'}</span></div>
-      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}<span className="genre-credit"><Sparkles /> {gimmick.label}</span></div>
+      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}<span className="visual-gimmick" title={gimmick.label}><img src={assetUrl(gimmick.image)} alt="" /></span><span className="year-stamp">{track.year || '????'}</span></div>
+      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}<span className="visual-credit"><Sparkles /> {gimmick.kind} · {gimmick.label}</span></div>
       {gameMode === 'guess' && <div className="game-result guess-result"><strong>{Number(answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2) + Number(answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2)} / 2 punten</strong><span>Titel {answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2 ? '✓' : '✕'} · Artiest {answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2 ? '✓' : '✕'}</span></div>}
       {gameMode === 'bingo' && <BingoResult track={track} />}
       {gameMode === 'battle' && <BattleResult track={track} />}
