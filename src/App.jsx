@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.4 — TRACKBACK'
+const APP_VERSION = '0.13.5 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -43,14 +43,29 @@ const ARTIST_GIMMICKS = [
   { match: /kurt cobain|nirvana/i, label: 'Kurt Cobain · Nirvana', image: 'assets/artists/retro/06-kurt-cobain.png', kind: 'Artiest' },
   { match: /britney spears/i, label: 'Britney Spears', image: 'assets/artists/retro/07-britney-spears.png', kind: 'Artiest' },
   { match: /daft punk/i, label: 'Daft Punk', image: 'assets/artists/retro/08-daft-punk.png', kind: 'Artiest' },
+  { match: /freddie mercury|\bqueen\b/i, label: 'Freddie Mercury · Queen', image: 'assets/artists/lineup/01-freddie-mercury.png', kind: 'Artiest' },
+  { match: /chris martin|coldplay/i, label: 'Chris Martin · Coldplay', image: 'assets/artists/lineup/02-chris-martin.png', kind: 'Artiest' },
+  { match: /stevie nicks|fleetwood mac/i, label: 'Stevie Nicks · Fleetwood Mac', image: 'assets/artists/lineup/03-stevie-nicks.png', kind: 'Artiest' },
+  { match: /eddie vedder|pearl jam/i, label: 'Eddie Vedder · Pearl Jam', image: 'assets/artists/lineup/04-eddie-vedder.png', kind: 'Artiest' },
+  { match: /c[eé]line dion/i, label: 'Céline Dion', image: 'assets/artists/lineup/05-celine-dion.png', kind: 'Artiest' },
+  { match: /mariah carey/i, label: 'Mariah Carey', image: 'assets/artists/lineup/06-mariah-carey.png', kind: 'Artiest' },
+  { match: /whitney houston/i, label: 'Whitney Houston', image: 'assets/artists/lineup/07-whitney-houston.png', kind: 'Artiest' },
+  { match: /shania twain/i, label: 'Shania Twain', image: 'assets/artists/lineup/08-shania-twain.png', kind: 'Artiest' },
+  { match: /lady gaga/i, label: 'Lady Gaga', image: 'assets/artists/lineup/09-lady-gaga.png', kind: 'Artiest' },
+  { match: /rihanna/i, label: 'Rihanna', image: 'assets/artists/lineup/10-rihanna.png', kind: 'Artiest' },
+  { match: /\bp!nk\b|\bpink\b/i, label: 'P!nk', image: 'assets/artists/lineup/11-pink.png', kind: 'Artiest' },
+  { match: /elton john/i, label: 'Elton John', image: 'assets/artists/lineup/12-elton-john.png', kind: 'Artiest' },
+  { match: /kiya tabassian/i, label: 'Kiya Tabassian', image: 'assets/artists/lineup/13-kiya-tabassian.png', kind: 'Artiest' },
+  { match: /ablaye cissoko/i, label: 'Ablaye Cissoko', image: 'assets/artists/lineup/14-ablaye-cissoko.png', kind: 'Artiest' },
+  { match: /florent h[eé]au/i, label: 'Florent Héau', image: 'assets/artists/lineup/15-florent-heau.png', kind: 'Artiest' },
 ]
-const EDITION_GIMMICKS = {
-  'hidden-corners-01': ARTIST_GIMMICKS[0],
-  'time-warp-01': ARTIST_GIMMICKS[2],
-  'after-dark-01': ARTIST_GIMMICKS[7],
-  'iris-crowd-pleasers-01': ARTIST_GIMMICKS[8],
-  'nikki-full-throttle-01': ARTIST_GIMMICKS[11],
-  'guilty-pleasures': ARTIST_GIMMICKS[14],
+const EDITION_LINEUPS = {
+  'hidden-corners-01': [ARTIST_GIMMICKS[0], ARTIST_GIMMICKS[2], ARTIST_GIMMICKS[3], ARTIST_GIMMICKS[30]],
+  'time-warp-01': [ARTIST_GIMMICKS[6], ARTIST_GIMMICKS[1], ARTIST_GIMMICKS[2], ARTIST_GIMMICKS[5]],
+  'after-dark-01': [ARTIST_GIMMICKS[7], ARTIST_GIMMICKS[28], ARTIST_GIMMICKS[29], ARTIST_GIMMICKS[30]],
+  'iris-crowd-pleasers-01': [ARTIST_GIMMICKS[16], ARTIST_GIMMICKS[17], ARTIST_GIMMICKS[18], ARTIST_GIMMICKS[19]],
+  'nikki-full-throttle-01': [ARTIST_GIMMICKS[11], ARTIST_GIMMICKS[24], ARTIST_GIMMICKS[25], ARTIST_GIMMICKS[26]],
+  'guilty-pleasures': [ARTIST_GIMMICKS[20], ARTIST_GIMMICKS[21], ARTIST_GIMMICKS[22], ARTIST_GIMMICKS[23]],
 }
 const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
 const GAME_MODES = [
@@ -158,9 +173,9 @@ function GiftLanding({ gift, onSelect, onClose }) {
     return () => { active = false }
   }, [gift])
   const editionGrid = (editions, fallbackSubtitle) => <div className="edition-grid">{editions.map((edition, index) => {
-    const gimmick = EDITION_GIMMICKS[edition.id]
+    const lineup = EDITION_LINEUPS[edition.id] || []
     return <article key={edition.id || edition.name}>
-      <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}{gimmick && <span className="edition-gimmick"><img src={assetUrl(gimmick.image)} alt="" /></span>}<b>{String(index + 1).padStart(2, '0')}</b></div>
+      <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}{lineup.length > 0 && <span className="edition-lineup">{lineup.map((artist, artistIndex) => <img key={artist.image} src={assetUrl(artist.image)} alt="" style={{ '--i': artistIndex }} />)}</span>}<b>{String(index + 1).padStart(2, '0')}</b></div>
       <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
       <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
     </article>
