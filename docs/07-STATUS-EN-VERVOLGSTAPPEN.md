@@ -11,7 +11,8 @@
 - kaart-, bingo-, cover-, regel- en scoreprintables;
 - algemene editiecatalogus;
 - versleutelde persoonlijke cadeaupagina's met felicitatie en confetti;
-- 300 persoonlijke kaarten voor Iris en 300 voor Nikki;
+- 400 persoonlijke kaarten voor Iris en 300 voor Nikki;
+- vierkante speelkaarten met een eigen setkleur en genreaccenten;
 - één algemene editie;
 - persoonlijke A5-uitnodigingen, QR-codes en klikbare links in Documenten;
 - volledige QR-bundelgenerator;
@@ -19,7 +20,7 @@
 
 ## Nog nodig voor de definitieve QR-bundel
 
-De publieke Spotify Client ID moet één keer aan de QR-generator worden doorgegeven. Daarna kunnen de 700 definitieve speelkaartcodes — 300 voor Iris, 300 voor Nikki en 100 algemeen — plus de ZIP in Documenten worden gemaakt.
+De publieke Spotify Client ID moet één keer aan de QR-generator worden doorgegeven. Daarna kunnen de 800 definitieve speelkaartcodes — 400 voor Iris, 300 voor Nikki en 100 algemeen — plus de ZIP in Documenten worden gemaakt.
 
 ## Logische volgende productstappen
 

@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.11.0 — TRACKBACK'
+const APP_VERSION = '0.12.0 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
@@ -95,6 +95,15 @@ const BINGO_SPACES = [
 ]
 const shuffle = values => [...values].sort(() => Math.random() - .5)
 const answerKey = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
+const editionTheme = collection => {
+  const value = `${collection.id || ''} ${collection.name || ''}`.toLowerCase()
+  if (/hidden corners/.test(value)) return 'set-hidden'
+  if (/crooked|time.warp/.test(value)) return 'set-timeline'
+  if (/after dark/.test(value)) return 'set-after-dark'
+  if (/top 2000|greatest hits|crowd pleasers/.test(value)) return 'set-crowd'
+  if (/nikki|full throttle/.test(value)) return 'set-nikki'
+  return 'set-original'
+}
 
 function GiftLanding({ gift, onSelect, onClose }) {
   const [celebrating, setCelebrating] = useState(true)
@@ -366,6 +375,7 @@ function CardsPage({ collection }) {
   const [editionName, setEditionName] = useState(localStorage.getItem('timepop.edition-name') || collection.name || 'Guilty Pleasures')
   const [recipient, setRecipient] = useState(localStorage.getItem('timepop.recipient') || '')
   const clientId = getClientId()
+  const theme = editionTheme(collection)
   const playbackReady = collection.tracks.length > 0 && (Boolean(clientId) || collection.tracks.every(track => track.audioUrl))
   const [printMode, setPrintMode] = useState('cards')
   const [printBusy, setPrintBusy] = useState(false)
@@ -380,7 +390,7 @@ function CardsPage({ collection }) {
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     print(); setPrintBusy(false)
   }
-  return <main className={`page content-page cards-page print-${printMode}`}>
+  return <main className={`page content-page cards-page print-${printMode} ${theme}`}>
     <PageTitle eyebrow="Stap 3 van 3" title="Personaliseer & print" description="Vul de naam in en kies daarna alleen wat je nodig hebt" />
     <div className="print-controls no-print"><div><div className="edition-fields"><label><span>Editienaam</span><input value={editionName} onChange={event => saveEdition('timepop.edition-name', event.target.value, setEditionName)} placeholder="Guilty Pleasures" /></label><label><span>Cadeau voor (optioneel)</span><input value={recipient} onChange={event => saveEdition('timepop.recipient', event.target.value, setRecipient)} placeholder="Bijvoorbeeld Sophie" /></label></div><details className="advanced-print"><summary>Geavanceerd: adres van de play-app</summary><label><span>Play-app URL</span><input value={baseUrl} onChange={event => saveBase(event.target.value)} /></label></details></div><div className="print-buttons"><button className="primary-button" disabled={!playbackReady || printBusy} onClick={() => doPrint('cards')}><Printer /> {printBusy ? 'Print klaarmaken…' : `${collection.tracks.length} QR-kaarten`}</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('bingo')}><Grid3X3 /> Bingokaarten</button><button className="secondary-button" disabled={printBusy} onClick={() => doPrint('rules')}><FileText /> Cover, regels & score</button></div></div>
     <div className={`print-note no-print ${!playbackReady ? 'is-warning' : ''}`}><QrCode /><p>{playbackReady ? <><strong>Klaar om te printen.</strong> Iedere kaart bevat het nummer en opent direct in de play-app.</> : <><strong>Afspelen is nog niet ingesteld.</strong> Koppel eerst Spotify onder Importeren, of voeg eigen audio-URL's aan alle nummers toe.</>}</p></div>
@@ -388,7 +398,7 @@ function CardsPage({ collection }) {
     <div className="deck-preview">{collection.tracks.slice(0, 6).map((track, index) => <div className={`mini-card genre-${track.genre || 'pop'}`} key={track.id}><CardQr value={cardUrl(track)} size={190} /><span>KAART {String(index + 1).padStart(2, '0')}</span></div>)}</div>
     {printBusy && <div className="print-deck">{sheets.flatMap((sheet, sheetIndex) => [
       <section className="print-sheet fronts" key={`front-${sheetIndex}`}>{sheet.map((track, index) => <div className={`print-card card-front genre-${track.genre || 'pop'}`} key={track.id}><div className="card-brand"><Music2 /> TRACKBACK</div><div className="card-edition">{editionName || collection.name}</div><div className="card-qr-shell"><CardQr value={cardUrl(track)} size={360} /></div><strong>LISTEN · PLACE · REVEAL</strong><span>KAART {String(sheetIndex * 6 + index + 1).padStart(2, '0')}</span></div>)}</section>,
-      <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className="print-card card-back" key={track.id}><div className="back-brand">{editionName || collection.name}</div><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
+      <section className="print-sheet backs" key={`back-${sheetIndex}`}>{[...sheet].reduce((rows, item, i) => { const row = Math.floor(i / 2); (rows[row] ||= []).push(item); return rows }, []).flatMap(row => row.reverse()).map(track => <div className={`print-card card-back genre-${track.genre || 'pop'}`} key={track.id}><div className="back-brand">{editionName || collection.name}</div><span className="back-year">{track.year || '????'}</span><div><strong>{track.title}</strong><span>{track.artist}</span>{track.album && <small>{track.album}</small>}</div><Music2 /></div>)}</section>,
     ])}</div>}
     {printBusy && <div className="bingo-print-deck">{Array.from({ length: 6 }, (_, page) => <section className="bingo-print-page" key={page}>{bingoBoards.slice(page * 2, page * 2 + 2).map((board, index) => <div className="print-bingo-card" key={index}><header><div><Music2 /><strong>TRACKBACK</strong></div><span>MUZIEKBINGO · KAART {String(page * 2 + index + 1).padStart(2, '0')}</span></header><div className="print-bingo-grid">{board.map(([id, label]) => <span key={id}>{label}</span>)}</div><small>Een vak telt zodra de DJ het nummer onthult. Drie op een rij = BINGO!</small></div>)}</section>)}</div>}
     {printBusy && <div className="rules-print-deck">

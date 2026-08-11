@@ -1,16 +1,26 @@
 import { readFile, writeFile } from 'node:fs/promises'
 
 const irisEditions = JSON.parse(await readFile('.private/iris-three-editions-300.json', 'utf8'))
+const crowdSource = JSON.parse(await readFile('.private/iris-crowd-pleasers.json', 'utf8'))
 const nikkiEdition = JSON.parse(await readFile('.private/nikki-edition.json', 'utf8'))
+const crowdPleasers = {
+  ...crowdSource,
+  id: 'iris-crowd-pleasers-01',
+  name: 'Crowd Pleasers',
+  subtitle: 'De Top 2000-editie',
+  description: 'Honderd grote publieksfavorieten uit de top van de officiële NPO Radio 2 Top 2000 van 2025. Toegankelijker, herkenbaarder en ideaal om nieuwe spelers mee te laten beginnen.',
+  difficulty: 'easy',
+  tracks: crowdSource.tracks.map(track => ({ ...track, tags: [...new Set([...(track.tags || []), 'top-2000', 'toegankelijk'])] })),
+}
 
 const iris = {
   v: 3,
   recipient: 'Iris',
   title: 'Iris haar platenkast',
-  celebrationMessage: 'Een eigen TRACKBACK-spel met driehonderd nummers uit de verborgen hoeken van jouw muzikale wereld — speciaal voor jou gemaakt.',
-  message: 'Drie muzikale dwaalroutes van honderd kaarten door de verborgen hoeken van jouw Spotify-platenkast. Persoonlijk, eigenzinnig en expres niet te makkelijk.',
+  celebrationMessage: 'Een eigen TRACKBACK-spel met vierhonderd nummers: drie eigenzinnige dwaalroutes én een toegankelijke Top 2000-set — speciaal voor jou gemaakt.',
+  message: 'Vier muzikale routes van honderd kaarten: drie uitdagende reizen door jouw muzikale wereld en Crowd Pleasers vol grote hits om lekker laagdrempelig mee te beginnen.',
   taste: ['dreampop', 'psychedelische blues', 'vintage jazz', 'wereldmuziek', 'spiritueel'],
-  editions: irisEditions,
+  editions: [...irisEditions, crowdPleasers],
 }
 
 const nikki = {

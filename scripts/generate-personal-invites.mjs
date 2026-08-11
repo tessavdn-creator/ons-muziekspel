@@ -6,7 +6,7 @@ import QRCode from 'qrcode'
 const baseUrl = String(process.env.TRACKBACK_BASE_URL || 'https://tessavdn-creator.github.io/ons-muziekspel/').replace(/\/$/, '')
 const outputRoot = process.env.TRACKBACK_INVITE_OUTPUT || join(os.homedir(), 'Documents', 'TRACKBACK QR-codes', 'Persoonlijke edities')
 const gifts = [
-  { name: 'Iris', id: 'g-7n4p2d8k', keyFile: '.private/gifts/iris.key', title: 'Iris haar platenkast', subtitle: '3 persoonlijke edities · 300 kaarten' },
+  { name: 'Iris', id: 'g-7n4p2d8k', keyFile: '.private/gifts/iris.key', title: 'Iris haar platenkast', subtitle: '4 persoonlijke edities · 400 kaarten' },
   { name: 'Nikki', id: 'g-m8q4v2zk', keyFile: '.private/gifts/nikki.key', title: 'Full Throttle', subtitle: 'Nikki’s Auto Classics · 300 kaarten' },
 ]
 

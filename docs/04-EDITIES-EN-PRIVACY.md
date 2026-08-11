@@ -15,8 +15,9 @@ Iris heeft drie privé-edities:
 - **Hidden Corners** — 100 nummers;
 - **The Crooked Timeline** — 100 nummers;
 - **After Dark** — 100 nummers.
+- **Crowd Pleasers** — 100 toegankelijke publieksfavorieten uit de top van de officiële NPO Radio 2 Top 2000 van 2025.
 
-Samen vormen deze drie delen één volwaardig persoonlijk spel van 300 unieke kaarten.
+Samen vormen deze vier delen één persoonlijke bibliotheek van 400 unieke kaarten. De eerste drie zijn eigenzinniger en moeilijker; Crowd Pleasers is bewust laagdrempelig.
 
 De online cadeau-inhoud staat versleuteld in `public/gifts/g-7n4p2d8k.json`. De sleutel staat alleen in de persoonlijke QR/link. Zonder die sleutel kan de website het cadeau niet ontsleutelen.
 

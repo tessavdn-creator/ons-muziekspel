@@ -20,6 +20,7 @@ Het commando `npm run generate:qrs` maakt:
 - 100 kaarten voor Hidden Corners;
 - 100 kaarten voor The Crooked Timeline;
 - 100 kaarten voor After Dark;
+- 100 kaarten voor Crowd Pleasers;
 - 300 kaarten voor Nikki's Full Throttle;
 - 100 kaarten voor Guilty Pleasures;
 - Iris’ en Nikki's bibliotheek-QR;
@@ -43,6 +44,8 @@ De losse cadeau-uitnodigingen staan in `Documenten/TRACKBACK QR-codes/Persoonlij
 
 ## Printadvies
 
+- De speelkaarten zijn vierkant: 89 × 89 mm, zes kaarten per A4-vel.
+- Iedere persoonlijke set heeft een eigen basiskleur; genreaccenten maken rock, disco, electronic, soul, Nederlands en classics extra herkenbaar.
 - Print QR-codes met een volledig witte rand.
 - Laat de printer niet automatisch extreem verkleinen.
 - Test op zowel iPhone als Android als dat mogelijk is.
