@@ -48,6 +48,7 @@ const EDITION_GIMMICKS = {
   'hidden-corners-01': ARTIST_GIMMICKS[0],
   'time-warp-01': ARTIST_GIMMICKS[2],
   'after-dark-01': ARTIST_GIMMICKS[7],
+  'iris-crowd-pleasers-01': ARTIST_GIMMICKS[8],
 }
 const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
 const GAME_MODES = [
