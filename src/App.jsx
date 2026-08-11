@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.2 — TRACKBACK'
+const APP_VERSION = '0.13.3 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -44,24 +44,13 @@ const ARTIST_GIMMICKS = [
   { match: /britney spears/i, label: 'Britney Spears', image: 'assets/artists/retro/07-britney-spears.png', kind: 'Artiest' },
   { match: /daft punk/i, label: 'Daft Punk', image: 'assets/artists/retro/08-daft-punk.png', kind: 'Artiest' },
 ]
-const GENRE_GIMMICKS = {
-  pop: { label: 'Pop', image: 'assets/genres/pop.png', kind: 'Genre' },
-  rock: { label: 'Rock', image: 'assets/genres/rock.png', kind: 'Genre' },
-  soul: { label: 'Soul & blues', image: 'assets/genres/soul.png', kind: 'Genre' },
-  disco: { label: 'Disco', image: 'assets/genres/disco.png', kind: 'Genre' },
-  electronic: { label: 'Electronic', image: 'assets/genres/electronic.png', kind: 'Genre' },
-  nederlands: { label: 'Nederlands', image: 'assets/genres/nederlands.png', kind: 'Genre' },
-  classic: { label: 'Classic', image: 'assets/genres/classic.png', kind: 'Genre' },
-}
 const EDITION_GIMMICKS = {
   'hidden-corners-01': ARTIST_GIMMICKS[0],
   'time-warp-01': ARTIST_GIMMICKS[2],
   'after-dark-01': ARTIST_GIMMICKS[7],
   'iris-crowd-pleasers-01': ARTIST_GIMMICKS[8],
 }
-const genreGimmick = track => GENRE_GIMMICKS[track?.genre] || GENRE_GIMMICKS.pop
 const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
-const visualGimmick = track => artistGimmick(track) || genreGimmick(track)
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', type: 'favoriet', meta: '1–10 spelers · direct spelen', icon: Mic2, setup: 'Speel alleen, in teams of allemaal tegen elkaar. Spreek af wie het antwoord mag geven.', prompt: 'Vul je gok in of roep hem hardop. Onthul daarna pas het antwoord.', steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
@@ -179,7 +168,7 @@ function GiftLanding({ gift, onSelect, onClose }) {
       <div className="confetti" aria-hidden="true">{Array.from({ length: 36 }, (_, index) => <i key={index} style={{ '--i': index, '--x': `${(index * 29) % 100}%`, '--delay': `${(index % 11) * -.27}s`, '--duration': `${2.8 + (index % 7) * .25}s`, '--drift': `${index % 2 ? 25 : -20}px` }} />)}</div>
       <div className="celebration-glow" aria-hidden="true" />
       <div className="celebration-card">
-        <img className="celebration-character" src={assetUrl('assets/characters/skip-viert.png')} alt="" />
+        <img className="celebration-character" src={assetUrl(ARTIST_GIMMICKS[8].image)} alt="" />
         <span className="eyebrow">Een muzikale verrassing voor jou</span>
         <h1 id="gift-congratulations">Gefeliciteerd,<br />{gift.recipient}!</h1>
         <p>{gift.celebrationMessage || 'Je hebt je eigen TRACKBACK-editie gekregen. Een persoonlijk muziekspel, speciaal voor jou samengesteld.'}</p>
@@ -235,7 +224,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
-  const gimmick = visualGimmick(track)
+  const gimmick = artistGimmick(track)
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
@@ -277,8 +266,8 @@ function Player({ track, onBack, onNext, gameMode }) {
       {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
     </> : <>
-      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}<span className="visual-gimmick" title={gimmick.label}><img src={assetUrl(gimmick.image)} alt="" /></span><span className="year-stamp">{track.year || '????'}</span></div>
-      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}<span className="visual-credit"><Sparkles /> {gimmick.kind} · {gimmick.label}</span></div>
+      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}{gimmick && <span className="visual-gimmick" title={gimmick.label}><img src={assetUrl(gimmick.image)} alt="" /></span>}<span className="year-stamp">{track.year || '????'}</span></div>
+      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}{gimmick && <span className="visual-credit"><Sparkles /> {gimmick.kind} · {gimmick.label}</span>}</div>
       {gameMode === 'guess' && <div className="game-result guess-result"><strong>{Number(answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2) + Number(answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2)} / 2 punten</strong><span>Titel {answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2 ? '✓' : '✕'} · Artiest {answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2 ? '✓' : '✕'}</span></div>}
       {gameMode === 'bingo' && <BingoResult track={track} />}
       {gameMode === 'battle' && <BattleResult track={track} />}
