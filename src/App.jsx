@@ -23,8 +23,33 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.12.0 — TRACKBACK'
+const APP_VERSION = '0.13.0 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
+const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
+const ARTIST_GIMMICKS = [
+  { match: /little willie john/i, label: 'Little Willie John', image: 'assets/artists/iris/01-little-willie-john.png' },
+  { match: /paul rodgers|\bfree\b/i, label: 'Paul Rodgers · Free', image: 'assets/artists/iris/02-paul-rodgers-free.png' },
+  { match: /ry cooder/i, label: 'Ry Cooder', image: 'assets/artists/iris/03-ry-cooder.png' },
+  { match: /sidney bechet/i, label: 'Sidney Bechet', image: 'assets/artists/iris/04-sidney-bechet.png' },
+  { match: /alvin lee|ten years after/i, label: 'Alvin Lee · Ten Years After', image: 'assets/artists/iris/05-alvin-lee-ten-years-after.png' },
+  { match: /john mayall/i, label: 'John Mayall', image: 'assets/artists/iris/06-john-mayall.png' },
+  { match: /hildegard von bingen/i, label: 'Hildegard von Bingen', image: 'assets/artists/iris/07-hildegard-von-bingen.png' },
+  { match: /le trio joubran/i, label: 'Le Trio Joubran', image: 'assets/artists/iris/08-le-trio-joubran.png' },
+  { match: /elvis presley/i, label: 'Elvis Presley', image: 'assets/artists/retro/01-elvis-presley.png' },
+  { match: /aretha franklin/i, label: 'Aretha Franklin', image: 'assets/artists/retro/02-aretha-franklin.png' },
+  { match: /diana ross/i, label: 'Diana Ross', image: 'assets/artists/retro/03-diana-ross.png' },
+  { match: /david bowie/i, label: 'David Bowie', image: 'assets/artists/retro/04-david-bowie.png' },
+  { match: /michael jackson/i, label: 'Michael Jackson', image: 'assets/artists/retro/05-michael-jackson.png' },
+  { match: /kurt cobain|nirvana/i, label: 'Kurt Cobain · Nirvana', image: 'assets/artists/retro/06-kurt-cobain.png' },
+  { match: /britney spears/i, label: 'Britney Spears', image: 'assets/artists/retro/07-britney-spears.png' },
+  { match: /daft punk/i, label: 'Daft Punk', image: 'assets/artists/retro/08-daft-punk.png' },
+]
+const EDITION_GIMMICKS = {
+  'hidden-corners-01': ARTIST_GIMMICKS[0],
+  'time-warp-01': ARTIST_GIMMICKS[2],
+  'after-dark-01': ARTIST_GIMMICKS[7],
+}
+const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
 const GAME_MODES = [
   { id: 'timeline', name: 'Tijdlijn', text: 'Leg de hit op de juiste plek in de tijd.', type: 'favoriet', meta: '2–10 spelers · ±30 min', icon: Clock3, setup: 'Geef iedere speler één kaart met het jaartal zichtbaar als start van de tijdlijn.', prompt: 'Leg de kaart eerst in je tijdlijn. Onthul pas als iedereen heeft gekozen.', steps: ['Scan en speel de verborgen hit', 'Leg de kaart vóór, na of tussen je eerdere hits', 'Onthul het jaar en controleer de plek'], score: 'Goed geplaatst? Houd de kaart. De eerste met 10 kaarten wint.' },
   { id: 'guess', name: 'Raad de hit', text: 'Noem titel en artiest voordat je onthult.', type: 'favoriet', meta: '1–10 spelers · direct spelen', icon: Mic2, setup: 'Speel alleen, in teams of allemaal tegen elkaar. Spreek af wie het antwoord mag geven.', prompt: 'Vul je gok in of roep hem hardop. Onthul daarna pas het antwoord.', steps: ['Scan en luister zonder naar de kaart te kijken', 'Vul titel en artiest in', 'Onthul het antwoord en tel de punten'], score: '1 punt voor de titel + 1 punt voor de artiest.' },
@@ -129,17 +154,20 @@ function GiftLanding({ gift, onSelect, onClose }) {
     loadCatalog()
     return () => { active = false }
   }, [gift])
-  const editionGrid = (editions, fallbackSubtitle) => <div className="edition-grid">{editions.map((edition, index) => <article key={edition.id || edition.name}>
-    <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}<b>{String(index + 1).padStart(2, '0')}</b></div>
-    <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
-    <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
-  </article>)}</div>
+  const editionGrid = (editions, fallbackSubtitle) => <div className="edition-grid">{editions.map((edition, index) => {
+    const gimmick = EDITION_GIMMICKS[edition.id]
+    return <article key={edition.id || edition.name}>
+      <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}{gimmick && <span className="edition-gimmick"><img src={assetUrl(gimmick.image)} alt="" /></span>}<b>{String(index + 1).padStart(2, '0')}</b></div>
+      <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
+      <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
+    </article>
+  })}</div>
   return <main className="gift-landing">
     {celebrating && <section className="gift-celebration" role="dialog" aria-modal="true" aria-labelledby="gift-congratulations">
       <div className="confetti" aria-hidden="true">{Array.from({ length: 36 }, (_, index) => <i key={index} style={{ '--i': index, '--x': `${(index * 29) % 100}%`, '--delay': `${(index % 11) * -.27}s`, '--duration': `${2.8 + (index % 7) * .25}s`, '--drift': `${index % 2 ? 25 : -20}px` }} />)}</div>
       <div className="celebration-glow" aria-hidden="true" />
       <div className="celebration-card">
-        <div className="celebration-icon"><Gift /></div>
+        <img className="celebration-character" src={assetUrl('assets/characters/skip-viert.png')} alt="" />
         <span className="eyebrow">Een muzikale verrassing voor jou</span>
         <h1 id="gift-congratulations">Gefeliciteerd,<br />{gift.recipient}!</h1>
         <p>{gift.celebrationMessage || 'Je hebt je eigen TRACKBACK-editie gekregen. Een persoonlijk muziekspel, speciaal voor jou samengesteld.'}</p>
@@ -195,6 +223,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
+  const gimmick = artistGimmick(track)
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
@@ -236,8 +265,8 @@ function Player({ track, onBack, onNext, gameMode }) {
       {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
     </> : <>
-      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{track.year || '????'}</span></div>
-      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}</div>
+      <div className="reveal-art">{track.image ? <img src={track.image} alt="" /> : <div><Music2 /></div>}{gimmick && <span className="artist-gimmick" title={gimmick.label}><img src={assetUrl(gimmick.image)} alt="" /></span>}<span className="year-stamp">{track.year || '????'}</span></div>
+      <div className="reveal-copy"><span className="eyebrow">Het was…</span><h1>{track.title}</h1><p>{track.artist}</p>{track.album && <small>{track.album}</small>}{gimmick && <span className="gimmick-credit"><Sparkles /> TRACKBACK-icoon · {gimmick.label}</span>}</div>
       {gameMode === 'guess' && <div className="game-result guess-result"><strong>{Number(answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2) + Number(answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2)} / 2 punten</strong><span>Titel {answerKey(track.title).includes(answerKey(titleGuess)) && titleGuess.length > 2 ? '✓' : '✕'} · Artiest {answerKey(track.artist).includes(answerKey(artistGuess)) && artistGuess.length > 2 ? '✓' : '✕'}</span></div>}
       {gameMode === 'bingo' && <BingoResult track={track} />}
       {gameMode === 'battle' && <BattleResult track={track} />}
