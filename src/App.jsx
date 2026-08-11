@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.3 — TRACKBACK'
+const APP_VERSION = '0.13.4 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -49,6 +49,8 @@ const EDITION_GIMMICKS = {
   'time-warp-01': ARTIST_GIMMICKS[2],
   'after-dark-01': ARTIST_GIMMICKS[7],
   'iris-crowd-pleasers-01': ARTIST_GIMMICKS[8],
+  'nikki-full-throttle-01': ARTIST_GIMMICKS[11],
+  'guilty-pleasures': ARTIST_GIMMICKS[14],
 }
 const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
 const GAME_MODES = [
