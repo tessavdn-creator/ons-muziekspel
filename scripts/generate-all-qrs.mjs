@@ -16,7 +16,7 @@ const giftSpecs = [
   { id: 'g-m8q4v2zk', recipient: 'Nikki', keyFile: '.private/gifts/nikki.key', environmentKey: 'NIKKI_GIFT_KEY' },
 ]
 
-if (!/^[A-Za-z0-9]{10,80}$/.test(clientId)) throw new Error('SPOTIFY_CLIENT_ID ontbreekt of lijkt niet geldig.')
+if (!/^[A-Za-z0-9]{32}$/.test(clientId)) throw new Error('SPOTIFY_CLIENT_ID moet exact 32 letters en/of cijfers bevatten.')
 
 const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 13).replace('T', '-')
 const output = customOutput ? path.resolve(customOutput) : path.join(os.homedir(), 'Documents', 'TRACKBACK QR-codes', `trackback-qr-bundle-${stamp}`)
