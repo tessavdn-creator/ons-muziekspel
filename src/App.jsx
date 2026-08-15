@@ -13,7 +13,7 @@ import {
 } from './lib/collection.js'
 import {
   activateSpotifyElement, finishSpotifyLogin, getClientId, hasSpotifySession,
-  importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
+  importPlaylist, loginSpotify, pauseSpotify, playSpotify, prepareSpotifyPlayer, setClientId,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 
@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.7 — TRACKBACK'
+const APP_VERSION = '0.14.0 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -240,16 +240,37 @@ function BattleResult({ track }) {
 function Player({ track, onBack, onNext, gameMode }) {
   const [revealed, setRevealed] = useState(false)
   const [playing, setPlaying] = useState(false)
-  const [message, setMessage] = useState('Klaar om af te spelen')
+  const spotifyTrack = Boolean(!track.audioUrl && track.spotifyUri)
+  const [spotifyReady, setSpotifyReady] = useState(!spotifyTrack || !hasSpotifySession())
+  const [spotifyPreparing, setSpotifyPreparing] = useState(false)
+  const [message, setMessage] = useState(spotifyTrack && !hasSpotifySession() ? 'Koppel Spotify één keer om te luisteren' : 'Klaar om af te spelen')
   const [titleGuess, setTitleGuess] = useState('')
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
   const gimmick = artistGimmick(track)
+  useEffect(() => {
+    if (!spotifyTrack || !hasSpotifySession()) return undefined
+    let active = true
+    setSpotifyPreparing(true)
+    setSpotifyReady(false)
+    setMessage('Spotify-speler wordt klaargezet…')
+    prepareSpotifyPlayer(state => {
+      if (!active) return
+      if (state?.error) { setMessage(state.error); setSpotifyPreparing(false); setSpotifyReady(false); setPlaying(false) }
+      else if (state?.ready) { setMessage('Klaar om af te spelen'); setSpotifyPreparing(false); setSpotifyReady(true) }
+      else if (typeof state?.paused === 'boolean') setPlaying(!state.paused)
+    }).then(() => {
+      if (active) { setSpotifyPreparing(false); setSpotifyReady(true); setMessage('Klaar om af te spelen') }
+    }).catch(error => {
+      if (active) { setSpotifyPreparing(false); setSpotifyReady(false); setMessage(error.message) }
+    })
+    return () => { active = false }
+  }, [track?.id, spotifyTrack])
   useEffect(() => () => { audioRef.current?.pause(); pauseSpotify().catch(() => {}) }, [track?.id])
 
   const start = async () => {
-    activateSpotifyElement()?.catch(() => {})
+    const activation = activateSpotifyElement()
     try {
       setMessage('Muziek wordt gestart…')
       if (track.audioUrl) {
@@ -257,6 +278,15 @@ function Player({ track, onBack, onNext, gameMode }) {
         audioRef.current.addEventListener('ended', () => setPlaying(false))
         await audioRef.current.play()
       } else if (track.spotifyUri && hasSpotifySession()) {
+        if (spotifyPreparing) throw new Error('Spotify is nog aan het opstarten. Probeer het over een paar seconden opnieuw.')
+        if (!spotifyReady) {
+          setSpotifyPreparing(true)
+          await prepareSpotifyPlayer(state => state?.error && setMessage(state.error))
+          setSpotifyPreparing(false)
+          setSpotifyReady(true)
+        }
+        const activeElement = activation || activateSpotifyElement()
+        if (activeElement) await activeElement
         await playSpotify(track.spotifyUri, state => state?.error && setMessage(state.error))
       } else if (track.spotifyUri) {
         if (!getClientId()) throw new Error('Scan eerst een geprinte TRACKBACK-kaart om deze telefoon met Spotify in te stellen.')
@@ -267,7 +297,7 @@ function Player({ track, onBack, onNext, gameMode }) {
       } else throw new Error('Deze kaart heeft nog geen interne afspeelbron.')
       setPlaying(true)
       if (track.audioUrl || hasSpotifySession()) setMessage('Nu aan het spelen')
-    } catch (error) { setMessage(error.message); setPlaying(false) }
+    } catch (error) { setMessage(error.message); setSpotifyPreparing(false); setPlaying(false) }
   }
   const pause = async () => {
     audioRef.current?.pause()
@@ -282,7 +312,7 @@ function Player({ track, onBack, onNext, gameMode }) {
     {!revealed ? <>
       <div className="secret-art"><div className="record"><Music2 /><span /></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></div>
       <div className="secret-copy"><span className="eyebrow">Geheim nummer</span><h1>Luister goed…</h1><p>{message}</p></div>
-      <button className="play-or-pause" onClick={playing ? pause : start} aria-label={playing ? 'Muziek pauzeren' : 'Muziek afspelen'}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
+      <button className="play-or-pause" disabled={spotifyPreparing} onClick={playing ? pause : start} aria-label={playing ? 'Muziek pauzeren' : hasSpotifySession() ? 'Muziek afspelen' : 'Spotify koppelen en muziek afspelen'}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
       <p className="round-prompt"><activeGame.icon /> {activeGame.prompt}</p>
       {gameMode === 'guess' && <div className="guess-fields"><input value={titleGuess} onChange={event => setTitleGuess(event.target.value)} placeholder="Titel…" /><input value={artistGuess} onChange={event => setArtistGuess(event.target.value)} placeholder="Artiest…" /></div>}
       <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles /> Onthul het nummer</button>
@@ -360,9 +390,9 @@ function TrackEditor({ initial, onSave, onCancel }) {
 }
 
 function StudioHome({ collection, setTab }) {
-  const hasClient = Boolean(getClientId())
+  const spotifyConnected = hasSpotifySession()
   const steps = [
-    { number: '01', title: 'Koppel & importeer', text: hasClient ? 'Spotify staat klaar. Importeer een playlist of vervang de huidige.' : 'Begin met je Client ID en een Spotify-playlist.', icon: Import, action: hasClient ? 'Playlist importeren' : 'Spotify instellen', tab: 'settings', done: hasClient },
+    { number: '01', title: 'Koppel & importeer', text: spotifyConnected ? 'Spotify staat klaar. Importeer een playlist of vervang de huidige.' : 'Koppel één keer Spotify; TRACKBACK is al technisch ingesteld.', icon: Import, action: spotifyConnected ? 'Playlist importeren' : 'Spotify koppelen', tab: 'settings', done: spotifyConnected },
     { number: '02', title: 'Controleer de muziek', text: `${collection.name} · ${collection.tracks.length} nummers. Check vooral titels en jaartallen.`, icon: Music2, action: 'Nummers controleren', tab: 'collection', done: collection.tracks.length > 3 },
     { number: '03', title: 'Personaliseer & print', text: 'Geef de editie een naam en print kaarten, regels en scorebladen.', icon: Printer, action: 'Naar de printstudio', tab: 'cards', done: Boolean(localStorage.getItem('timepop.recipient')) },
   ]
@@ -469,7 +499,6 @@ function SettingsPage({ collection, setCollection }) {
   const [status, setStatus] = useState(hasSpotifySession() ? 'Spotify is verbonden.' : '')
   const [busy, setBusy] = useState(false)
   const connect = async () => {
-    if (!client.trim()) { setStatus('Vul eerst je Spotify Client ID in.'); return }
     try { setClientId(client); setStatus('Spotify-login wordt geopend…'); await loginSpotify() }
     catch (error) { setStatus(error.message) }
   }
@@ -480,7 +509,7 @@ function SettingsPage({ collection, setCollection }) {
   }
   return <main className="page content-page settings-page">
     <PageTitle eyebrow="Stap 1 van 3" title="Koppel & importeer" description="Dit stel je één keer in; daarna kun je steeds nieuwe playlists omzetten naar een spel" />
-    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Eenmalige instelling</span><h2>{hasSpotifySession() ? 'Spotify is verbonden' : 'Spotify koppelen'}</h2><p>Plak de Client ID uit jouw Spotify Developer Dashboard. Een Client ID is openbaar en mag in de QR-kaarten staan; gebruik hier nooit een Client Secret.</p><details className="setup-help"><summary>Welke Redirect URI moet ik instellen?</summary><p>Voeg in het Spotify Developer Dashboard exact dit adres toe:</p><code>{`${location.origin}${location.pathname}`}</code></details><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} placeholder="Bijvoorbeeld 1a2b3c…" /></label><button className="spotify-button" disabled={!client.trim()} onClick={connect}>{hasSpotifySession() ? 'Spotify opnieuw koppelen' : 'Verbinden met Spotify'} <ExternalLink /></button></div></section>
+    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Eenmalig op deze telefoon</span><h2>{hasSpotifySession() ? 'Spotify is verbonden' : 'Spotify koppelen'}</h2><p>TRACKBACK is al ingesteld. Log alleen in met het Spotify Premium-account waarmee je tijdens het spel wilt luisteren.</p><button className="spotify-button" onClick={connect}>{hasSpotifySession() ? 'Spotify opnieuw koppelen' : 'Koppel Spotify'} <ExternalLink /></button><details className="setup-help"><summary>Geavanceerd: andere Spotify Developer-app</summary><p>Alleen voor beheer: pas hier eventueel de Client ID aan en registreer exact deze Redirect URI.</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} /></label></details></div></section>
     <section className="settings-card import-card"><div className="settings-icon"><Import /></div><div className="settings-body"><span className="eyebrow">Maak een nieuwe editie</span><h2>Playlist importeren</h2><p>Plak een Spotify-playlistlink. De huidige muziekcollectie wordt na jouw bevestiging vervangen door de geïmporteerde playlist.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={() => (!collection.tracks.length || confirm(`‘${collection.name}’ vervangen door deze Spotify-playlist?`)) && doImport()}><Import /> {busy ? 'Playlist ophalen…' : 'Importeer hele playlist'}</button>{!hasSpotifySession() ? <small className="field-help">Koppel hierboven eerst Spotify om te kunnen importeren.</small> : <small className="field-help">Spotify laat momenteel alleen playlists van jezelf of playlists waaraan je meewerkt volledig importeren.</small>}</div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
     <details className="technical-details"><summary><Settings /> Testgebruikers, limieten & techniek</summary><section className="settings-card"><div className="settings-icon"><UserPlus /></div><div className="settings-body"><h2>Vrienden toelaten</h2><p>Voor een gezellige avond is één DJ-telefoon het eenvoudigst. De eigenaar van de Spotify-app heeft Premium nodig. Wil iemand toch op zijn eigen Spotify-account afspelen? Voeg die persoon dan in het Spotify Developer Dashboard toe via <strong>Settings → Users Management</strong>. Development Mode ondersteunt maximaal vijf Spotify-gebruikers.</p></div></section><section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Prototype en muziekrechten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify staat games met Spotify-content niet toe zonder afzonderlijke schriftelijke toestemming. Voor een volwaardige openbare app is daarom een productiegeschikte, rechtmatig gelicentieerde audiobron nodig.</p><small>Versie {APP_VERSION}</small></div></section></details>

@@ -25,9 +25,12 @@ export const setClientId = id => {
 }
 export const getToken = () => {
   const token = readToken()
-  return token.expiresAt > Date.now() + 30000 ? token.accessToken : ''
+  return token.clientId === getClientId() && token.expiresAt > Date.now() + 30000 ? token.accessToken : ''
 }
-export const hasSpotifySession = () => Boolean(getToken() || readToken().refreshToken)
+export const hasSpotifySession = () => {
+  const token = readToken()
+  return token.clientId === getClientId() && Boolean(getToken() || token.refreshToken)
+}
 
 async function getAccessToken() {
   const current = getToken()
@@ -73,6 +76,8 @@ export async function loginSpotify() {
   sessionStorage.setItem(OAUTH_CLIENT_KEY, clientId)
   sessionStorage.setItem(RETURN_HASH_KEY, location.hash === '#admin' ? '#admin' : '#play')
   const redirectUri = `${location.origin}${location.pathname}`
+  const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state']
+  if (location.hash === '#admin') scopes.push('playlist-read-private')
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
@@ -80,7 +85,7 @@ export async function loginSpotify() {
     code_challenge_method: 'S256',
     code_challenge: challenge,
     state,
-    scope: 'playlist-read-private streaming user-read-email user-read-private user-modify-playback-state',
+    scope: scopes.join(' '),
   })
   location.href = `https://accounts.spotify.com/authorize?${params}`
 }
@@ -205,45 +210,85 @@ export async function importPlaylist(value) {
 
 let player
 let deviceId
-export async function connectPlayer(onState) {
-  await getAccessToken()
-  if (!window.Spotify) {
-    await new Promise((resolve, reject) => {
-      window.onSpotifyWebPlaybackSDKReady = resolve
-      const script = document.createElement('script')
-      script.src = 'https://sdk.scdn.co/spotify-player.js'
-      script.onerror = () => reject(new Error('Spotify-speler kon niet laden.'))
-      document.head.appendChild(script)
+let sdkPromise
+let connectPromise
+let activationPromise
+let stateReporter
+
+const friendlyPlayerError = message => {
+  if (/premium|account/i.test(message || '')) return 'Voor afspelen is een toegestaan Spotify Premium-account nodig.'
+  if (/auth|token/i.test(message || '')) return 'De Spotify-koppeling is verlopen. Verbind Spotify opnieuw.'
+  return message || 'Spotify kon dit nummer niet afspelen.'
+}
+
+async function loadSpotifySdk() {
+  if (window.Spotify) return window.Spotify
+  if (!sdkPromise) {
+    sdkPromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Spotify-speler laden duurt te lang. Controleer je internetverbinding.')), 15000)
+      window.onSpotifyWebPlaybackSDKReady = () => { clearTimeout(timeout); resolve(window.Spotify) }
+      let script = document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')
+      if (!script) {
+        script = document.createElement('script')
+        script.src = 'https://sdk.scdn.co/spotify-player.js'
+        script.async = true
+        document.head.appendChild(script)
+      }
+      script.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('Spotify-speler kon niet laden.')) }, { once: true })
     })
   }
-  if (!player) {
-    player = new window.Spotify.Player({
-      name: 'TRACKBACK',
-      getOAuthToken: callback => getAccessToken().then(callback).catch(error => onState?.({ error: error.message })),
-      volume: 0.8,
-    })
-    player.addListener('ready', event => { deviceId = event.device_id })
-    player.addListener('player_state_changed', state => onState?.(state))
-    player.addListener('authentication_error', event => onState?.({ error: event.message }))
-    player.addListener('account_error', event => onState?.({ error: event.message }))
-    player.addListener('initialization_error', event => onState?.({ error: event.message }))
-    player.addListener('playback_error', event => onState?.({ error: event.message }))
-    const connected = await player.connect()
-    if (!connected) throw new Error('Spotify-speler kon geen verbinding maken.')
-  }
-  await player.activateElement()
-  for (let tries = 0; !deviceId && tries < 20; tries += 1) await new Promise(resolve => setTimeout(resolve, 150))
-  if (!deviceId) throw new Error('Spotify-speler werd niet op tijd actief.')
+  return sdkPromise
+}
+
+const waitForDevice = async () => {
+  for (let tries = 0; !deviceId && tries < 100; tries += 1) await new Promise(resolve => setTimeout(resolve, 150))
+  if (!deviceId) throw new Error('Spotify reageert niet. Sluit andere Spotify-tabbladen en probeer opnieuw.')
   return deviceId
 }
 
+export async function prepareSpotifyPlayer(onState) {
+  stateReporter = onState || stateReporter
+  await getAccessToken()
+  await loadSpotifySdk()
+  if (!player) {
+    player = new window.Spotify.Player({
+      name: 'TRACKBACK',
+      getOAuthToken: callback => getAccessToken().then(callback).catch(error => stateReporter?.({ error: error.message })),
+      volume: 0.8,
+    })
+    player.addListener('ready', event => { deviceId = event.device_id; stateReporter?.({ ready: true }) })
+    player.addListener('not_ready', () => { deviceId = undefined; stateReporter?.({ error: 'Spotify is even niet bereikbaar. Probeer opnieuw.' }) })
+    player.addListener('player_state_changed', state => stateReporter?.(state))
+    const reportError = event => stateReporter?.({ error: friendlyPlayerError(event.message) })
+    player.addListener('authentication_error', reportError)
+    player.addListener('account_error', reportError)
+    player.addListener('initialization_error', reportError)
+    player.addListener('playback_error', reportError)
+  }
+  if (!connectPromise) {
+    connectPromise = player.connect().then(connected => {
+      if (!connected) throw new Error('Spotify-speler kon geen verbinding maken.')
+      return connected
+    }).catch(error => { connectPromise = undefined; throw error })
+  }
+  await connectPromise
+  return waitForDevice()
+}
+
 export function activateSpotifyElement() {
-  return player?.activateElement()
+  if (!player) return null
+  activationPromise = player.activateElement()
+  return activationPromise
 }
 
 export async function playSpotify(uri, onState) {
-  const id = await connectPlayer(onState)
-  await spotifyFetch(`/me/player/play?device_id=${id}`, { method: 'PUT', body: JSON.stringify({ uris: [uri] }) })
+  const id = await prepareSpotifyPlayer(onState)
+  if (activationPromise) await activationPromise
+  else await player.activateElement()
+  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ uris: [uri] }) })
+  await new Promise(resolve => setTimeout(resolve, 350))
+  const state = await player.getCurrentState().catch(() => null)
+  if (state?.paused) await player.resume()
 }
 
 export async function pauseSpotify() {

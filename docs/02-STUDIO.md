@@ -5,10 +5,11 @@ De Studio heeft drie stappen.
 ## 1. Koppel en importeer
 
 1. Open **Importeren**.
-2. Plak de publieke Spotify Client ID.
-3. Controleer of de getoonde Redirect URI exact in het Spotify Developer Dashboard staat.
-4. Kies **Verbinden met Spotify**.
-5. Plak een Spotify-playlistlink en kies **Importeer hele playlist**.
+2. Kies **Koppel Spotify**; de Client ID staat al ingesteld.
+3. Log in met het Spotify Premium-account van de DJ-telefoon.
+4. Plak een Spotify-playlistlink en kies **Importeer hele playlist**.
+
+De Client ID en Redirect URI staan alleen nog onder de geavanceerde beheerinstellingen en zijn niet nodig voor normaal gebruik.
 
 Door de huidige Spotify-beperking werkt volledige playlistimport voor playlists waarvan het gekoppelde account eigenaar of collaborator is.
 
@@ -42,4 +43,3 @@ Print altijd eerst één testvel. Controleer QR-formaat, dubbelzijdige uitlijnin
 ## Handmatig nummer toevoegen
 
 Onder **Muziek → Nummer** kunnen titel, artiest, jaar, album, genre, Spotify-link en een eigen audio-URL worden ingevuld. Minimaal titel en artiest zijn verplicht.
-

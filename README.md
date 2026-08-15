@@ -31,13 +31,12 @@ Per nummer kan in Studio een genrethema worden gekozen: pop, disco, rock, electr
 
 ## Spotify-prototype
 
-1. Maak in het Spotify Developer Dashboard een app aan.
-2. Voeg de Redirect URI toe die onder **Instellen** wordt getoond.
-3. Plak de Client ID, verbind Spotify en importeer een playlist waarvan je eigenaar/collaborator bent.
-4. Een Premium-account is nodig voor playback in de webapp.
-5. Voeg iedere vriend in het Developer Dashboard toe via **Settings → Users Management**. Development Mode ondersteunt maximaal vijf toegelaten Spotify-gebruikers.
+1. TRACKBACK is vooraf ingesteld met de publieke Client ID.
+2. Kies **Koppel Spotify** en log één keer in met een toegestaan Premium-account.
+3. Importeer in Studio eventueel een playlist waarvan je eigenaar/collaborator bent.
+4. Voeg iedere extra DJ in het Developer Dashboard toe via **Settings → Users Management**. Development Mode ondersteunt maximaal vijf toegelaten Spotify-gebruikers.
 
-Plak nooit handmatig een access token of Client Secret in de app of broncode. De browser gebruikt Authorization Code met PKCE, bewaart de refresh token lokaal en vernieuwt access tokens automatisch. Spotify vraagt na het verlopen of intrekken van de koppeling opnieuw om toestemming.
+Een speler hoeft nooit een Client ID, verificatiecode, access token of Client Secret in te vullen. De browser gebruikt Authorization Code met PKCE, bewaart de refresh token lokaal en vernieuwt access tokens automatisch. Spotify vraagt na het verlopen of intrekken van de koppeling opnieuw om toestemming.
 
 De Spotify-adapter is een privé technisch prototype. De actuele Spotify-policy verbiedt muziektrivia en vereist bij streaming zichtbare metadata. Gebruik dit niet als publiek of commercieel Spotify-product zonder afzonderlijke toestemming.
 

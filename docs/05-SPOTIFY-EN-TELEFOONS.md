@@ -16,11 +16,12 @@ Dit is de eenvoudigste opzet en voorkomt dat Spotify-testplaatsen onnodig bezet 
 
 De app gebruikt Authorization Code met PKCE. Tokens worden alleen lokaal in de browser van het gekoppelde toestel opgeslagen.
 
+Deze Spotify-controle is voor volledige nummers verplicht. TRACKBACK handelt de PKCE-code volledig onzichtbaar af: de speler kiest alleen **Koppel Spotify**, logt bij Spotify in en keert terug naar het spel. Er hoeft nergens een Client ID of verificatiecode te worden overgetypt.
+
 ## Nieuwe telefoon
 
-Een definitief geprinte TRACKBACK-kaart neemt de publieke Client ID mee. Bij de eerste afspeelpoging opent Spotify de veilige inlogpagina. Daarna kan dezelfde telefoon volgende kaarten afspelen zolang de toestemming geldig is.
+Een definitief geprinte TRACKBACK-kaart neemt de publieke Client ID mee. Bij de eerste afspeelpoging opent Spotify de veilige inlogpagina. Daarna zet TRACKBACK de mobiele browserplayer vooraf klaar en activeert de playknop het geluid rechtstreeks. Dezelfde telefoon kan volgende kaarten afspelen zolang de toestemming geldig is.
 
 ## Beperking voor een volwaardige app
 
 Spotify staat games en muziekquizzen met Spotify-content niet toe zonder schriftelijke toestemming. De huidige Spotify-adapter is daarom alleen geschikt als privé technisch prototype. Voor openbare of commerciële publicatie is een andere, rechtmatig gelicentieerde audiobron of expliciete toestemming nodig.
-
