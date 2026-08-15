@@ -5,7 +5,7 @@
 1. Kies op de playpagina een spelvorm. **Tijdlijn** staat standaard geselecteerd.
 2. Tik op **Scan een kaart**.
 3. Geef cameratoegang en houd de volledige QR-code rustig in beeld.
-4. Tik op afspelen. Titel, artiest en jaar blijven verborgen.
+4. Het nummer start na de scan automatisch. Titel, artiest en jaar blijven verborgen.
 5. Voer de opdracht van de gekozen spelvorm uit.
 6. Tik op **Onthul het nummer**.
 7. Tik op **Scan volgende kaart** voor de volgende ronde.
@@ -44,4 +44,3 @@ Werkt de camera niet goed, kies dan **Scan vanuit foto** en gebruik een scherpe 
 - De laatste kampioen wint de avond.
 
 Alle vier spelvormen gebruiken dezelfde QR-kaarten. Er hoeven dus geen aparte kaartensets per spel te worden geprint.
-

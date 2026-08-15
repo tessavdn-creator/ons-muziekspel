@@ -22,6 +22,8 @@ Deze Spotify-controle is voor volledige nummers verplicht. TRACKBACK handelt de 
 
 Een definitief geprinte TRACKBACK-kaart neemt de publieke Client ID mee. Bij de eerste afspeelpoging opent Spotify de veilige inlogpagina. Daarna zet TRACKBACK de mobiele browserplayer vooraf klaar en activeert de playknop het geluid rechtstreeks. Dezelfde telefoon kan volgende kaarten afspelen zolang de toestemming geldig is.
 
+Bij gebruik van de scanner ín TRACKBACK activeert de knop **Scan een kaart** meteen de browserplayer. Zodra de QR is herkend start het nummer automatisch. Alleen na de allereerste Spotify-login kan een extra playtik nodig zijn, omdat mobiele browsers een gebruikersactivatie niet over een externe inlogpagina heen bewaren.
+
 ## Beperking voor een volwaardige app
 
 Spotify staat games en muziekquizzen met Spotify-content niet toe zonder schriftelijke toestemming. De huidige Spotify-adapter is daarom alleen geschikt als privé technisch prototype. Voor openbare of commerciële publicatie is een andere, rechtmatig gelicentieerde audiobron of expliciete toestemming nodig.

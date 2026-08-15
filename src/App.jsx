@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.14.0 — TRACKBACK'
+const APP_VERSION = '0.14.1 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -237,7 +237,7 @@ function BattleResult({ track }) {
   return <div className="game-result"><div className="result-heading"><Trophy /><strong>Wie gaat door?</strong><button onClick={reset}>Opnieuw</button></div><div className="battle-buttons"><button onClick={() => choose(champion)}><small>Kampioen</small>{champion.title}<span>{champion.artist}</span></button><b>VS</b><button onClick={() => choose(track)}><small>Uitdager</small>{track.title}<span>{track.artist}</span></button></div></div>
 }
 
-function Player({ track, onBack, onNext, gameMode }) {
+function Player({ track, onBack, onNext, gameMode, autoPlay = false }) {
   const [revealed, setRevealed] = useState(false)
   const [playing, setPlaying] = useState(false)
   const spotifyTrack = Boolean(!track.audioUrl && track.spotifyUri)
@@ -247,6 +247,7 @@ function Player({ track, onBack, onNext, gameMode }) {
   const [titleGuess, setTitleGuess] = useState('')
   const [artistGuess, setArtistGuess] = useState('')
   const audioRef = useRef(null)
+  const autoStarted = useRef(false)
   const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
   const gimmick = artistGimmick(track)
   useEffect(() => {
@@ -304,6 +305,13 @@ function Player({ track, onBack, onNext, gameMode }) {
     await pauseSpotify().catch(() => {})
     setPlaying(false); setMessage('Gepauzeerd')
   }
+  useEffect(() => {
+    if (!autoPlay || autoStarted.current) return
+    const canStart = Boolean(track.audioUrl || (spotifyTrack && hasSpotifySession() && spotifyReady && !spotifyPreparing))
+    if (!canStart) return
+    autoStarted.current = true
+    start()
+  }, [autoPlay, spotifyReady, spotifyPreparing, track?.id])
   return <main className={`player-screen theme-${track.genre || 'pop'} ${revealed ? 'is-revealed' : ''}`}>
     <header className="player-header">
       <button className="round-button" onClick={onBack} aria-label="Terug naar scannen"><ArrowLeft /></button>
@@ -336,11 +344,15 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
     : GAME_MODES
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
+  const [scanPlayerReady, setScanPlayerReady] = useState(!hasSpotifySession())
   const [showAlternatives, setShowAlternatives] = useState(availableGames.length > 1 && gameMode !== 'timeline')
   const [showRules, setShowRules] = useState(false)
   const activeGame = availableGames.find(game => game.id === gameMode) || availableGames[0] || GAME_MODES[0]
   const practiceTrack = useMemo(() => collection.tracks[Math.floor(Math.random() * collection.tracks.length)], [collection])
   const practiceReady = Boolean(practiceTrack?.audioUrl || getClientId())
+  useEffect(() => {
+    if (hasSpotifySession()) prepareSpotifyPlayer().then(() => setScanPlayerReady(true)).catch(() => setScanPlayerReady(true))
+  }, [])
   const selectGame = id => { setGameMode(id); setShowAlternatives(false); setShowRules(false) }
   const parseScan = text => {
     setScanning(false)
@@ -357,7 +369,7 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
       <span className="eyebrow">Klaar voor een ronde?</span>
       <h1>Luister.<br /><em>{gameMode === 'timeline' ? 'Leg de tijdlijn.' : `Speel ${activeGame.name}.`}</em></h1>
       <p>Scan een kaart, luister zonder titel en speel samen op één telefoon.</p>
-      <button className="scan-button" onClick={() => { setError(''); setScanning(true) }}><span><ScanLine /></span>Scan een kaart</button>
+      <button className="scan-button" disabled={!scanPlayerReady} onClick={() => { activateSpotifyElement()?.catch(() => {}); setError(''); setScanning(true) }}><span><ScanLine /></span>{scanPlayerReady ? 'Scan een kaart' : 'Spotify voorbereiden…'}</button>
       <p className="one-phone-tip"><Check /> Eén telefoon is genoeg voor de hele groep</p>
       {availableGames.length > 1 && <div className="game-switch-bar"><span><activeGame.icon /><small>Gekozen spel</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Ander spel'} <ChevronRight /></button></div>}
       {availableGames.length > 1 && showAlternatives && <div className="game-menu">
@@ -374,7 +386,7 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
       <span>Nog geen kaarten bij de hand?</span>
       <h2>Probeer één oefenronde</h2>
       <p>{practiceReady ? 'Zo ontdek je zonder QR-kaart eerst rustig hoe luisteren en onthullen werkt.' : 'Scan eerst één geprinte TRACKBACK-kaart. Daarmee wordt deze telefoon automatisch voor Spotify ingesteld.'}</p>
-      <button className="secondary-button" disabled={!practiceTrack || !practiceReady} onClick={() => practiceTrack && onOpenTrack(practiceTrack)}><Play /> {practiceReady ? 'Start oefenronde' : 'Eerst een kaart scannen'} <ChevronRight /></button>
+      <button className="secondary-button" disabled={!practiceTrack || !practiceReady} onClick={() => { activateSpotifyElement()?.catch(() => {}); if (practiceTrack) onOpenTrack(practiceTrack) }}><Play /> {practiceReady ? 'Start oefenronde' : 'Eerst een kaart scannen'} <ChevronRight /></button>
     </section>
   </main>
 }
@@ -524,6 +536,7 @@ export default function App() {
   const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
   const [tab, setTab] = useState('home')
   const [activeTrack, setActiveTrack] = useState(null)
+  const [autoPlayTrackId, setAutoPlayTrackId] = useState('')
   const [gift, setGift] = useState(null)
   const [giftError, setGiftError] = useState('')
   const [gameMode, setGameModeState] = useState(localStorage.getItem('timepop.game-mode') || 'timeline')
@@ -592,8 +605,8 @@ export default function App() {
 
   if (gift?.loading) return <main className="gift-loading"><Gift /><h1>Jouw cadeau wordt geopend…</h1></main>
   if (gift) return <GiftLanding gift={gift} onSelect={openEdition} onClose={() => { setGift(null); history.replaceState({}, '', `${location.pathname}#play`) }} />
-  if (activeTrack) return <Player track={activeTrack} gameMode={gameMode} onBack={() => setActiveTrack(null)} onNext={() => setActiveTrack(null)} />
-  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={setActiveTrack} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
+  if (activeTrack) return <Player track={activeTrack} gameMode={gameMode} autoPlay={autoPlayTrackId === activeTrack.id} onBack={() => { setAutoPlayTrackId(''); setActiveTrack(null) }} onNext={() => { setAutoPlayTrackId(''); setActiveTrack(null) }} />
+  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={track => { setAutoPlayTrackId(track.id); setActiveTrack(track) }} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TRACKBACK <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'home' && <StudioHome collection={collection} setTab={setTab} />}
