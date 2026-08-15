@@ -4,16 +4,21 @@ const VERIFIER_KEY = 'giftster.spotify.verifier'
 const STATE_KEY = 'giftster.spotify.state'
 const OAUTH_CLIENT_KEY = 'giftster.spotify.oauth-client'
 const RETURN_HASH_KEY = 'giftster.spotify.return-hash'
+const DEFAULT_CLIENT_ID = '3cdd431703234d9081c53217dd1b3b2c'
 
 const base64url = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-export const getClientId = () => localStorage.getItem(CLIENT_KEY) || ''
+export const getClientId = () => {
+  const saved = localStorage.getItem(CLIENT_KEY) || ''
+  return /^[A-Za-z0-9]{32}$/.test(saved) ? saved : DEFAULT_CLIENT_ID
+}
 const readToken = () => {
   try { return JSON.parse(localStorage.getItem(TOKEN_KEY)) || {} } catch { return {} }
 }
 export const clearSpotifySession = () => localStorage.removeItem(TOKEN_KEY)
 export const setClientId = id => {
-  const next = id.trim()
+  const candidate = id.trim()
+  const next = /^[A-Za-z0-9]{32}$/.test(candidate) ? candidate : DEFAULT_CLIENT_ID
   const previous = getClientId()
   localStorage.setItem(CLIENT_KEY, next)
   if (previous && previous !== next) clearSpotifySession()
@@ -59,7 +64,7 @@ async function getAccessToken() {
 export async function loginSpotify() {
   const clientId = getClientId()
   if (!clientId) throw new Error('Vul eerst je Spotify Client ID in.')
-  if (!/^[A-Za-z0-9]{16,80}$/.test(clientId)) throw new Error('Deze Spotify Client ID lijkt niet geldig.')
+  if (!/^[A-Za-z0-9]{32}$/.test(clientId)) throw new Error('Deze Spotify Client ID lijkt niet geldig.')
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(64)))
   const state = base64url(crypto.getRandomValues(new Uint8Array(24)))
   const challenge = base64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
