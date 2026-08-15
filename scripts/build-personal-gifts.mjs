@@ -20,6 +20,8 @@ const iris = {
   celebrationMessage: 'Een eigen TRACKBACK-spel met vierhonderd nummers: drie eigenzinnige dwaalroutes én een toegankelijke Top 2000-set — speciaal voor jou gemaakt.',
   message: 'Vier muzikale routes van honderd kaarten: drie uitdagende reizen door jouw muzikale wereld en Crowd Pleasers vol grote hits om lekker laagdrempelig mee te beginnen.',
   taste: ['dreampop', 'psychedelische blues', 'vintage jazz', 'wereldmuziek', 'spiritueel'],
+  showPublicEditions: false,
+  gameModes: ['timeline'],
   editions: [...irisEditions, crowdPleasers],
 }
 

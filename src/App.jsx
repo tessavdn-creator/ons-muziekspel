@@ -151,8 +151,12 @@ const editionTheme = collection => {
 function GiftLanding({ gift, onSelect, onClose }) {
   const [celebrating, setCelebrating] = useState(true)
   const [publicEditions, setPublicEditions] = useState([])
-  const [catalogLoading, setCatalogLoading] = useState(true)
+  const [catalogLoading, setCatalogLoading] = useState(gift.showPublicEditions !== false)
   useEffect(() => {
+    if (gift.showPublicEditions === false) {
+      setCatalogLoading(false)
+      return undefined
+    }
     let active = true
     const loadCatalog = async () => {
       try {
@@ -201,10 +205,10 @@ function GiftLanding({ gift, onSelect, onClose }) {
       {editionGrid(gift.editions, 'Persoonlijke mix')}
       <p className="edition-update"><Sparkles /> Nieuwe persoonlijke edities verschijnen automatisch achter dezelfde QR.</p>
     </section>
-    <section className="edition-shelf public-edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Voor iedereen</span><h2>Algemene edities</h2></div><small>{catalogLoading ? 'Laden…' : `${publicEditions.length} ${publicEditions.length === 1 ? 'editie' : 'edities'}`}</small></div>
+    {gift.showPublicEditions !== false && <section className="edition-shelf public-edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Voor iedereen</span><h2>Algemene edities</h2></div><small>{catalogLoading ? 'Laden…' : `${publicEditions.length} ${publicEditions.length === 1 ? 'editie' : 'edities'}`}</small></div>
       {publicEditions.length > 0 ? editionGrid(publicEditions, 'TRACKBACK original') : !catalogLoading && <p className="catalog-empty">Er zijn nog geen algemene edities gepubliceerd.</p>}
       <p className="edition-update"><Library /> Nieuwe openbare edities komen automatisch in deze bibliotheek.</p>
-    </section>
+    </section>}
   </main>
 }
 
@@ -297,11 +301,14 @@ function Player({ track, onBack, onNext, gameMode }) {
 }
 
 function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode }) {
+  const availableGames = collection.gameModes?.length
+    ? GAME_MODES.filter(game => collection.gameModes.includes(game.id))
+    : GAME_MODES
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState('')
-  const [showAlternatives, setShowAlternatives] = useState(gameMode !== 'timeline')
+  const [showAlternatives, setShowAlternatives] = useState(availableGames.length > 1 && gameMode !== 'timeline')
   const [showRules, setShowRules] = useState(false)
-  const activeGame = GAME_MODES.find(game => game.id === gameMode) || GAME_MODES[0]
+  const activeGame = availableGames.find(game => game.id === gameMode) || availableGames[0] || GAME_MODES[0]
   const practiceTrack = useMemo(() => collection.tracks[Math.floor(Math.random() * collection.tracks.length)], [collection])
   const practiceReady = Boolean(practiceTrack?.audioUrl || getClientId())
   const selectGame = id => { setGameMode(id); setShowAlternatives(false); setShowRules(false) }
@@ -322,12 +329,12 @@ function PlayHome({ collection, onOpenTrack, resolveCard, gameMode, setGameMode 
       <p>Scan een kaart, luister zonder titel en speel samen op één telefoon.</p>
       <button className="scan-button" onClick={() => { setError(''); setScanning(true) }}><span><ScanLine /></span>Scan een kaart</button>
       <p className="one-phone-tip"><Check /> Eén telefoon is genoeg voor de hele groep</p>
-      <div className="game-switch-bar"><span><activeGame.icon /><small>Gekozen spel</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Ander spel'} <ChevronRight /></button></div>
-      {showAlternatives && <div className="game-menu">
+      {availableGames.length > 1 && <div className="game-switch-bar"><span><activeGame.icon /><small>Gekozen spel</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Ander spel'} <ChevronRight /></button></div>}
+      {availableGames.length > 1 && showAlternatives && <div className="game-menu">
         <div className="game-menu-heading"><strong>Snel beginnen</strong><small>De makkelijkste spelvormen</small></div>
-        <div className="alternate-games">{GAME_MODES.filter(game => game.type === 'favoriet').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
+        <div className="alternate-games">{availableGames.filter(game => game.type === 'favoriet').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
         <div className="game-menu-heading group-heading"><strong>Extra voor groepen</strong><small>Leuk als iedereen het basisspel kent</small></div>
-        <div className="alternate-games">{GAME_MODES.filter(game => game.type === 'groep').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
+        <div className="alternate-games">{availableGames.filter(game => game.type === 'groep').map(game => <button className={gameMode === game.id ? 'active' : ''} key={game.id} onClick={() => selectGame(game.id)}><game.icon /><span><strong>{game.name}</strong><small>{game.text}</small><em>{game.meta}</em></span>{gameMode === game.id && <Check />}</button>)}</div>
       </div>}
       <button className="rules-toggle" onClick={() => setShowRules(value => !value)}><activeGame.icon /> Hoe speel je {activeGame.name}? <ChevronRight className={showRules ? 'is-open' : ''} /></button>
       {showRules && <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>In drie stappen</small><strong>{activeGame.name}</strong></div></div><div className="setup-tip"><b>Voor je begint</b>{activeGame.setup}</div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>}
@@ -501,10 +508,12 @@ export default function App() {
     } catch (error) { setGift(null); setGiftError(error.message) }
   }
   const openEdition = edition => {
-    const value = { ...edition, tracks: (edition.tracks || []).map(normalizeTrack) }
+    const value = { ...edition, gameModes: gift?.gameModes || edition.gameModes, tracks: (edition.tracks || []).map(normalizeTrack) }
     const sharedClientId = edition.clientId || gift?.clientId
     if (sharedClientId) setClientId(sharedClientId)
-    setCollectionState(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
+    const allowedModes = value.gameModes?.length ? value.gameModes : GAME_MODES.map(game => game.id)
+    if (!allowedModes.includes(gameMode)) setGameMode(allowedModes[0] || 'timeline')
+    setCollection(value); setGift(null); history.replaceState({}, '', `${location.pathname}#play`)
   }
 
   const resolveCard = value => {

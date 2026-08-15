@@ -19,6 +19,10 @@ Iris heeft drie privé-edities:
 
 Samen vormen deze vier delen één persoonlijke bibliotheek van 400 unieke kaarten. De eerste drie zijn eigenzinniger en moeilijker; Crowd Pleasers is bewust laagdrempelig.
 
+Iris ziet via haar cadeau-QR uitsluitend deze vier persoonlijke edities. De
+algemene bibliotheek is voor haar verborgen en haar play-app gebruikt alleen
+het basisspel Tijdlijn, zonder spelwisselaar.
+
 De online cadeau-inhoud staat versleuteld in `public/gifts/g-7n4p2d8k.json`. De sleutel staat alleen in de persoonlijke QR/link. Zonder die sleutel kan de website het cadeau niet ontsleutelen.
 
 Wie de volledige persoonlijke QR of link krijgt, kan de editie wel openen. Behandel die daarom als een toegangssleutel en publiceer hem niet.
