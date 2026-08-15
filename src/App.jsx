@@ -12,7 +12,7 @@ import {
   randomId, saveCollection,
 } from './lib/collection.js'
 import {
-  activateSpotifyElement, finishSpotifyLogin, getClientId, hasSpotifySession,
+  activateSpotifyElement, clearSpotifySession, finishSpotifyLogin, getClientId, hasSpotifySession,
   importPlaylist, loginSpotify, pauseSpotify, playSpotify, prepareSpotifyPlayer, setClientId,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
@@ -23,7 +23,13 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.14.1 — TRACKBACK'
+const APP_VERSION = '0.14.2 — TRACKBACK'
+const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
+if (resetSpotifyRequested) {
+  clearSpotifySession()
+  ;['giftster.spotify.verifier', 'giftster.spotify.state', 'giftster.spotify.oauth-client', 'giftster.spotify.return-hash', 'giftster.pending-track'].forEach(key => sessionStorage.removeItem(key))
+  history.replaceState({}, '', `${location.pathname}#play`)
+}
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -521,7 +527,7 @@ function SettingsPage({ collection, setCollection }) {
   }
   return <main className="page content-page settings-page">
     <PageTitle eyebrow="Stap 1 van 3" title="Koppel & importeer" description="Dit stel je één keer in; daarna kun je steeds nieuwe playlists omzetten naar een spel" />
-    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Eenmalig op deze telefoon</span><h2>{hasSpotifySession() ? 'Spotify is verbonden' : 'Spotify koppelen'}</h2><p>TRACKBACK is al ingesteld. Log alleen in met het Spotify Premium-account waarmee je tijdens het spel wilt luisteren.</p><button className="spotify-button" onClick={connect}>{hasSpotifySession() ? 'Spotify opnieuw koppelen' : 'Koppel Spotify'} <ExternalLink /></button><details className="setup-help"><summary>Geavanceerd: andere Spotify Developer-app</summary><p>Alleen voor beheer: pas hier eventueel de Client ID aan en registreer exact deze Redirect URI.</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} /></label></details></div></section>
+    <section className="settings-card spotify-card"><div className="settings-icon spotify-icon"><Music2 /></div><div className="settings-body"><span className="eyebrow">Eenmalig op deze telefoon</span><h2>{hasSpotifySession() ? 'Spotify is verbonden' : 'Spotify koppelen'}</h2><p>TRACKBACK is al ingesteld. Log alleen in met het Spotify Premium-account waarmee je tijdens het spel wilt luisteren.</p><div className="spotify-actions"><button className="spotify-button" onClick={connect}>{hasSpotifySession() ? 'Spotify opnieuw koppelen' : 'Koppel Spotify'} <ExternalLink /></button>{hasSpotifySession() && <button className="secondary-button" onClick={() => location.assign(`${location.pathname}?resetSpotify=1#play`)}>Spotify ontkoppelen</button>}</div><details className="setup-help"><summary>Geavanceerd: andere Spotify Developer-app</summary><p>Alleen voor beheer: pas hier eventueel de Client ID aan en registreer exact deze Redirect URI.</p><code>{`${location.origin}${location.pathname}`}</code><label><span>Client ID</span><input value={client} onChange={event => { setClient(event.target.value); setClientId(event.target.value) }} /></label></details></div></section>
     <section className="settings-card import-card"><div className="settings-icon"><Import /></div><div className="settings-body"><span className="eyebrow">Maak een nieuwe editie</span><h2>Playlist importeren</h2><p>Plak een Spotify-playlistlink. De huidige muziekcollectie wordt na jouw bevestiging vervangen door de geïmporteerde playlist.</p><label><span>Spotify-playlistlink</span><input value={playlist} onChange={event => setPlaylist(event.target.value)} placeholder="https://open.spotify.com/playlist/…" /></label><button className="primary-button" disabled={!playlist || !hasSpotifySession() || busy} onClick={() => (!collection.tracks.length || confirm(`‘${collection.name}’ vervangen door deze Spotify-playlist?`)) && doImport()}><Import /> {busy ? 'Playlist ophalen…' : 'Importeer hele playlist'}</button>{!hasSpotifySession() ? <small className="field-help">Koppel hierboven eerst Spotify om te kunnen importeren.</small> : <small className="field-help">Spotify laat momenteel alleen playlists van jezelf of playlists waaraan je meewerkt volledig importeren.</small>}</div></section>
     {status && <div className="status-message"><Check /> {status}</div>}
     <details className="technical-details"><summary><Settings /> Testgebruikers, limieten & techniek</summary><section className="settings-card"><div className="settings-icon"><UserPlus /></div><div className="settings-body"><h2>Vrienden toelaten</h2><p>Voor een gezellige avond is één DJ-telefoon het eenvoudigst. De eigenaar van de Spotify-app heeft Premium nodig. Wil iemand toch op zijn eigen Spotify-account afspelen? Voeg die persoon dan in het Spotify Developer Dashboard toe via <strong>Settings → Users Management</strong>. Development Mode ondersteunt maximaal vijf Spotify-gebruikers.</p></div></section><section className="settings-card warning-card"><div className="settings-icon"><Gift /></div><div className="settings-body"><h2>Prototype en muziekrechten</h2><p>De verborgen Spotify-speler is bedoeld als privé technisch prototype. Spotify staat games met Spotify-content niet toe zonder afzonderlijke schriftelijke toestemming. Voor een volwaardige openbare app is daarom een productiegeschikte, rechtmatig gelicentieerde audiobron nodig.</p><small>Versie {APP_VERSION}</small></div></section></details>
