@@ -12,7 +12,7 @@ import {
   randomId, saveCollection,
 } from './lib/collection.js'
 import {
-  activateSpotifyElement, connectPlayer, finishSpotifyLogin, getClientId, hasSpotifySession,
+  activateSpotifyElement, finishSpotifyLogin, getClientId, hasSpotifySession,
   importPlaylist, loginSpotify, pauseSpotify, playSpotify, setClientId,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
@@ -23,7 +23,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.13.5 — TRACKBACK'
+const APP_VERSION = '0.13.7 — TRACKBACK'
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
@@ -546,14 +546,18 @@ export default function App() {
       if (track) setActiveTrack(track)
     }
     finishSpotifyLogin().then(connected => {
-      if (connected || hasSpotifySession()) connectPlayer().catch(() => {})
+      if (connected) setMode(location.hash === '#admin' ? 'admin' : 'play')
       const pending = sessionStorage.getItem('giftster.pending-track')
       if (connected && pending) {
         sessionStorage.removeItem('giftster.pending-track')
         setActiveTrack(normalizeTrack(JSON.parse(pending)))
         history.replaceState({}, '', `${location.pathname}#play`)
+        setMode('play')
       }
-    }).catch(error => alert(error.message))
+    }).catch(error => {
+      setMode(location.hash === '#admin' ? 'admin' : 'play')
+      alert(error.message)
+    })
     return () => removeEventListener('hashchange', route)
   }, [])
 

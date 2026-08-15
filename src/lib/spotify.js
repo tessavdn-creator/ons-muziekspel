@@ -2,13 +2,21 @@ const TOKEN_KEY = 'giftster.spotify.token.v1'
 const CLIENT_KEY = 'giftster.spotify.client-id'
 const VERIFIER_KEY = 'giftster.spotify.verifier'
 const STATE_KEY = 'giftster.spotify.state'
+const OAUTH_CLIENT_KEY = 'giftster.spotify.oauth-client'
+const RETURN_HASH_KEY = 'giftster.spotify.return-hash'
 
 const base64url = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
 export const getClientId = () => localStorage.getItem(CLIENT_KEY) || ''
-export const setClientId = id => localStorage.setItem(CLIENT_KEY, id.trim())
 const readToken = () => {
   try { return JSON.parse(localStorage.getItem(TOKEN_KEY)) || {} } catch { return {} }
+}
+export const clearSpotifySession = () => localStorage.removeItem(TOKEN_KEY)
+export const setClientId = id => {
+  const next = id.trim()
+  const previous = getClientId()
+  localStorage.setItem(CLIENT_KEY, next)
+  if (previous && previous !== next) clearSpotifySession()
 }
 export const getToken = () => {
   const token = readToken()
@@ -21,6 +29,10 @@ async function getAccessToken() {
   if (current) return current
   const saved = readToken()
   if (!saved.refreshToken) throw new Error('Log opnieuw in bij Spotify.')
+  if (saved.clientId && saved.clientId !== getClientId()) {
+    clearSpotifySession()
+    throw new Error('De Spotify Client ID is gewijzigd. Verbind Spotify opnieuw.')
+  }
   const response = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -35,6 +47,7 @@ async function getAccessToken() {
   }
   const updated = {
     ...saved,
+    clientId: getClientId(),
     accessToken: data.access_token,
     refreshToken: data.refresh_token || saved.refreshToken,
     expiresAt: Date.now() + data.expires_in * 1000,
@@ -46,11 +59,14 @@ async function getAccessToken() {
 export async function loginSpotify() {
   const clientId = getClientId()
   if (!clientId) throw new Error('Vul eerst je Spotify Client ID in.')
+  if (!/^[A-Za-z0-9]{16,80}$/.test(clientId)) throw new Error('Deze Spotify Client ID lijkt niet geldig.')
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(64)))
   const state = base64url(crypto.getRandomValues(new Uint8Array(24)))
   const challenge = base64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
   sessionStorage.setItem(VERIFIER_KEY, verifier)
   sessionStorage.setItem(STATE_KEY, state)
+  sessionStorage.setItem(OAUTH_CLIENT_KEY, clientId)
+  sessionStorage.setItem(RETURN_HASH_KEY, location.hash === '#admin' ? '#admin' : '#play')
   const redirectUri = `${location.origin}${location.pathname}`
   const params = new URLSearchParams({
     client_id: clientId,
@@ -68,27 +84,67 @@ export async function finishSpotifyLogin() {
   const query = new URLSearchParams(location.search)
   const code = query.get('code')
   const verifier = sessionStorage.getItem(VERIFIER_KEY)
-  if (query.get('error')) throw new Error('Spotify-koppeling is geannuleerd.')
+  const returnHash = sessionStorage.getItem(RETURN_HASH_KEY) || '#play'
+  const oauthClientId = sessionStorage.getItem(OAUTH_CLIENT_KEY) || getClientId()
+  const restoreRoute = () => history.replaceState({}, '', `${location.pathname}${returnHash}`)
+  const clearOAuthState = () => {
+    sessionStorage.removeItem(VERIFIER_KEY)
+    sessionStorage.removeItem(STATE_KEY)
+    sessionStorage.removeItem(OAUTH_CLIENT_KEY)
+    sessionStorage.removeItem(RETURN_HASH_KEY)
+  }
+  if (query.get('error')) {
+    restoreRoute()
+    clearOAuthState()
+    throw new Error(query.get('error') === 'access_denied' ? 'Spotify-koppeling is geannuleerd.' : `Spotify weigerde de koppeling (${query.get('error')}).`)
+  }
   if (!code || !verifier) return false
-  if (!query.get('state') || query.get('state') !== sessionStorage.getItem(STATE_KEY)) throw new Error('Spotify-login kon niet veilig worden gecontroleerd.')
+  if (!query.get('state') || query.get('state') !== sessionStorage.getItem(STATE_KEY)) {
+    restoreRoute()
+    clearOAuthState()
+    throw new Error('Spotify-login kon niet veilig worden gecontroleerd. Probeer opnieuw te verbinden.')
+  }
   const body = new URLSearchParams({
-    client_id: getClientId(), grant_type: 'authorization_code', code,
+    client_id: oauthClientId, grant_type: 'authorization_code', code,
     redirect_uri: `${location.origin}${location.pathname}`, code_verifier: verifier,
   })
   const response = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
   })
-  if (!response.ok) throw new Error('Spotify-login kon niet worden afgerond.')
-  const data = await response.json()
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    clearSpotifySession()
+    restoreRoute()
+    clearOAuthState()
+    throw new Error(data.error_description || (data.error === 'invalid_grant'
+      ? 'De Spotify-login is verlopen. Probeer opnieuw te verbinden.'
+      : `Spotify-login kon niet worden afgerond (${data.error || response.status}).`))
+  }
+  setClientId(oauthClientId)
   localStorage.setItem(TOKEN_KEY, JSON.stringify({
+    clientId: oauthClientId,
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
     expiresAt: Date.now() + data.expires_in * 1000,
     authorizedAt: Date.now(),
   }))
-  sessionStorage.removeItem(VERIFIER_KEY)
-  sessionStorage.removeItem(STATE_KEY)
-  history.replaceState({}, '', location.pathname)
+  clearOAuthState()
+  restoreRoute()
+
+  const profileResponse = await fetch('https://api.spotify.com/v1/me', {
+    headers: { Authorization: `Bearer ${data.access_token}` },
+  })
+  const profile = await profileResponse.json().catch(() => ({}))
+  if (!profileResponse.ok) {
+    clearSpotifySession()
+    if (profileResponse.status === 403) throw new Error('Dit Spotify-account heeft nog geen toegang. Voeg het account toe bij Spotify Developer Dashboard → Settings → Users Management.')
+    if (profileResponse.status === 429) throw new Error('De Spotify-limiet is tijdelijk bereikt. Probeer het over een paar minuten opnieuw.')
+    throw new Error(profile?.error?.message || `Spotify-accountcontrole gaf fout ${profileResponse.status}.`)
+  }
+  if (profile.product && profile.product !== 'premium') {
+    clearSpotifySession()
+    throw new Error('Voor afspelen in TRACKBACK is een Spotify Premium-account nodig.')
+  }
   return true
 }
 
@@ -99,7 +155,15 @@ async function spotifyFetch(path, options = {}) {
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers },
   })
   if (!response.ok) {
-    const message = (await response.json().catch(() => null))?.error?.message
+    const payload = await response.json().catch(() => null)
+    const message = payload?.error?.message
+    const reason = payload?.error?.reason
+    if (response.status === 401) {
+      clearSpotifySession()
+      throw new Error('Je Spotify-koppeling is verlopen. Verbind Spotify opnieuw.')
+    }
+    if (response.status === 403) throw new Error('Dit Spotify-account is niet toegelaten voor deze app of heeft geen Premium.')
+    if (response.status === 429) throw new Error(reason === 'QUOTA_EXCEEDED' ? 'De Spotify-daglimiet voor deze ontwikkelapp is bereikt.' : 'Spotify krijgt te veel verzoeken. Probeer het zo opnieuw.')
     throw new Error(message || `Spotify gaf fout ${response.status}.`)
   }
   return response.status === 204 ? null : response.json()
@@ -157,9 +221,12 @@ export async function connectPlayer(onState) {
     player.addListener('player_state_changed', state => onState?.(state))
     player.addListener('authentication_error', event => onState?.({ error: event.message }))
     player.addListener('account_error', event => onState?.({ error: event.message }))
-    await player.connect()
-    await player.activateElement()
+    player.addListener('initialization_error', event => onState?.({ error: event.message }))
+    player.addListener('playback_error', event => onState?.({ error: event.message }))
+    const connected = await player.connect()
+    if (!connected) throw new Error('Spotify-speler kon geen verbinding maken.')
   }
+  await player.activateElement()
   for (let tries = 0; !deviceId && tries < 20; tries += 1) await new Promise(resolve => setTimeout(resolve, 150))
   if (!deviceId) throw new Error('Spotify-speler werd niet op tijd actief.')
   return deviceId
