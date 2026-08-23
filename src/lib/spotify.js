@@ -320,6 +320,9 @@ export async function prepareSpotifyPlayer(onState) {
       name: 'TRACKBACK',
       getOAuthToken: callback => getAccessToken().then(callback).catch(error => stateReporter?.({ error: error.message })),
       volume: 0.8,
+      // Voorkom dat titel, artiest en hoes via de browser/lockscreen worden
+      // verklapt terwijl spelers het geheime nummer nog moeten raden.
+      enableMediaSession: false,
     })
     player.addListener('ready', event => { deviceId = event.device_id; stateReporter?.({ ready: true }) })
     player.addListener('not_ready', () => { deviceId = undefined; stateReporter?.({ error: 'Spotify is even niet bereikbaar. Probeer opnieuw.' }) })

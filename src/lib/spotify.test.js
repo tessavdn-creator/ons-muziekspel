@@ -31,8 +31,9 @@ describe('Spotify playback', () => {
   it('bereidt de browserplayer voor en activeert hem vóór het afspeelverzoek', async () => {
     const calls = []
     let instance
+    let playerOptions
     class PlayerMock {
-      constructor() { this.listeners = {}; instance = this }
+      constructor(options) { this.listeners = {}; instance = this; playerOptions = options }
       addListener(name, callback) { this.listeners[name] = callback }
       async connect() { calls.push('connect'); this.listeners.ready({ device_id: 'phone-device' }); return true }
       activateElement() { calls.push('activate'); return Promise.resolve() }
@@ -60,6 +61,7 @@ describe('Spotify playback', () => {
     await playSpotify('spotify:track:test')
 
     expect(instance).toBeTruthy()
+    expect(playerOptions).toMatchObject({ name: 'TRACKBACK', enableMediaSession: false })
     expect(calls).toEqual(['connect', 'activate', 'play-request', 'resume'])
     expect(fetch).toHaveBeenCalledWith(
       'https://api.spotify.com/v1/me/player/play?device_id=phone-device',
