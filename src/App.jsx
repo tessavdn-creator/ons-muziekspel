@@ -441,7 +441,7 @@ function SpotifyPlaylistPicker({ onStart }) {
     activateSpotifyElement()?.catch(() => {})
     try { await onStart(playlist) } catch (problem) { setError(problem.message); setStarting('') }
   }
-  if (!connected) return <div className="playlist-connect"><p>Koppel Spotify Premium om playlists te zoeken en zonder kaarten te spelen.</p><button className="spotify-button" onClick={() => loginSpotify().catch(problem => setError(problem.message))}>Koppel Spotify <ExternalLink /></button>{error && <div className="inline-error">{error}</div>}</div>
+  if (!connected) return <div className="playlist-connect"><p><strong>Alleen de spelleider:</strong> koppel Spotify Premium één keer op deze telefoon. Daarna vernieuwt TRACKBACK de verbinding automatisch.</p><button className="spotify-button" onClick={() => loginSpotify().catch(problem => setError(problem.message))}>Koppel één keer met Spotify <ExternalLink /></button><small>Spotify kan zelf om een wachtwoord, passkey of e-mailcode vragen. TRACKBACK kan die beveiliging niet overslaan.</small>{error && <div className="inline-error">{error}</div>}</div>
   return <div className="playlist-picker">
     <form onSubmit={search}><label><Search /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Zoek bijvoorbeeld Top 2000…" aria-label="Spotify-playlists zoeken" /></label><button disabled={query.trim().length < 2 || searching}>{searching ? 'Zoeken…' : 'Zoek'}</button></form>
     {results.length > 0 && <div className="playlist-results">{results.map(playlist => <article key={playlist.id}>

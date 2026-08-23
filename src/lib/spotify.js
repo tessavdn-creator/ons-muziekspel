@@ -71,11 +71,11 @@ export async function loginSpotify() {
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(64)))
   const state = base64url(crypto.getRandomValues(new Uint8Array(24)))
   const challenge = base64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
-  sessionStorage.setItem(VERIFIER_KEY, verifier)
-  sessionStorage.setItem(STATE_KEY, state)
-  sessionStorage.setItem(OAUTH_CLIENT_KEY, clientId)
+  localStorage.setItem(VERIFIER_KEY, verifier)
+  localStorage.setItem(STATE_KEY, state)
+  localStorage.setItem(OAUTH_CLIENT_KEY, clientId)
   const activeRoom = new URLSearchParams(location.search).get('room')
-  sessionStorage.setItem(RETURN_HASH_KEY, `${activeRoom ? `?room=${encodeURIComponent(activeRoom)}` : ''}${location.hash === '#admin' ? '#admin' : '#play'}`)
+  localStorage.setItem(RETURN_HASH_KEY, `${activeRoom ? `?room=${encodeURIComponent(activeRoom)}` : ''}${location.hash === '#admin' ? '#admin' : '#play'}`)
   const redirectUri = `${location.origin}${location.pathname}`
   const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state']
   if (location.hash === '#admin') scopes.push('playlist-read-private')
@@ -87,6 +87,7 @@ export async function loginSpotify() {
     code_challenge: challenge,
     state,
     scope: scopes.join(' '),
+    show_dialog: 'false',
   })
   location.href = `https://accounts.spotify.com/authorize?${params}`
 }
@@ -94,15 +95,15 @@ export async function loginSpotify() {
 export async function finishSpotifyLogin() {
   const query = new URLSearchParams(location.search)
   const code = query.get('code')
-  const verifier = sessionStorage.getItem(VERIFIER_KEY)
-  const returnHash = sessionStorage.getItem(RETURN_HASH_KEY) || '#play'
-  const oauthClientId = sessionStorage.getItem(OAUTH_CLIENT_KEY) || getClientId()
+  const verifier = localStorage.getItem(VERIFIER_KEY)
+  const returnHash = localStorage.getItem(RETURN_HASH_KEY) || '#play'
+  const oauthClientId = localStorage.getItem(OAUTH_CLIENT_KEY) || getClientId()
   const restoreRoute = () => history.replaceState({}, '', `${location.pathname}${returnHash}`)
   const clearOAuthState = () => {
-    sessionStorage.removeItem(VERIFIER_KEY)
-    sessionStorage.removeItem(STATE_KEY)
-    sessionStorage.removeItem(OAUTH_CLIENT_KEY)
-    sessionStorage.removeItem(RETURN_HASH_KEY)
+    localStorage.removeItem(VERIFIER_KEY)
+    localStorage.removeItem(STATE_KEY)
+    localStorage.removeItem(OAUTH_CLIENT_KEY)
+    localStorage.removeItem(RETURN_HASH_KEY)
   }
   if (query.get('error')) {
     restoreRoute()
@@ -110,7 +111,7 @@ export async function finishSpotifyLogin() {
     throw new Error(query.get('error') === 'access_denied' ? 'Spotify-koppeling is geannuleerd.' : `Spotify weigerde de koppeling (${query.get('error')}).`)
   }
   if (!code || !verifier) return false
-  if (!query.get('state') || query.get('state') !== sessionStorage.getItem(STATE_KEY)) {
+  if (!query.get('state') || query.get('state') !== localStorage.getItem(STATE_KEY)) {
     restoreRoute()
     clearOAuthState()
     throw new Error('Spotify-login kon niet veilig worden gecontroleerd. Probeer opnieuw te verbinden.')
