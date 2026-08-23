@@ -225,6 +225,24 @@ export async function searchSpotifyPlaylists(query) {
   }))
 }
 
+export async function getSpotifyPlaylistAnchors(playlist) {
+  const id = playlist?.id || playlistIdFrom(playlist?.uri || '')
+  if (!id) throw new Error('Deze playlist kan niet worden voorbereid.')
+  const total = Math.max(0, Number(playlist.total) || 0)
+  const limit = Math.min(50, Math.max(10, total || 10))
+  const offset = total > limit ? Math.floor(Math.random() * (total - limit + 1)) : 0
+  const page = await spotifyFetch(`/playlists/${id}/items?limit=${limit}&offset=${offset}`)
+  const tracks = (page.items || []).map(row => row.item || row.track).filter(Boolean).map(track => ({
+    id: track.id || track.uri || '', title: track.name || '',
+    artist: track.artists?.map(artist => artist.name).join(', ') || '',
+    year: track.album?.release_date?.slice(0, 4) || '', image: track.album?.images?.[0]?.url || '',
+  })).filter(track => /^\d{4}$/.test(track.year))
+  const unique = [...new Map(tracks.map(track => [`${track.year}-${track.id}`, track])).values()]
+  if (unique.length < 2) throw new Error('Deze playlist bevat te weinig nummers met een bekend jaartal.')
+  const shuffled = unique.sort(() => Math.random() - 0.5).slice(0, 2)
+  return shuffled.sort((a, b) => Number(a.year) - Number(b.year))
+}
+
 let player
 let deviceId
 let sdkPromise

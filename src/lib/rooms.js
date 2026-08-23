@@ -98,6 +98,12 @@ export const setRoomTrack = async (roomId, round, track) => {
   })
 }
 
+export const setRoomDigitalTimeline = (roomId, tracks, playlist) => update(ref(database, `rooms/${roomId}/public`), {
+  mode: 'digital',
+  timeline: tracks.map(track => ({ id: track.id || '', title: track.title || '', artist: track.artist || '', year: track.year || '' })),
+  playlist: { id: playlist.id || '', name: playlist.name || '', uri: playlist.uri || '', total: Number(playlist.total) || 0 },
+})
+
 export const submitRoomGuess = async (roomId, round, guess) => {
   const user = await ensureRoomUser()
   await set(ref(database, `rooms/${roomId}/rounds/${round}/guesses/${user.uid}`), {
@@ -117,7 +123,14 @@ export const scoreRoomPlayer = async (roomId, round, uid, points) => {
   await runTransaction(ref(database, `rooms/${roomId}/players/${uid}/score`), score => (Number(score) || 0) + points)
 }
 
-export const nextRoomRound = async (roomId, round, players) => {
+export const nextRoomRound = async (roomId, round, players, answer, digital = false) => {
+  if (digital && answer) {
+    await runTransaction(ref(database, `rooms/${roomId}/public/timeline`), current => {
+      const timeline = Array.isArray(current) ? current : []
+      const next = [...timeline, { id: answer.id || '', title: answer.title || '', artist: answer.artist || '', year: answer.year || '' }]
+      return next.sort((a, b) => Number(a.year) - Number(b.year))
+    })
+  }
   const updates = { 'public/round': round + 1, 'public/status': 'lobby', 'public/revealed': false }
   Object.keys(players || {}).forEach(uid => { updates[`players/${uid}/ready`] = false })
   await update(ref(database, `rooms/${roomId}`), updates)

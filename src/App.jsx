@@ -13,14 +13,14 @@ import {
 } from './lib/collection.js'
 import {
   activateSpotifyElement, clearSpotifySession, finishSpotifyLogin, getClientId, hasSpotifySession,
-  importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
+  getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
   resumeSpotify, searchSpotifyPlaylists, setClientId, startSpotifyPlaylist,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 import { answerMatches, clampPlayerCount, DUO_SCORE_KEY, duoRoundPoints, freshDuoMatch, loadDuoMatch } from './lib/duo.js'
 import {
   closeRoom, createRoom, currentRoomUid, ensureRoomUser, joinRoom, leaveRoom, nextRoomRound, reconnectRoom, revealRoom,
-  roomIdFromUrl, roomInviteUrl, scoreRoomPlayer, setRoomTrack, submitRoomGuess, subscribeMyRoomGuess,
+  roomIdFromUrl, roomInviteUrl, scoreRoomPlayer, setRoomDigitalTimeline, setRoomTrack, submitRoomGuess, subscribeMyRoomGuess,
   subscribeRoomPlayers, subscribeRoomPublic, subscribeRoundAnswer, subscribeRoundGuesses, subscribeRoundScores,
 } from './lib/rooms.js'
 
@@ -464,34 +464,45 @@ function RoundSteps({ position, finalLabel }) {
 }
 
 const timelineCardCount = round => Math.max(2, Number(round) + 1)
-const timelinePositionLabel = (position, round) => {
-  const cards = timelineCardCount(round)
+const timelinePositionLabel = (position, round, timeline = []) => {
+  const digital = Array.isArray(timeline) && timeline.length > 0
+  const cards = digital ? timeline.length : timelineCardCount(round)
   const index = Number(position)
+  if (digital) {
+    if (index === 0) return `Vóór ${timeline[0].year}`
+    if (index === cards) return `Na ${timeline[cards - 1].year}`
+    return `Tussen ${timeline[index - 1].year} en ${timeline[index].year}`
+  }
   if (index === 0) return 'Ouder dan kaart 1'
   if (index === cards) return `Nieuwer dan kaart ${cards}`
   return `Tussen kaart ${index} en ${index + 1}`
 }
 
-function TimelinePositionPicker({ value, onChange, round }) {
-  const cards = timelineCardCount(round)
+function BaseTimelinePositionPicker({ value, onChange, round, timeline = [] }) {
+  const digital = Array.isArray(timeline) && timeline.length > 0
+  const cards = digital ? timeline.length : timelineCardCount(round)
   const positions = Array.from({ length: cards + 1 }, (_, index) => ({
     value: index,
-    label: timelinePositionLabel(index, round),
+    label: timelinePositionLabel(index, round, timeline),
   }))
   return <section className="timeline-picker" aria-label="Kies een plek in de tijdlijn">
-    <header><Clock3 /><div><strong>2 · Kies de plek op tafel</strong><small>De kaarten liggen van oud naar nieuw. Tik op één vak.</small></div></header>
+    <header><Clock3 /><div><strong>2 · Kies de plek {digital ? 'in de app' : 'op tafel'}</strong><small>{digital ? 'Dit is jullie digitale tijdlijn, van oud naar nieuw.' : 'De kaarten liggen van oud naar nieuw. Tik op één vak.'}</small></div></header>
+    {digital && <div className="digital-timeline">{timeline.map(track => <span key={`${track.id}-${track.year}`}><b>{track.year}</b><small>{track.title}</small></span>)}</div>}
     {cards > 2 && <span className="swipe-tip">Veeg naar links voor alle plekken →</span>}
     <div className="timeline-positions">{positions.map(position => <button type="button" className={value !== null && Number(value) === position.value ? 'active' : ''} aria-pressed={value !== null && Number(value) === position.value} onClick={() => onChange(position.value)} key={position.value}><span className="position-picture"><i />{position.value > 0 && position.value < cards && <i />}</span><b>{position.label}</b></button>)}</div>
-    <p><b>Nog niet neerleggen:</b> tik nu alleen je keuze aan. Na de onthulling leg je de kaart echt op tafel.</p>
+    <p>{digital ? <><b>Geen kaarten nodig:</b> de app voegt het nummer na de onthulling zelf toe.</> : <><b>Nog niet neerleggen:</b> tik nu alleen je keuze aan. Na de onthulling leg je de kaart echt op tafel.</>}</p>
   </section>
 }
 
-function RoomScoreBoard({ roomId, round, players, guesses, answer, scores }) {
+function BaseRoomScoreBoard({ roomId, round, players, guesses, answer, scores, timeline = [] }) {
   const contestants = Object.entries(players)
-  const [timeline, setTimeline] = useState({})
+  const [timelineChecks, setTimelineChecks] = useState({})
+  const digital = Array.isArray(timeline) && timeline.length > 0
+  const correctPosition = digital ? timeline.filter(track => Number(track.year) <= Number(answer.year)).length : null
+  const digitalTimelinePoints = guess => digital && Number(guess.position) === correctPosition ? 2 : 0
   const save = async (uid, guess) => {
     const base = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist))
-    await scoreRoomPlayer(roomId, round, uid, base + (timeline[uid] ? 2 : 0))
+    await scoreRoomPlayer(roomId, round, uid, base + (digital ? digitalTimelinePoints(guess) : timelineChecks[uid] ? 2 : 0))
   }
   return <section className="room-scoreboard">
     <h2>Controleer de ronde</h2>
@@ -499,11 +510,12 @@ function RoomScoreBoard({ roomId, round, players, guesses, answer, scores }) {
       const guess = guesses[uid]
       const saved = scores[uid] !== undefined
       if (!guess) return <article key={uid}><strong>{player.name}</strong><span>Geen antwoord</span></article>
-      const auto = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist))
+      const auto = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist)) + digitalTimelinePoints(guess)
       return <article key={uid} className={saved ? 'is-scored' : ''}>
         <header><strong>{player.name}</strong><b>{saved ? `+${scores[uid]} punten` : `${auto} automatisch`}</b></header>
-        <p>Titel: {guess.title || '—'} · artiest: {guess.artist || '—'} · gekozen plek: <strong>{timelinePositionLabel(guess.position, round)}</strong></p>
-        {!saved && <div><button className={timeline[uid] ? 'active' : ''} onClick={() => setTimeline(value => ({ ...value, [uid]: !value[uid] }))}><Clock3 /> Tijdlijn goed +2</button><button onClick={() => save(uid, guess)}><Check /> Punten opslaan</button></div>}
+        <p>Titel: {guess.title || '—'} · artiest: {guess.artist || '—'} · gekozen plek: <strong>{timelinePositionLabel(guess.position, round, timeline)}</strong></p>
+        {digital && <p>Juiste plek: <strong>{timelinePositionLabel(correctPosition, round, timeline)}</strong> · tijdlijn {digitalTimelinePoints(guess) ? 'goed (+2)' : 'niet goed'}</p>}
+        {!saved && <div className={digital ? 'single-action' : ''}>{!digital && <button className={timelineChecks[uid] ? 'active' : ''} onClick={() => setTimelineChecks(value => ({ ...value, [uid]: !value[uid] }))}><Clock3 /> Tijdlijn goed +2</button>}<button onClick={() => save(uid, guess)}><Check /> {digital ? `Sla ${auto} punten op` : 'Punten opslaan'}</button></div>}
       </article>
     })}
   </section>
@@ -530,6 +542,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   const activePlayers = Object.fromEntries(Object.entries(rawPlayers).filter(([, player]) => player.online !== false))
   const players = activePlayers
   const guests = Object.entries(activePlayers).filter(([, player]) => player.role !== 'host')
+  const TimelinePositionPicker = props => <BaseTimelinePositionPicker {...props} timeline={room?.mode === 'digital' ? room.timeline || [] : []} />
 
   useEffect(() => {
     let active = true
@@ -589,13 +602,21 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     else { setScanning(false); setMessage('Deze kaart hoort niet bij de gekozen editie.') }
   }
   const startPlaylist = async playlist => {
+    setMessage('Digitale starttijdlijn maken…')
+    const anchors = await getSpotifyPlaylistAnchors(playlist)
     const selected = await startSpotifyPlaylist(playlist)
+    await setRoomDigitalTimeline(roomId, anchors, playlist)
     setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
     await selectTrack(normalizeTrack(selected))
   }
   const nextPlaylist = async () => {
     const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
     setPlaylistSession(value => ({ ...value, currentUri: selected.spotifyUri }))
+    await selectTrack(normalizeTrack(selected))
+  }
+  const resumeDigitalPlaylist = async () => {
+    const selected = await startSpotifyPlaylist(room.playlist)
+    setPlaylistSession({ playlist: room.playlist, currentUri: selected.spotifyUri })
     await selectTrack(normalizeTrack(selected))
   }
   const stopPlaying = async () => { await pauseSpotify().catch(() => {}); setPlaying(false) }
@@ -628,11 +649,19 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       <section className="room-setup"><Clock3 /><div><span className="eyebrow">Stap 3 · eenmalig</span><h2>Leg 2 startkaarten open op tafel</h2><p>Draai de jaartallen zichtbaar. Leg de <b>oudste links</b> en de <b>nieuwste rechts</b>. Hier tussen gaan jullie zo kiezen.</p></div></section>
       <section className="room-start"><div><span className="eyebrow">Stap 4</span><h2>Klaar? Start het eerste nummer</h2><p>Scan één nieuwe kaart zonder de achterkant te bekijken. De muziek speelt alleen op jouw telefoon.</p></div><button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan een kaart en start</button>{playlistSession && <button className="secondary-button" onClick={nextPlaylist}><Play /> Volgend playlistnummer</button>}<details><summary>Zonder kaarten: kies een Spotify-playlist</summary><SpotifyPlaylistPicker onStart={startPlaylist} /></details></section>
     </>}
-    {room.status === 'lobby' && isHost && Number(room.round) > 1 && <><div className="room-guide next-round-guide"><span className="active"><b>1</b>Kaart ligt</span><span><b>2</b>Scan volgende</span></div><section className="room-start next-round-start"><div><span className="eyebrow">Ronde {room.round}</span><h1>Klaar voor de volgende hit?</h1><p>De vorige kaart ligt in de tijdlijn. Scan nu één nieuwe kaart zonder de achterkant te bekijken.</p></div><button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan volgende kaart</button>{playlistSession && <button className="secondary-button" onClick={nextPlaylist}><Play /> Start volgend playlistnummer</button>}</section></>}
-    {room.status === 'lobby' && !isHost && <section className="room-wait"><div className="secret-art"><div className="record"><Music2 /><span /></div></div><span className="eyebrow">Verbonden als {players[uid]?.name}</span><h1>{Number(room.round) === 1 ? 'Je bent klaar' : `Ronde ${room.round} komt eraan`}</h1><p>{Number(room.round) === 1 ? 'De spelleider scant zo de eerste kaart. Daarna ga je raden, een plek kiezen en je antwoord vastzetten.' : 'De vorige kaart ligt in de tijdlijn. De spelleider scant nu het volgende nummer; jij blijft gewoon op dit scherm.'}</p></section>}
+    {room.status === 'lobby' && isHost && Number(room.round) > 1 && <>
+      <div className="room-guide next-round-guide"><span className="active"><b>1</b>{room.mode === 'digital' ? 'App bijgewerkt' : 'Kaart ligt'}</span><span><b>2</b>{room.mode === 'digital' ? 'Start nummer' : 'Scan volgende'}</span></div>
+      <section className="room-start next-round-start"><div><span className="eyebrow">Ronde {room.round}</span><h1>Klaar voor de volgende hit?</h1><p>{room.mode === 'digital' ? `De digitale tijdlijn heeft nu ${room.timeline?.length || 0} nummers. Start het volgende geheime playlistnummer.` : 'De vorige kaart ligt in de tijdlijn. Scan nu één nieuwe kaart zonder de achterkant te bekijken.'}</p></div>{room.mode === 'digital' ? <button className="scan-button" onClick={playlistSession ? nextPlaylist : resumeDigitalPlaylist}><span><Play /></span>Start volgend nummer</button> : <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan volgende kaart</button>}</section>
+    </>}
+    {room.status === 'lobby' && !isHost && <section className="room-wait"><div className="secret-art"><div className="record"><Music2 /><span /></div></div><span className="eyebrow">Verbonden als {players[uid]?.name}</span><h1>{Number(room.round) === 1 ? 'Je bent klaar' : `Ronde ${room.round} komt eraan`}</h1><p>{Number(room.round) === 1 ? 'De spelleider start zo het eerste nummer. Daarna ga je raden, een plek kiezen en je antwoord vastzetten.' : room.mode === 'digital' ? `De app heeft de tijdlijn aangevuld. Er staan nu ${room.timeline?.length || 0} nummers in; wacht hier op de volgende hit.` : 'De vorige kaart ligt in de tijdlijn. De spelleider scant nu het volgende nummer; jij blijft gewoon op dit scherm.'}</p></section>}
     {room.status === 'guessing' && isHost && <section className="room-host-round"><RoundSteps position={guess.position} finalLabel="Zet vast" /><span className="eyebrow">Geheim nummer · ronde {room.round}</span><h1>Luister en doe zelf mee</h1><div className="secret-art"><div className="record"><Music2 /><span /></div></div><button className="play-or-pause" onClick={() => playing ? stopPlaying() : playTrack(track)}>{playing ? <Pause /> : <Play />}</button>{!guesses[uid]?.locked ? <div className="host-own-guess"><strong>Jouw eigen gok</strong><small>Titel en artiest mogen leeg blijven. Een plek kiezen is verplicht.</small><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Welke titel denk je?" /><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Welke artiest denk je?" /><TimelinePositionPicker value={guess.position} onChange={position => setGuess(value => ({ ...value, position }))} round={room.round} /><button disabled={guess.position === null} onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Mijn gok vastzetten</button></div> : <div className="host-own-guess is-locked"><Check /> Jouw gok staat vast. Wacht tot iedereen groen is.</div>}<div className="ready-list">{Object.entries(players).map(([id, player]) => <span className={player.ready ? 'ready' : ''} key={id}>{player.ready ? <Check /> : <Clock3 />}{player.name}</span>)}</div><button className="reveal-button" disabled={!Object.keys(players).length || !Object.values(players).every(player => player.ready)} onClick={() => revealRoom(roomId)}><Sparkles /> Iedereen klaar: onthul</button>{message && <p>{message}</p>}</section>}
     {room.status === 'guessing' && !isHost && <section className="room-guess"><RoundSteps position={guess.position} finalLabel="Zet vast" /><span className="eyebrow">Ronde {room.round}</span><h1>{guesses[uid]?.locked ? 'Klaar!' : 'Wat denk jij?'}</h1>{guesses[uid]?.locked ? <><div className="locked-answer"><Check /><p>Je antwoord staat vast en blijft geheim. Wacht tot de spelleider onthult.</p></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></> : <><div className="guess-help"><b>1 · Raad wat je kunt</b><span>Titel en artiest mogen leeg blijven.</span></div><label><span>Titel</span><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Welke titel denk je?" /></label><label><span>Artiest</span><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Welke artiest denk je?" /></label><TimelinePositionPicker value={guess.position} onChange={position => setGuess(value => ({ ...value, position }))} round={room.round} /><button className="reveal-button" disabled={guess.position === null} onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Dit is mijn definitieve gok</button></>}</section>}
-    {room.status === 'revealed' && answer && <section className="room-reveal"><span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p><div className="place-reveal-note"><Clock3 /><div><strong>Leg de kaart nu in de tijdlijn</strong><span>Zet {answer.year || 'het jaartal'} op de juiste plek, van oud links naar nieuw rechts. Controleer daarna ieders keuze.</span></div></div>{isHost ? <RoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${scores[uid]} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}{isHost && <button className="primary-button wide" onClick={() => nextRoomRound(roomId, room.round, players)}><ChevronRight /> Kaart gelegd? Volgende ronde</button>}</section>}
+    {room.status === 'revealed' && answer && <section className="room-reveal">
+      <span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p>
+      <div className="place-reveal-note"><Clock3 /><div><strong>{room.mode === 'digital' ? 'De app vult de tijdlijn aan' : 'Leg de kaart nu in de tijdlijn'}</strong><span>{room.mode === 'digital' ? `${answer.year || 'Het jaartal'} wordt automatisch op de juiste digitale plek gezet.` : `Zet ${answer.year || 'het jaartal'} op de juiste plek, van oud links naar nieuw rechts.`} Controleer daarna ieders keuze.</span></div></div>
+      {isHost ? <BaseRoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} timeline={room.mode === 'digital' ? room.timeline || [] : []} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${scores[uid]} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}
+      {isHost && <button className="primary-button wide" onClick={() => nextRoomRound(roomId, room.round, players, answer, room.mode === 'digital')}><ChevronRight /> {room.mode === 'digital' ? 'Volgende digitale ronde' : 'Kaart gelegd? Volgende ronde'}</button>}
+    </section>}
   </main>
 }
 
