@@ -95,6 +95,7 @@ export const setRoomTrack = async (roomId, round, track) => {
     [`rounds/${round}/answer`]: answer,
     [`public/status`]: 'guessing',
     [`public/revealed`]: false,
+    [`public/guessDeadline`]: null,
   })
 }
 
@@ -116,7 +117,12 @@ export const submitRoomGuess = async (roomId, round, guess) => {
   await update(ref(database, `rooms/${roomId}/players/${user.uid}`), { ready: true })
 }
 
-export const revealRoom = roomId => update(ref(database, `rooms/${roomId}/public`), { status: 'revealed', revealed: true })
+export const startRoomGuessDeadline = (roomId, deadline = Date.now() + 20000) => runTransaction(
+  ref(database, `rooms/${roomId}/public/guessDeadline`),
+  current => current || deadline,
+)
+
+export const revealRoom = roomId => update(ref(database, `rooms/${roomId}/public`), { status: 'revealed', revealed: true, guessDeadline: null })
 
 export const scoreRoomPlayer = async (roomId, round, uid, points) => {
   await set(ref(database, `rooms/${roomId}/rounds/${round}/scores/${uid}`), points)
@@ -131,7 +137,7 @@ export const nextRoomRound = async (roomId, round, players, answer, digital = fa
       return next.sort((a, b) => Number(a.year) - Number(b.year))
     })
   }
-  const updates = { 'public/round': round + 1, 'public/status': 'lobby', 'public/revealed': false }
+  const updates = { 'public/round': round + 1, 'public/status': 'lobby', 'public/revealed': false, 'public/guessDeadline': null }
   Object.keys(players || {}).forEach(uid => { updates[`players/${uid}/ready`] = false })
   await update(ref(database, `rooms/${roomId}`), updates)
 }

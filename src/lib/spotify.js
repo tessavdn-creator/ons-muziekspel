@@ -77,8 +77,7 @@ export async function loginSpotify() {
   const activeRoom = new URLSearchParams(location.search).get('room')
   localStorage.setItem(RETURN_HASH_KEY, `${activeRoom ? `?room=${encodeURIComponent(activeRoom)}` : ''}${location.hash === '#admin' ? '#admin' : '#play'}`)
   const redirectUri = `${location.origin}${location.pathname}`
-  const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state']
-  if (location.hash === '#admin') scopes.push('playlist-read-private')
+  const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state', 'playlist-read-private']
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
@@ -182,7 +181,7 @@ async function spotifyFetch(path, options = {}) {
 }
 
 export function playlistIdFrom(value) {
-  return value.match(/playlist[/:]([A-Za-z0-9]+)/)?.[1] || (value.match(/^[A-Za-z0-9]+$/) ? value : '')
+  return value.match(/playlist[/:]([A-Za-z0-9]+)/)?.[1] || (value.match(/^[A-Za-z0-9]{22}$/) ? value : '')
 }
 
 export async function importPlaylist(value) {
@@ -213,7 +212,11 @@ export async function importPlaylist(value) {
 export async function searchSpotifyPlaylists(query) {
   const value = query.trim()
   if (value.length < 2) return []
-  const data = await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=8`)
+  const directId = playlistIdFrom(value)
+  const data = directId
+    ? { playlists: { items: [await spotifyFetch(`/playlists/${directId}`)] } }
+    : await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=12`)
+  const normalizedQuery = cleanSearchValue(value)
   return (data.playlists?.items || []).filter(Boolean).map(playlist => ({
     id: playlist.id,
     name: playlist.name,
@@ -223,7 +226,17 @@ export async function searchSpotifyPlaylists(query) {
     uri: playlist.uri || `spotify:playlist:${playlist.id}`,
     total: playlist.items?.total ?? playlist.tracks?.total ?? 0,
     externalUrl: playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`,
-  }))
+  })).sort((left, right) => playlistRelevance(right, normalizedQuery) - playlistRelevance(left, normalizedQuery))
+}
+
+const cleanSearchValue = value => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()
+const playlistRelevance = (playlist, query) => {
+  const name = cleanSearchValue(playlist.name)
+  if (!query) return 0
+  if (name === query) return 100
+  if (name.startsWith(query)) return 60
+  if (name.includes(query)) return 30
+  return query.split(' ').filter(word => word.length > 1 && name.includes(word)).length
 }
 
 export async function getSpotifyPlaylistAnchors(playlist) {

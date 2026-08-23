@@ -265,6 +265,22 @@ select { width:100%;height:48px;border:1px solid #d8cfc4;border-radius:12px;back
 .room-scoreboard { margin:28px 0;text-align:left; }.room-scoreboard h2 { font-size:1.1rem; }.room-scoreboard article { margin:9px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#13101b; }.room-scoreboard article.is-scored { border-color:#2c795f; }.room-scoreboard header { display:flex;justify-content:space-between;gap:10px; }.room-scoreboard header b { color:var(--yellow); }.room-scoreboard p { color:#aaa3b5;font-size:.78rem;overflow-wrap:anywhere; }.room-scoreboard article>div { display:grid;grid-template-columns:1fr 1fr;gap:8px; }.room-scoreboard button { min-height:42px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#211c2b;color:#fff;font-weight:800; }.room-scoreboard button.active { background:#584700;color:#fff2a8;border-color:#ffd51f; }
 .room-scoreboard article>div.single-action { grid-template-columns:1fr; }
 
+.player-count-options { grid-template-columns:repeat(6,1fr); }
+.player-count-options button { min-width:0;padding:0 4px;font-size:.72rem; }
+.guess-fields>small { grid-column:1/-1;color:#aaa3b5;font-size:.7rem;line-height:1.4;text-align:left; }
+.room-guide.solo-room-guide { grid-template-columns:repeat(2,1fr); }
+.guess-countdown { max-width:460px;margin:0 auto 18px;padding:12px 14px;border:1px solid rgba(255,213,31,.35);border-radius:13px;background:#211d0f;color:#fff2a8;display:flex;align-items:center;gap:11px;text-align:left; }
+.guess-countdown>svg { flex:0 0 auto;width:24px; }
+.guess-countdown strong,.guess-countdown span { display:block; }
+.guess-countdown span { margin-top:2px;color:#c7bd9e;font-size:.7rem;line-height:1.35; }
+.guess-countdown.urgent { border-color:#ff526e;background:#361018;color:#ffd5dc;animation:countdown-pulse .8s ease-in-out infinite alternate; }
+.guess-countdown.urgent span { color:#efb9c2; }
+.playlist-suggestions { margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
+.playlist-suggestions>span,.playlist-search-tip { color:#91899d;font-size:.66rem; }
+.playlist-suggestions button { min-height:30px;padding:0 9px;border:1px solid rgba(40,216,189,.3);border-radius:20px;background:#132923;color:#a9eadc;font-size:.64rem;font-weight:800; }
+.playlist-search-tip { display:block;margin-top:9px;line-height:1.4; }
+@keyframes countdown-pulse { to { transform:scale(1.015); } }
+
 @media(max-width:720px) {
   .page { padding:28px 18px 65px; }.content-page { padding-top:38px; }
   .play-home { display:flex;flex-direction:column;align-items:stretch;min-height:calc(100vh - 90px); }.hero-brand { margin-bottom:70px; }.play-hero { margin:auto 0; }.play-hero h1 { font-size:clamp(2.9rem,12.2vw,4rem); }.quick-test { align-self:stretch;width:100%;margin-top:50px; }
