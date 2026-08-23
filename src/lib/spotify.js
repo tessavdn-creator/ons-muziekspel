@@ -405,7 +405,10 @@ export async function startSpotifyPlaylist(playlist, onState) {
 export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
   const id = await prepareSpotifyPlayer(onState)
   await spotifyFetch(`/me/player/next?device_id=${encodeURIComponent(id)}`, { method: 'POST' })
-  return waitForPlaylistTrack(previousUri, playlist)
+  const track = await waitForPlaylistTrack(previousUri, playlist)
+  const state = await player.getCurrentState().catch(() => null)
+  if (state?.paused) await player.resume()
+  return track
 }
 
 export async function preparePublicSpotifyPlaylist(playlist, onProgress) {

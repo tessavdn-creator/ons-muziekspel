@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.20.4 — OPENBARE PLAYLISTS'
+const APP_VERSION = '0.20.5 — VOLGEND NUMMER'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -650,10 +650,12 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       setPlaying(true); setMessage('Muziek speelt op de telefoon van de spelleider')
     } catch (error) { setMessage(error.message); setPlaying(false) }
   }
-  const selectTrack = async selected => {
+  const selectTrack = async (selected, playback = 'start') => {
     setScanning(false); setTrack(selected); setAnswer(selected); setMessage('Ronde gestart')
     await setRoomTrack(roomId, room.round, selected)
-    await playTrack(selected)
+    if (playback === 'resume-context') await resumeSpotify()
+    if (playback === 'start') await playTrack(selected)
+    else { setPlaying(true); setMessage('Muziek speelt op de telefoon van de spelleider') }
   }
   const parseScan = text => {
     let id = text
@@ -666,6 +668,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     setMessage('Digitale starttijdlijn maken…'); onProgress?.('Playlist controleren…')
     let anchors
     let selected
+    let preparedWhileMuted = false
     try {
       anchors = await getSpotifyPlaylistAnchors(playlist)
       onProgress?.('Eerste geheime nummer starten…')
@@ -675,20 +678,21 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       const prepared = await preparePublicSpotifyPlaylist(playlist, onProgress)
       anchors = prepared.anchors
       selected = prepared.selected
+      preparedWhileMuted = true
     }
     await setRoomDigitalTimeline(roomId, anchors, playlist)
     setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
-    await selectTrack(normalizeTrack(selected))
+    await selectTrack(normalizeTrack(selected), preparedWhileMuted ? 'resume-context' : 'already-playing')
   }
   const nextPlaylist = async () => {
     const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
     setPlaylistSession(value => ({ ...value, currentUri: selected.spotifyUri }))
-    await selectTrack(normalizeTrack(selected))
+    await selectTrack(normalizeTrack(selected), 'already-playing')
   }
   const resumeDigitalPlaylist = async () => {
     const selected = await startSpotifyPlaylist(room.playlist)
     setPlaylistSession({ playlist: room.playlist, currentUri: selected.spotifyUri })
-    await selectTrack(normalizeTrack(selected))
+    await selectTrack(normalizeTrack(selected), 'already-playing')
   }
   const stopPlaying = async () => { await pauseSpotify().catch(() => {}); setPlaying(false) }
   const share = async () => {
