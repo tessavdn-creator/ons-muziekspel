@@ -45,12 +45,12 @@ export const ensureRoomUser = async () => {
   })
 }
 
-export const createRoom = async ({ hostName = 'Spelleider', maxPlayers = 2 } = {}) => {
+export const createRoom = async ({ hostName = 'Spelleider', maxPlayers = 2, mode = 'digital' } = {}) => {
   const user = await ensureRoomUser()
   const room = push(ref(database, 'rooms'))
   const now = Date.now()
   await set(ref(database, `rooms/${room.key}/public`), {
-    code: roomCode(), hostUid: user.uid, maxPlayers, round: 1, status: 'lobby',
+    code: roomCode(), hostUid: user.uid, maxPlayers, mode: mode === 'cards' ? 'cards' : 'digital', round: 1, status: 'lobby',
     revealed: false, createdAt: now, expiresAt: now + 24 * 60 * 60 * 1000,
   })
   await set(ref(database, `rooms/${room.key}/players/${user.uid}`), {
