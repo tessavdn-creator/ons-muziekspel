@@ -412,26 +412,6 @@ export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
   return track
 }
 
-export async function preparePublicSpotifyPlaylist(playlist, onProgress) {
-  await prepareSpotifyPlayer()
-  await player.setVolume?.(0)
-  try {
-    onProgress?.('Openbare playlist starten…')
-    const first = await startSpotifyPlaylist(playlist)
-    onProgress?.('Starttijdlijn maken: 1 van 2…')
-    const second = await nextSpotifyPlaylistTrack(first.spotifyUri, playlist)
-    onProgress?.('Eerste geheime nummer klaarzetten…')
-    const selected = await nextSpotifyPlaylistTrack(second.spotifyUri, playlist)
-    await player.pause()
-    return {
-      anchors: [first, second].sort((left, right) => Number(left.year) - Number(right.year)),
-      selected,
-    }
-  } finally {
-    await player.setVolume?.(0.8)
-  }
-}
-
 export async function resumeSpotify() {
   if (!player) await prepareSpotifyPlayer()
   await player.resume()

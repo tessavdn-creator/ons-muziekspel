@@ -13,7 +13,7 @@ import {
 } from './lib/collection.js'
 import {
   activateSpotifyElement, clearSpotifySession, finishSpotifyLogin, getClientId, hasSpotifySession,
-  getMySpotifyPlaylists, getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, preparePublicSpotifyPlaylist, prepareSpotifyPlayer,
+  getMySpotifyPlaylists, getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
   resumeSpotify, searchSpotifyPlaylists, setClientId, startSpotifyPlaylist,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.20.6 — DOOR NAAR SPELSCHERM'
+const APP_VERSION = '0.20.7 — SNELLE PLAYLISTSTART'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -667,22 +667,20 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   const startPlaylist = async (playlist, onProgress) => {
     setMessage('Digitale starttijdlijn maken…'); onProgress?.('Playlist controleren…')
     let anchors
-    let selected
-    let preparedWhileMuted = false
     try {
       anchors = await getSpotifyPlaylistAnchors(playlist)
-      onProgress?.('Eerste geheime nummer starten…')
-      selected = await startSpotifyPlaylist(playlist)
     } catch (error) {
       if (error.message !== 'SPOTIFY_PLAYLIST_ITEMS_BLOCKED') throw error
-      const prepared = await preparePublicSpotifyPlaylist(playlist, onProgress)
-      anchors = prepared.anchors
-      selected = prepared.selected
-      preparedWhileMuted = true
+      anchors = [
+        { id: 'public-marker-1980', title: 'Startpunt', artist: 'Digitale tijdlijn', year: '1980' },
+        { id: 'public-marker-2000', title: 'Startpunt', artist: 'Digitale tijdlijn', year: '2000' },
+      ]
     }
+    onProgress?.('Eerste geheime nummer starten…')
+    const selected = await startSpotifyPlaylist(playlist)
     await setRoomDigitalTimeline(roomId, anchors, playlist)
     setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
-    await selectTrack(normalizeTrack(selected), preparedWhileMuted ? 'resume-context' : 'already-playing')
+    await selectTrack(normalizeTrack(selected), 'already-playing')
   }
   const nextPlaylist = async () => {
     const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
