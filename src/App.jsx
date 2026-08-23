@@ -480,6 +480,7 @@ function TimelinePositionPicker({ value, onChange, round }) {
   }))
   return <section className="timeline-picker" aria-label="Kies een plek in de tijdlijn">
     <header><Clock3 /><div><strong>2 · Kies de plek op tafel</strong><small>De kaarten liggen van oud naar nieuw. Tik op één vak.</small></div></header>
+    {cards > 2 && <span className="swipe-tip">Veeg naar links voor alle plekken →</span>}
     <div className="timeline-positions">{positions.map(position => <button type="button" className={value !== null && Number(value) === position.value ? 'active' : ''} aria-pressed={value !== null && Number(value) === position.value} onClick={() => onChange(position.value)} key={position.value}><span className="position-picture"><i />{position.value > 0 && position.value < cards && <i />}</span><b>{position.label}</b></button>)}</div>
     <p><b>Nog niet neerleggen:</b> tik nu alleen je keuze aan. Na de onthulling leg je de kaart echt op tafel.</p>
   </section>
