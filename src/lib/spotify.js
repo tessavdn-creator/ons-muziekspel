@@ -173,6 +173,7 @@ async function spotifyFetch(path, options = {}) {
       clearSpotifySession()
       throw new Error('Je Spotify-koppeling is verlopen. Verbind Spotify opnieuw.')
     }
+    if (response.status === 403 && /^\/playlists\/[^/]+\/items/.test(path)) throw new Error('SPOTIFY_PLAYLIST_ITEMS_BLOCKED')
     if (response.status === 403) throw new Error('Dit Spotify-account is niet toegelaten voor deze app of heeft geen Premium.')
     if (response.status === 429) throw new Error(reason === 'QUOTA_EXCEEDED' ? 'De Spotify-daglimiet voor deze ontwikkelapp is bereikt.' : 'Spotify krijgt te veel verzoeken. Probeer het zo opnieuw.')
     throw new Error(message || `Spotify gaf fout ${response.status}.`)
@@ -405,6 +406,26 @@ export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
   const id = await prepareSpotifyPlayer(onState)
   await spotifyFetch(`/me/player/next?device_id=${encodeURIComponent(id)}`, { method: 'POST' })
   return waitForPlaylistTrack(previousUri, playlist)
+}
+
+export async function preparePublicSpotifyPlaylist(playlist, onProgress) {
+  await prepareSpotifyPlayer()
+  await player.setVolume?.(0)
+  try {
+    onProgress?.('Openbare playlist starten…')
+    const first = await startSpotifyPlaylist(playlist)
+    onProgress?.('Starttijdlijn maken: 1 van 2…')
+    const second = await nextSpotifyPlaylistTrack(first.spotifyUri, playlist)
+    onProgress?.('Eerste geheime nummer klaarzetten…')
+    const selected = await nextSpotifyPlaylistTrack(second.spotifyUri, playlist)
+    await player.pause()
+    return {
+      anchors: [first, second].sort((left, right) => Number(left.year) - Number(right.year)),
+      selected,
+    }
+  } finally {
+    await player.setVolume?.(0.8)
+  }
 }
 
 export async function resumeSpotify() {

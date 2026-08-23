@@ -119,4 +119,21 @@ describe('Spotify playback', () => {
       expect.any(Object),
     )
   })
+
+  it('herkent wanneer Spotify de nummers van een openbare playlist afschermt', async () => {
+    localStorage.setItem('giftster.spotify.token.v1', JSON.stringify({
+      clientId: CLIENT_ID,
+      accessToken: 'test-token',
+      refreshToken: 'refresh-token',
+      expiresAt: Date.now() + 3600000,
+    }))
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: { message: 'Forbidden' } }),
+    }))
+
+    const { getSpotifyPlaylistAnchors } = await import('./spotify.js')
+    await expect(getSpotifyPlaylistAnchors({ id: 'radio2', total: 2000 })).rejects.toThrow('SPOTIFY_PLAYLIST_ITEMS_BLOCKED')
+  })
 })

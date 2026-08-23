@@ -13,7 +13,7 @@ import {
 } from './lib/collection.js'
 import {
   activateSpotifyElement, clearSpotifySession, finishSpotifyLogin, getClientId, hasSpotifySession,
-  getMySpotifyPlaylists, getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
+  getMySpotifyPlaylists, getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, preparePublicSpotifyPlaylist, prepareSpotifyPlayer,
   resumeSpotify, searchSpotifyPlaylists, setClientId, startSpotifyPlaylist,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.20.3 — ALLE PLAYLISTS'
+const APP_VERSION = '0.20.4 — OPENBARE PLAYLISTS'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -429,6 +429,7 @@ function SpotifyPlaylistPicker({ onStart }) {
   const [needsPlaylistPermission, setNeedsPlaylistPermission] = useState(false)
   const [resultLabel, setResultLabel] = useState('')
   const [playlistSource, setPlaylistSource] = useState('all')
+  const [startMessage, setStartMessage] = useState('')
   const connected = hasSpotifySession()
   const search = async (event, suggestedQuery) => {
     event?.preventDefault(); const nextQuery = suggestedQuery || query; setPlaylistSource('all'); setQuery(nextQuery); setError(''); setSearching(true)
@@ -457,7 +458,7 @@ function SpotifyPlaylistPicker({ onStart }) {
   const start = async playlist => {
     setStarting(playlist.id); setError('')
     activateSpotifyElement()?.catch(() => {})
-    try { await onStart(playlist) } catch (problem) { setError(problem.message); setStarting('') }
+    try { await onStart(playlist, setStartMessage) } catch (problem) { setError(problem.message); setStarting(''); setStartMessage('') }
   }
   if (!connected) return <div className="playlist-connect"><p><strong>Alleen de spelleider:</strong> koppel Spotify Premium één keer op deze telefoon. Daarna vernieuwt TRACKBACK de verbinding automatisch.</p><button className="spotify-button" onClick={() => loginSpotify().catch(problem => setError(problem.message))}>Koppel één keer met Spotify <ExternalLink /></button><small>Spotify kan zelf om een wachtwoord, passkey of e-mailcode vragen. TRACKBACK kan die beveiliging niet overslaan.</small>{error && <div className="inline-error">{error}</div>}</div>
   return <div className="playlist-picker">
@@ -467,6 +468,7 @@ function SpotifyPlaylistPicker({ onStart }) {
     <small className="playlist-search-tip"><b>Hier vind je openbare playlists</b>, zoals Radio 2 Top 2000. Je kunt ook iedere Spotify-playlistlink plakken.</small></>}
     {playlistSource === 'mine' && !searching && !results.length && !error && <p className="playlist-empty-note">Kies “Mijn playlists” om je openbare, privé- en gevolgde playlists te laden.</p>}
     {resultLabel && results.length > 0 && <h3 className="playlist-result-label">{resultLabel}</h3>}
+    {starting && <div className="playlist-start-progress"><span /><strong>{startMessage || 'Playlist voorbereiden…'}</strong><small>Blijf op dit scherm; TRACKBACK maakt de digitale starttijdlijn.</small></div>}
     {results.length > 0 && <div className="playlist-results">{results.map(playlist => <article key={playlist.id}>
       {playlist.image ? <img src={playlist.image} alt="" /> : <span className="playlist-fallback"><Music2 /></span>}
       <div><strong>{playlist.name}</strong><small>{playlist.public === false ? 'Privé' : playlist.collaborative ? 'Samenwerking' : 'Openbaar'} · {playlist.owner}{playlist.total ? ` · ${playlist.total} nummers` : ''}</small><a href={playlist.externalUrl} target="_blank" rel="noreferrer">Bekijk op Spotify <ExternalLink /></a></div>
@@ -660,10 +662,20 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     if (selected) selectTrack(selected)
     else { setScanning(false); setMessage('Deze kaart hoort niet bij de gekozen editie.') }
   }
-  const startPlaylist = async playlist => {
-    setMessage('Digitale starttijdlijn maken…')
-    const anchors = await getSpotifyPlaylistAnchors(playlist)
-    const selected = await startSpotifyPlaylist(playlist)
+  const startPlaylist = async (playlist, onProgress) => {
+    setMessage('Digitale starttijdlijn maken…'); onProgress?.('Playlist controleren…')
+    let anchors
+    let selected
+    try {
+      anchors = await getSpotifyPlaylistAnchors(playlist)
+      onProgress?.('Eerste geheime nummer starten…')
+      selected = await startSpotifyPlaylist(playlist)
+    } catch (error) {
+      if (error.message !== 'SPOTIFY_PLAYLIST_ITEMS_BLOCKED') throw error
+      const prepared = await preparePublicSpotifyPlaylist(playlist, onProgress)
+      anchors = prepared.anchors
+      selected = prepared.selected
+    }
     await setRoomDigitalTimeline(roomId, anchors, playlist)
     setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
     await selectTrack(normalizeTrack(selected))
