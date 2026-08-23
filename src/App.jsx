@@ -463,11 +463,20 @@ function RoundSteps({ position, finalLabel }) {
   </div>
 }
 
+const timelineCardCount = round => Math.max(2, Number(round) + 1)
+const timelinePositionLabel = (position, round) => {
+  const cards = timelineCardCount(round)
+  const index = Number(position)
+  if (index === 0) return 'Ouder dan kaart 1'
+  if (index === cards) return `Nieuwer dan kaart ${cards}`
+  return `Tussen kaart ${index} en ${index + 1}`
+}
+
 function TimelinePositionPicker({ value, onChange, round }) {
-  const cards = Math.max(2, Number(round) + 1)
+  const cards = timelineCardCount(round)
   const positions = Array.from({ length: cards + 1 }, (_, index) => ({
     value: index,
-    label: index === 0 ? 'Ouder dan kaart 1' : index === cards ? `Nieuwer dan kaart ${cards}` : `Tussen kaart ${index} en ${index + 1}`,
+    label: timelinePositionLabel(index, round),
   }))
   return <section className="timeline-picker" aria-label="Kies een plek in de tijdlijn">
     <header><Clock3 /><div><strong>2 · Kies de plek op tafel</strong><small>De kaarten liggen van oud naar nieuw. Tik op één vak.</small></div></header>
@@ -492,7 +501,7 @@ function RoomScoreBoard({ roomId, round, players, guesses, answer, scores }) {
       const auto = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist))
       return <article key={uid} className={saved ? 'is-scored' : ''}>
         <header><strong>{player.name}</strong><b>{saved ? `+${scores[uid]} punten` : `${auto} automatisch`}</b></header>
-        <p>Titel: {guess.title || '—'} · artiest: {guess.artist || '—'} · plek {guess.position}</p>
+        <p>Titel: {guess.title || '—'} · artiest: {guess.artist || '—'} · gekozen plek: <strong>{timelinePositionLabel(guess.position, round)}</strong></p>
         {!saved && <div><button className={timeline[uid] ? 'active' : ''} onClick={() => setTimeline(value => ({ ...value, [uid]: !value[uid] }))}><Clock3 /> Tijdlijn goed +2</button><button onClick={() => save(uid, guess)}><Check /> Punten opslaan</button></div>}
       </article>
     })}
@@ -614,7 +623,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     {room.status === 'lobby' && !isHost && <section className="room-wait"><div className="secret-art"><div className="record"><Music2 /><span /></div></div><span className="eyebrow">Verbonden als {players[uid]?.name}</span><h1>Je bent klaar</h1><p>De spelleider scant zo een kaart. Zodra de muziek start verschijnen hier drie duidelijke stappen: raden, plek kiezen en vergrendelen.</p></section>}
     {room.status === 'guessing' && isHost && <section className="room-host-round"><RoundSteps position={guess.position} finalLabel="Zet vast" /><span className="eyebrow">Geheim nummer · ronde {room.round}</span><h1>Luister en doe zelf mee</h1><div className="secret-art"><div className="record"><Music2 /><span /></div></div><button className="play-or-pause" onClick={() => playing ? stopPlaying() : playTrack(track)}>{playing ? <Pause /> : <Play />}</button>{!guesses[uid]?.locked ? <div className="host-own-guess"><strong>Jouw eigen gok</strong><small>Titel en artiest mogen leeg blijven. Een plek kiezen is verplicht.</small><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Welke titel denk je?" /><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Welke artiest denk je?" /><TimelinePositionPicker value={guess.position} onChange={position => setGuess(value => ({ ...value, position }))} round={room.round} /><button disabled={guess.position === null} onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Mijn gok vastzetten</button></div> : <div className="host-own-guess is-locked"><Check /> Jouw gok staat vast. Wacht tot iedereen groen is.</div>}<div className="ready-list">{Object.entries(players).map(([id, player]) => <span className={player.ready ? 'ready' : ''} key={id}>{player.ready ? <Check /> : <Clock3 />}{player.name}</span>)}</div><button className="reveal-button" disabled={!Object.keys(players).length || !Object.values(players).every(player => player.ready)} onClick={() => revealRoom(roomId)}><Sparkles /> Iedereen klaar: onthul</button>{message && <p>{message}</p>}</section>}
     {room.status === 'guessing' && !isHost && <section className="room-guess"><RoundSteps position={guess.position} finalLabel="Zet vast" /><span className="eyebrow">Ronde {room.round}</span><h1>{guesses[uid]?.locked ? 'Klaar!' : 'Wat denk jij?'}</h1>{guesses[uid]?.locked ? <><div className="locked-answer"><Check /><p>Je antwoord staat vast en blijft geheim. Wacht tot de spelleider onthult.</p></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></> : <><div className="guess-help"><b>1 · Raad wat je kunt</b><span>Titel en artiest mogen leeg blijven.</span></div><label><span>Titel</span><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Welke titel denk je?" /></label><label><span>Artiest</span><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Welke artiest denk je?" /></label><TimelinePositionPicker value={guess.position} onChange={position => setGuess(value => ({ ...value, position }))} round={room.round} /><button className="reveal-button" disabled={guess.position === null} onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Dit is mijn definitieve gok</button></>}</section>}
-    {room.status === 'revealed' && answer && <section className="room-reveal"><span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p>{isHost ? <RoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${scores[uid]} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}{isHost && <button className="primary-button wide" onClick={() => nextRoomRound(roomId, room.round, players)}><ChevronRight /> Volgende ronde</button>}</section>}
+    {room.status === 'revealed' && answer && <section className="room-reveal"><span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p><div className="place-reveal-note"><Clock3 /><div><strong>Leg de kaart nu in de tijdlijn</strong><span>Zet {answer.year || 'het jaartal'} op de juiste plek, van oud links naar nieuw rechts. Controleer daarna ieders keuze.</span></div></div>{isHost ? <RoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${scores[uid]} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}{isHost && <button className="primary-button wide" onClick={() => nextRoomRound(roomId, room.round, players)}><ChevronRight /> Kaart gelegd? Volgende ronde</button>}</section>}
   </main>
 }
 
