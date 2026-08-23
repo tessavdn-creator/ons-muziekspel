@@ -62,8 +62,10 @@ export const createRoom = async ({ hostName = 'Spelleider', maxPlayers = 2 } = {
 export const joinRoom = async (roomId, name) => {
   const user = await ensureRoomUser()
   const playerRef = ref(database, `rooms/${roomId}/players/${user.uid}`)
-  await update(playerRef, { name: safeName(name), role: 'guest', ready: false, online: true, joinedAt: Date.now() })
-  await runTransaction(ref(database, `rooms/${roomId}/players/${user.uid}/score`), score => score ?? 0)
+  await runTransaction(playerRef, current => ({
+    ...(current || {}), name: safeName(name), role: 'guest', ready: false,
+    score: Number(current?.score) || 0, online: true, joinedAt: Date.now(),
+  }))
   await onDisconnect(playerRef).update({ online: false, lastSeen: Date.now() })
   return user.uid
 }
