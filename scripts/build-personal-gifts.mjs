@@ -21,7 +21,8 @@ const iris = {
   message: 'Vier muzikale routes van honderd kaarten: drie uitdagende reizen door jouw muzikale wereld en Crowd Pleasers vol grote hits om lekker laagdrempelig mee te beginnen.',
   taste: ['dreampop', 'psychedelische blues', 'vintage jazz', 'wereldmuziek', 'spiritueel'],
   showPublicEditions: false,
-  gameModes: ['timeline'],
+  // Tijdlijn blijft de standaard; Duo verschijnt als expliciete extra keuze.
+  gameModes: ['timeline', 'duo'],
   editions: [...irisEditions, crowdPleasers],
 }
 

@@ -66,4 +66,31 @@ describe('Spotify playback', () => {
       expect.objectContaining({ method: 'PUT' }),
     )
   })
+
+  it('zoekt Spotify-playlists en maakt compacte keuzeresultaten', async () => {
+    localStorage.setItem('giftster.spotify.token.v1', JSON.stringify({
+      clientId: CLIENT_ID,
+      accessToken: 'test-token',
+      refreshToken: 'refresh-token',
+      expiresAt: Date.now() + 3600000,
+    }))
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ playlists: { items: [{
+        id: 'top2000', name: 'Top 2000', uri: 'spotify:playlist:top2000',
+        owner: { display_name: 'NPO Radio 2' }, images: [{ url: 'https://image.example/top.jpg' }],
+        items: { total: 2000 }, external_urls: { spotify: 'https://open.spotify.com/playlist/top2000' },
+      }] } }),
+    }))
+
+    const { searchSpotifyPlaylists } = await import('./spotify.js')
+    const playlists = await searchSpotifyPlaylists('Top 2000')
+
+    expect(playlists[0]).toMatchObject({ name: 'Top 2000', owner: 'NPO Radio 2', total: 2000 })
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.spotify.com/v1/search?q=Top%202000&type=playlist&limit=8',
+      expect.any(Object),
+    )
+  })
 })

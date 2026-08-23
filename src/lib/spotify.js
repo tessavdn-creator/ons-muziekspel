@@ -208,6 +208,22 @@ export async function importPlaylist(value) {
   }
 }
 
+export async function searchSpotifyPlaylists(query) {
+  const value = query.trim()
+  if (value.length < 2) return []
+  const data = await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=8`)
+  return (data.playlists?.items || []).filter(Boolean).map(playlist => ({
+    id: playlist.id,
+    name: playlist.name,
+    description: playlist.description || '',
+    owner: playlist.owner?.display_name || 'Spotify',
+    image: playlist.images?.[0]?.url || '',
+    uri: playlist.uri || `spotify:playlist:${playlist.id}`,
+    total: playlist.items?.total ?? playlist.tracks?.total ?? 0,
+    externalUrl: playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`,
+  }))
+}
+
 let player
 let deviceId
 let sdkPromise
@@ -289,6 +305,63 @@ export async function playSpotify(uri, onState) {
   await new Promise(resolve => setTimeout(resolve, 350))
   const state = await player.getCurrentState().catch(() => null)
   if (state?.paused) await player.resume()
+}
+
+const playbackTrack = async (state, playlist) => {
+  const current = state?.track_window?.current_track
+  if (!current?.id || current.type !== 'track') return null
+  const detail = await spotifyFetch(`/tracks/${current.id}`)
+  return {
+    id: `playlist-${current.id}-${Date.now()}`,
+    title: detail.name || current.name,
+    artist: detail.artists?.map(artist => artist.name).join(', ') || current.artists?.map(artist => artist.name).join(', ') || '',
+    year: detail.album?.release_date?.slice(0, 4) || '',
+    album: detail.album?.name || current.album?.name || '',
+    image: detail.album?.images?.[0]?.url || current.album?.images?.[0]?.url || '',
+    spotifyUri: detail.uri || current.uri,
+    externalUrl: detail.external_urls?.spotify || '',
+    genre: 'pop',
+    playlistName: playlist?.name || '',
+  }
+}
+
+const waitForPlaylistTrack = async (previousUri, playlist) => {
+  for (let tries = 0; tries < 30; tries += 1) {
+    const state = await player?.getCurrentState().catch(() => null)
+    const currentUri = state?.track_window?.current_track?.uri
+    if (currentUri && currentUri !== previousUri) {
+      const track = await playbackTrack(state, playlist)
+      if (track) return track
+    }
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
+  throw new Error('Spotify kon geen nummer uit deze playlist starten. Probeer een andere playlist.')
+}
+
+export async function startSpotifyPlaylist(playlist, onState) {
+  const id = await prepareSpotifyPlayer(onState)
+  if (activationPromise) await activationPromise
+  else await player.activateElement()
+  const previousState = await player.getCurrentState().catch(() => null)
+  const previousUri = previousState?.track_window?.current_track?.uri || ''
+  const total = Number(playlist.total) || 0
+  const offset = total > 1 ? { position: Math.floor(Math.random() * total) } : undefined
+  await spotifyFetch(`/me/player/play?device_id=${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ context_uri: playlist.uri, ...(offset ? { offset } : {}) }),
+  })
+  return waitForPlaylistTrack(previousUri, playlist)
+}
+
+export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
+  const id = await prepareSpotifyPlayer(onState)
+  await spotifyFetch(`/me/player/next?device_id=${encodeURIComponent(id)}`, { method: 'POST' })
+  return waitForPlaylistTrack(previousUri, playlist)
+}
+
+export async function resumeSpotify() {
+  if (!player) await prepareSpotifyPlayer()
+  await player.resume()
 }
 
 export async function pauseSpotify() {
