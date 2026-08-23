@@ -215,7 +215,7 @@ export async function searchSpotifyPlaylists(query) {
   const directId = playlistIdFrom(value)
   const data = directId
     ? { playlists: { items: [await spotifyFetch(`/playlists/${directId}`)] } }
-    : await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=12`)
+    : await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=10`)
   const normalizedQuery = cleanSearchValue(value)
   return (data.playlists?.items || []).filter(Boolean).map(playlist => ({
     id: playlist.id,

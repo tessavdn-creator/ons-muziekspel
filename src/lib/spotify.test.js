@@ -89,7 +89,7 @@ describe('Spotify playback', () => {
 
     expect(playlists[0]).toMatchObject({ name: 'Top 2000', owner: 'NPO Radio 2', total: 2000 })
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.spotify.com/v1/search?q=Top%202000&type=playlist&limit=12',
+      'https://api.spotify.com/v1/search?q=Top%202000&type=playlist&limit=10',
       expect.any(Object),
     )
   })

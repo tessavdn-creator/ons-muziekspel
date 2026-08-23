@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.20.0 — SOLO EN SLIM Raden'
+const APP_VERSION = '0.20.1 — SPOTIFY ZOEKFIX'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
