@@ -93,4 +93,30 @@ describe('Spotify playback', () => {
       expect.any(Object),
     )
   })
+
+  it('laadt ook de privéplaylists van de ingelogde gebruiker', async () => {
+    localStorage.setItem('giftster.spotify.token.v1', JSON.stringify({
+      clientId: CLIENT_ID,
+      accessToken: 'test-token',
+      refreshToken: 'refresh-token',
+      expiresAt: Date.now() + 3600000,
+    }))
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [{
+        id: 'private-playlist-id', name: 'Vakantie geheim', public: false,
+        owner: { display_name: 'Tessa' }, images: [], items: { total: 123 },
+      }] }),
+    }))
+
+    const { getMySpotifyPlaylists } = await import('./spotify.js')
+    const playlists = await getMySpotifyPlaylists()
+
+    expect(playlists[0]).toMatchObject({ name: 'Vakantie geheim', public: false, owner: 'Tessa', total: 123 })
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.spotify.com/v1/me/playlists?limit=50&offset=0',
+      expect.any(Object),
+    )
+  })
 })

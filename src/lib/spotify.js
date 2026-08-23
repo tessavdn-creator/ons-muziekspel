@@ -77,7 +77,7 @@ export async function loginSpotify() {
   const activeRoom = new URLSearchParams(location.search).get('room')
   localStorage.setItem(RETURN_HASH_KEY, `${activeRoom ? `?room=${encodeURIComponent(activeRoom)}` : ''}${location.hash === '#admin' ? '#admin' : '#play'}`)
   const redirectUri = `${location.origin}${location.pathname}`
-  const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state', 'playlist-read-private']
+  const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state', 'playlist-read-private', 'playlist-read-collaborative']
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
@@ -217,16 +217,31 @@ export async function searchSpotifyPlaylists(query) {
     ? { playlists: { items: [await spotifyFetch(`/playlists/${directId}`)] } }
     : await spotifyFetch(`/search?q=${encodeURIComponent(value)}&type=playlist&limit=10`)
   const normalizedQuery = cleanSearchValue(value)
-  return (data.playlists?.items || []).filter(Boolean).map(playlist => ({
-    id: playlist.id,
-    name: playlist.name,
-    description: playlist.description || '',
-    owner: playlist.owner?.display_name || 'Spotify',
-    image: playlist.images?.[0]?.url || '',
-    uri: playlist.uri || `spotify:playlist:${playlist.id}`,
-    total: playlist.items?.total ?? playlist.tracks?.total ?? 0,
-    externalUrl: playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`,
-  })).sort((left, right) => playlistRelevance(right, normalizedQuery) - playlistRelevance(left, normalizedQuery))
+  return (data.playlists?.items || []).filter(Boolean).map(normalizePlaylist)
+    .sort((left, right) => playlistRelevance(right, normalizedQuery) - playlistRelevance(left, normalizedQuery))
+}
+
+const normalizePlaylist = playlist => ({
+  id: playlist.id,
+  name: playlist.name,
+  description: playlist.description || '',
+  owner: playlist.owner?.display_name || 'Spotify',
+  image: playlist.images?.[0]?.url || '',
+  uri: playlist.uri || `spotify:playlist:${playlist.id}`,
+  total: playlist.items?.total ?? playlist.tracks?.total ?? 0,
+  public: playlist.public,
+  collaborative: Boolean(playlist.collaborative),
+  externalUrl: playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`,
+})
+
+export async function getMySpotifyPlaylists() {
+  try {
+    const data = await spotifyFetch('/me/playlists?limit=50&offset=0')
+    return (data.items || []).filter(Boolean).map(normalizePlaylist)
+  } catch (error) {
+    if (/niet toegelaten|Premium|403/i.test(error.message)) throw new Error('Koppel Spotify opnieuw om toegang tot je privéplaylists te geven.')
+    throw error
+  }
 }
 
 const cleanSearchValue = value => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()

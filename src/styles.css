@@ -279,6 +279,10 @@ select { width:100%;height:48px;border:1px solid #d8cfc4;border-radius:12px;back
 .playlist-suggestions>span,.playlist-search-tip { color:#91899d;font-size:.66rem; }
 .playlist-suggestions button { min-height:30px;padding:0 9px;border:1px solid rgba(40,216,189,.3);border-radius:20px;background:#132923;color:#a9eadc;font-size:.64rem;font-weight:800; }
 .playlist-search-tip { display:block;margin-top:9px;line-height:1.4; }
+.my-playlists-button { width:100%;min-height:46px;margin-top:14px;border:1px solid rgba(40,216,189,.38);border-radius:12px;background:#12362f;color:#bcebdd;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900; }
+.my-playlists-button svg { width:18px; }
+.playlist-result-label { margin:16px 0 7px;color:#fff;font-size:.76rem;letter-spacing:.02em; }
+.playlist-picker .inline-error button { display:block;width:100%;min-height:40px;margin-top:10px;border:0;border-radius:10px;background:#fff;color:#110e18;font-weight:900; }
 @keyframes countdown-pulse { to { transform:scale(1.015); } }
 
 @media(max-width:720px) {

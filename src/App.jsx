@@ -13,7 +13,7 @@ import {
 } from './lib/collection.js'
 import {
   activateSpotifyElement, clearSpotifySession, finishSpotifyLogin, getClientId, hasSpotifySession,
-  getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
+  getMySpotifyPlaylists, getSpotifyPlaylistAnchors, importPlaylist, loginSpotify, nextSpotifyPlaylistTrack, pauseSpotify, playSpotify, prepareSpotifyPlayer,
   resumeSpotify, searchSpotifyPlaylists, setClientId, startSpotifyPlaylist,
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.20.1 — SPOTIFY ZOEKFIX'
+const APP_VERSION = '0.20.2 — PRIVÉPLAYLISTS'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -426,14 +426,32 @@ function SpotifyPlaylistPicker({ onStart }) {
   const [searching, setSearching] = useState(false)
   const [starting, setStarting] = useState('')
   const [error, setError] = useState('')
+  const [needsPlaylistPermission, setNeedsPlaylistPermission] = useState(false)
+  const [resultLabel, setResultLabel] = useState('')
   const connected = hasSpotifySession()
   const search = async (event, suggestedQuery) => {
     event?.preventDefault(); const nextQuery = suggestedQuery || query; setQuery(nextQuery); setError(''); setSearching(true)
     try {
       const found = await searchSpotifyPlaylists(nextQuery)
       setResults(found)
+      setResultLabel(`Zoekresultaten voor “${nextQuery}”`)
       if (!found.length) setError('Geen playlists gevonden. Probeer een kortere zoekterm.')
     } catch (problem) { setError(problem.message) } finally { setSearching(false) }
+  }
+  const loadMine = async () => {
+    setError(''); setSearching(true); setNeedsPlaylistPermission(false)
+    try {
+      const found = await getMySpotifyPlaylists()
+      setResults(found); setResultLabel('Mijn Spotify-playlists')
+      if (!found.length) setError('Spotify gaf geen eigen of gevolgde playlists terug.')
+    } catch (problem) {
+      setError(problem.message)
+      if (/opnieuw|privéplaylists/i.test(problem.message)) setNeedsPlaylistPermission(true)
+    } finally { setSearching(false) }
+  }
+  const renewPlaylistPermission = () => {
+    clearSpotifySession()
+    loginSpotify().catch(problem => setError(problem.message))
   }
   const start = async playlist => {
     setStarting(playlist.id); setError('')
@@ -442,15 +460,17 @@ function SpotifyPlaylistPicker({ onStart }) {
   }
   if (!connected) return <div className="playlist-connect"><p><strong>Alleen de spelleider:</strong> koppel Spotify Premium één keer op deze telefoon. Daarna vernieuwt TRACKBACK de verbinding automatisch.</p><button className="spotify-button" onClick={() => loginSpotify().catch(problem => setError(problem.message))}>Koppel één keer met Spotify <ExternalLink /></button><small>Spotify kan zelf om een wachtwoord, passkey of e-mailcode vragen. TRACKBACK kan die beveiliging niet overslaan.</small>{error && <div className="inline-error">{error}</div>}</div>
   return <div className="playlist-picker">
+    <button className="my-playlists-button" disabled={searching} onClick={loadMine}><Library /> {searching ? 'Playlists laden…' : 'Toon mijn playlists, ook privé'}</button>
     <form onSubmit={search}><label><Search /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Naam of Spotify-playlistlink…" aria-label="Spotify-playlists zoeken" /></label><button disabled={query.trim().length < 2 || searching}>{searching ? 'Zoeken…' : 'Zoek'}</button></form>
     <div className="playlist-suggestions"><span>Snel zoeken:</span>{['Top 2000', 'Guilty pleasures', '80s hits'].map(suggestion => <button disabled={searching} onClick={() => search(null, suggestion)} key={suggestion}>{suggestion}</button>)}</div>
     <small className="playlist-search-tip">Vind je hem niet? Plak dan de Spotify-link van de playlist; die opent altijd rechtstreeks.</small>
+    {resultLabel && results.length > 0 && <h3 className="playlist-result-label">{resultLabel}</h3>}
     {results.length > 0 && <div className="playlist-results">{results.map(playlist => <article key={playlist.id}>
       {playlist.image ? <img src={playlist.image} alt="" /> : <span className="playlist-fallback"><Music2 /></span>}
-      <div><strong>{playlist.name}</strong><small>{playlist.owner}{playlist.total ? ` · ${playlist.total} nummers` : ''}</small><a href={playlist.externalUrl} target="_blank" rel="noreferrer">Bekijk op Spotify <ExternalLink /></a></div>
+      <div><strong>{playlist.name}</strong><small>{playlist.public === false ? 'Privé · ' : playlist.collaborative ? 'Samenwerking · ' : ''}{playlist.owner}{playlist.total ? ` · ${playlist.total} nummers` : ''}</small><a href={playlist.externalUrl} target="_blank" rel="noreferrer">Bekijk op Spotify <ExternalLink /></a></div>
       <button disabled={Boolean(starting)} onClick={() => start(playlist)}>{starting === playlist.id ? 'Starten…' : 'Kies'}</button>
     </article>)}</div>}
-    {error && <div className="inline-error">{error}</div>}
+    {error && <div className="inline-error">{error}{needsPlaylistPermission && <button onClick={renewPlaylistPermission}>Opnieuw koppelen voor privéplaylists</button>}</div>}
   </div>
 }
 
