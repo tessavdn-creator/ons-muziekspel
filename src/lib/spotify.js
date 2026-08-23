@@ -359,12 +359,13 @@ export async function playSpotify(uri, onState) {
 const playbackTrack = async (state, playlist) => {
   const current = state?.track_window?.current_track
   if (!current?.id || current.type !== 'track') return null
-  const detail = await spotifyFetch(`/tracks/${current.id}`)
+  let detail = {}
+  try { detail = await spotifyFetch(`/tracks/${current.id}`) } catch { /* De spelerdata is genoeg om het spelscherm altijd te openen. */ }
   return {
     id: `playlist-${current.id}-${Date.now()}`,
     title: detail.name || current.name,
     artist: detail.artists?.map(artist => artist.name).join(', ') || current.artists?.map(artist => artist.name).join(', ') || '',
-    year: detail.album?.release_date?.slice(0, 4) || '',
+    year: detail.album?.release_date?.slice(0, 4) || current.album?.release_date?.slice?.(0, 4) || '',
     album: detail.album?.name || current.album?.name || '',
     image: detail.album?.images?.[0]?.url || current.album?.images?.[0]?.url || '',
     spotifyUri: detail.uri || current.uri,

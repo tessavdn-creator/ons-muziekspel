@@ -129,6 +129,22 @@ export const scoreRoomPlayer = async (roomId, round, uid, points) => {
   await runTransaction(ref(database, `rooms/${roomId}/players/${uid}/score`), score => (Number(score) || 0) + points)
 }
 
+export const scoreRoomPlayerBreakdown = async (roomId, round, uid, result) => {
+  const value = {
+    points: Math.max(0, Number(result.points) || 0),
+    timeline: Boolean(result.timeline), title: Boolean(result.title), artist: Boolean(result.artist),
+    scoredAt: Date.now(),
+  }
+  const saved = await runTransaction(ref(database, `rooms/${roomId}/rounds/${round}/scores/${uid}`), current => {
+    if (current !== null) return undefined
+    return value
+  })
+  if (saved.committed) {
+    await runTransaction(ref(database, `rooms/${roomId}/players/${uid}/score`), score => (Number(score) || 0) + value.points)
+  }
+  return saved.committed
+}
+
 export const nextRoomRound = async (roomId, round, players, answer, digital = false) => {
   if (digital && answer) {
     await runTransaction(ref(database, `rooms/${roomId}/public/timeline`), current => {
