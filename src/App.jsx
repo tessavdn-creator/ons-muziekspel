@@ -597,6 +597,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   const isSolo = Number(room?.maxPlayers) === 1
   const readyCount = Object.values(activePlayers).filter(player => player.ready).length
   const allReady = Object.keys(activePlayers).length > 0 && readyCount === Object.keys(activePlayers).length
+  const allRoundScoresReady = Object.keys(players).length > 0 && Object.keys(players).every(playerUid => scores[playerUid] !== undefined)
   const secondsLeft = room?.guessDeadline ? Math.max(0, Math.ceil((Number(room.guessDeadline) - now) / 1000)) : null
   const TimelinePositionPicker = props => <BaseTimelinePositionPicker {...props} timeline={room?.mode === 'digital' ? room.timeline || [] : []} />
 
@@ -784,7 +785,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       <span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p>
       <div className="place-reveal-note"><Clock3 /><div><strong>{room.mode === 'digital' ? 'De app vult de tijdlijn aan' : 'Leg de kaart nu in de tijdlijn'}</strong><span>{room.mode === 'digital' ? `${answer.year || 'Het jaartal'} wordt automatisch op de juiste digitale plek gezet.` : `Zet ${answer.year || 'het jaartal'} op de juiste plek, van oud links naar nieuw rechts.`} Controleer daarna ieders keuze.</span></div></div>
       {isHost ? <BaseRoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} timeline={room.mode === 'digital' ? room.timeline || [] : []} /> : room.mode === 'digital' ? <DigitalRoundResults players={players} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${roundScoreValue(scores[uid])} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}
-      {isHost && <button className="primary-button wide" onClick={() => { setMessage(''); nextRoomRound(roomId, room.round, players, answer, room.mode === 'digital') }}><ChevronRight /> {room.mode === 'digital' ? 'Volgende digitale ronde' : 'Kaart gelegd? Volgende ronde'}</button>}
+      {isHost && <button className="primary-button wide" disabled={room.mode === 'digital' && !allRoundScoresReady} onClick={() => { setMessage(''); nextRoomRound(roomId, room.round, players, answer, room.mode === 'digital') }}><ChevronRight /> {room.mode === 'digital' ? allRoundScoresReady ? 'Volgende digitale ronde' : 'Tussenstand berekenen…' : 'Kaart gelegd? Volgende ronde'}</button>}
     </section>}
   </main>
 }
