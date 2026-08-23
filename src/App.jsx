@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.21.0 — RONDE-UITSLAG'
+const APP_VERSION = '0.22.0 — VOLGENDE-HIT'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -521,7 +521,7 @@ function BaseTimelinePositionPicker({ value, onChange, round, timeline = [] }) {
 
 const roundScoreValue = score => typeof score === 'number' ? score : Number(score?.points) || 0
 
-function DigitalRoundResults({ players, scores }) {
+function DigitalRoundResults({ players, scores, currentUid = '' }) {
   const entries = Object.entries(players)
   const ranking = [...entries].sort(([, left], [, right]) => (Number(right.score) || 0) - (Number(left.score) || 0))
   return <section className="digital-round-results">
@@ -530,7 +530,12 @@ function DigitalRoundResults({ players, scores }) {
       const result = scores[uid]
       if (result === undefined) return <article key={uid} className="is-calculating"><header><strong>{player.name}</strong><b>Berekenen…</b></header></article>
       const breakdown = typeof result === 'number' ? null : result
-      return <article key={uid}><header><strong>{player.name}</strong><b>+{roundScoreValue(result)} punten</b></header><div><span className={breakdown?.timeline ? 'correct' : ''}>{breakdown?.timeline ? <Check /> : <X />} Plek {breakdown?.timeline ? '+2' : '+0'}</span><span className={breakdown?.title ? 'correct' : ''}>{breakdown?.title ? <Check /> : <X />} Titel {breakdown?.title ? '+1' : '+0'}</span><span className={breakdown?.artist ? 'correct' : ''}>{breakdown?.artist ? <Check /> : <X />} Artiest {breakdown?.artist ? '+1' : '+0'}</span></div></article>
+      const roundPoints = roundScoreValue(result)
+      return <article key={uid} className={uid === currentUid ? 'is-you' : ''}>
+        <header><div><strong>{player.name}{uid === currentUid ? ' · jij' : ''}</strong><small>Deze ronde</small></div><b>+{roundPoints}</b></header>
+        <div><span className={breakdown?.timeline ? 'correct' : ''}>{breakdown?.timeline ? <Check /> : <X />}<b>Plek</b><small>{breakdown?.timeline ? 'GOED · +2' : 'NIET GOED · +0'}</small></span><span className={breakdown?.title ? 'correct' : ''}>{breakdown?.title ? <Check /> : <X />}<b>Titel</b><small>{breakdown?.title ? 'GOED · +1' : 'NIET GOED · +0'}</small></span><span className={breakdown?.artist ? 'correct' : ''}>{breakdown?.artist ? <Check /> : <X />}<b>Artiest</b><small>{breakdown?.artist ? 'GOED · +1' : 'NIET GOED · +0'}</small></span></div>
+        <footer><span>Totaalscore</span><strong>{Number(player.score) || 0} punten</strong></footer>
+      </article>
     })}</div>
     <h2 className="standings-title">Tussenstand</h2>
     <ol className="room-standings">{ranking.map(([uid, player], index) => <li key={uid}><b>{index + 1}</b><strong>{player.name}</strong><span>{Number(player.score) || 0} punten</span></li>)}</ol>
@@ -541,7 +546,7 @@ function BaseRoomScoreBoard({ roomId, round, players, guesses, answer, scores, t
   const contestants = Object.entries(players)
   const [timelineChecks, setTimelineChecks] = useState({})
   const digital = Array.isArray(timeline) && timeline.length > 0
-  if (digital) return <DigitalRoundResults players={players} scores={scores} />
+  if (digital) return <DigitalRoundResults players={players} scores={scores} currentUid={currentRoomUid()} />
   const correctPosition = digital ? timeline.filter(track => Number(track.year) <= Number(answer.year)).length : null
   const digitalTimelinePoints = guess => digital && Number(guess.position) === correctPosition ? 2 : 0
   const save = async (uid, guess) => {
@@ -689,9 +694,9 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       setPlaying(true); setMessage('Muziek speelt op de telefoon van de spelleider')
     } catch (error) { setMessage(error.message); setPlaying(false) }
   }
-  const selectTrack = async (selected, playback = 'start') => {
+  const selectTrack = async (selected, playback = 'start', targetRound = room.round) => {
     setScanning(false); setTrack(selected); setAnswer(selected); setMessage('Ronde gestart')
-    await setRoomTrack(roomId, room.round, selected)
+    await setRoomTrack(roomId, targetRound, selected)
     if (playback === 'resume-context') await resumeSpotify()
     if (playback === 'start') await playTrack(selected)
     else { setPlaying(true); setMessage('Muziek speelt op de telefoon van de spelleider') }
@@ -721,12 +726,12 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
     await selectTrack(normalizeTrack(selected), 'already-playing')
   }
-  const nextPlaylist = async () => {
+  const nextPlaylist = async (targetRound = room.round) => {
     setStartingNext(true); setMessage('Volgende nummer laden…')
     try {
       const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
       setPlaylistSession(value => ({ ...value, currentUri: selected.spotifyUri }))
-      await selectTrack(normalizeTrack(selected), 'already-playing')
+      await selectTrack(normalizeTrack(selected), 'already-playing', targetRound)
     } catch (error) { setMessage(error.message) } finally { setStartingNext(false) }
   }
   const resumeDigitalPlaylist = async () => {
@@ -736,6 +741,26 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
       setPlaylistSession({ playlist: room.playlist, currentUri: selected.spotifyUri })
       await selectTrack(normalizeTrack(selected), 'already-playing')
     } catch (error) { setMessage(error.message) } finally { setStartingNext(false) }
+  }
+  const continueAfterReveal = async () => {
+    setMessage('Volgende hit voorbereiden…')
+    if (room.mode !== 'digital') {
+      await nextRoomRound(roomId, room.round, players, answer, false)
+      return
+    }
+    setStartingNext(true)
+    try {
+      const nextRound = Number(room.round) + 1
+      await nextRoomRound(roomId, room.round, players, answer, true)
+      if (!playlistSession) return
+      const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
+      setPlaylistSession(value => ({ ...value, currentUri: selected.spotifyUri }))
+      await selectTrack(normalizeTrack(selected), 'already-playing', nextRound)
+    } catch (error) {
+      setMessage(error.message)
+    } finally {
+      setStartingNext(false)
+    }
   }
   const stopPlaying = async () => { await pauseSpotify().catch(() => {}); setPlaying(false) }
   const share = async () => {
@@ -776,7 +801,7 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     </>}
     {room.status === 'lobby' && isHost && Number(room.round) > 1 && <>
       <div className="room-guide next-round-guide"><span className="active"><b>1</b>{room.mode === 'digital' ? 'App bijgewerkt' : 'Kaart ligt'}</span><span><b>2</b>{room.mode === 'digital' ? 'Start nummer' : 'Scan volgende'}</span></div>
-      <section className="room-start next-round-start"><div><span className="eyebrow">Ronde {room.round}</span><h1>Klaar voor de volgende hit?</h1><p>{room.mode === 'digital' ? `De digitale tijdlijn heeft nu ${room.timeline?.length || 0} nummers. Start het volgende geheime playlistnummer.` : 'De vorige kaart ligt in de tijdlijn. Scan nu één nieuwe kaart zonder de achterkant te bekijken.'}</p></div>{room.mode === 'digital' ? <button className="scan-button" disabled={startingNext} onClick={playlistSession ? nextPlaylist : resumeDigitalPlaylist}><span><Play /></span>{startingNext ? 'Nummer laden…' : 'Start volgend nummer'}</button> : <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan volgende kaart</button>}{message && <div className="next-track-status">{message}</div>}</section>
+      <section className="room-start next-round-start"><div><span className="eyebrow">Ronde {room.round}</span><h1>Klaar voor de volgende hit?</h1><p>{room.mode === 'digital' ? `De digitale tijdlijn heeft nu ${room.timeline?.length || 0} nummers. Start het volgende geheime playlistnummer.` : 'De vorige kaart ligt in de tijdlijn. Scan nu één nieuwe kaart zonder de achterkant te bekijken.'}</p></div>{room.mode === 'digital' ? <button className="scan-button" disabled={startingNext} onClick={playlistSession ? () => nextPlaylist() : resumeDigitalPlaylist}><span><Play /></span>{startingNext ? 'Nummer laden…' : 'Start volgend nummer'}</button> : <button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan volgende kaart</button>}{message && <div className="next-track-status">{message}</div>}</section>
     </>}
     {room.status === 'lobby' && !isHost && <section className="room-wait"><div className="secret-art"><div className="record"><Music2 /><span /></div></div><span className="eyebrow">Verbonden als {players[uid]?.name}</span><h1>{Number(room.round) === 1 ? 'Je bent klaar' : `Ronde ${room.round} komt eraan`}</h1><p>{Number(room.round) === 1 ? room.mode === 'digital' ? 'Geen kaarten nodig. De spelleider kiest een playlist; daarna raad jij op je eigen telefoon en kies je een plek in de digitale tijdlijn.' : 'De spelleider scant zo het eerste nummer. Daarna ga je raden, een plek kiezen en je antwoord vastzetten.' : room.mode === 'digital' ? `De app heeft de tijdlijn aangevuld. Er staan nu ${room.timeline?.length || 0} nummers in; wacht hier op de volgende hit.` : 'De vorige kaart ligt in de tijdlijn. De spelleider scant nu het volgende nummer; jij blijft gewoon op dit scherm.'}</p></section>}
     {room.status === 'guessing' && isHost && <section className="room-host-round"><RoundSteps position={guess.position} finalLabel="Zet vast" /><GuessCountdown seconds={secondsLeft} /><span className="eyebrow">Geheim nummer · ronde {room.round}</span><h1>{isSolo ? 'Wat denk jij?' : 'Luister en doe zelf mee'}</h1><div className="secret-art"><div className="record"><Music2 /><span /></div></div><button className="play-or-pause" onClick={() => playing ? stopPlaying() : playTrack(track)}>{playing ? <Pause /> : <Play />}</button>{!guesses[uid]?.locked ? <div className="host-own-guess"><strong>Jouw eigen gok</strong><small>Spelfouten worden soepel beoordeeld en één juiste artiest is genoeg. Een plek kiezen is verplicht.</small><input autoCorrect="off" value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Welke titel denk je?" /><input autoCorrect="off" value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Welke artiest denk je?" /><TimelinePositionPicker value={guess.position} onChange={position => setGuess(value => ({ ...value, position }))} round={room.round} /><button disabled={guess.position === null} onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Mijn gok vastzetten</button></div> : <div className="host-own-guess is-locked"><Check /> {isSolo ? 'Jouw gok staat vast. Je kunt nu onthullen.' : 'Jouw gok staat vast. Wacht tot iedereen groen is.'}</div>}<div className="ready-list">{Object.entries(players).map(([id, player]) => <span className={player.ready ? 'ready' : ''} key={id}>{player.ready ? <Check /> : <Clock3 />}{player.name}</span>)}</div><button className="reveal-button" disabled={!allReady && secondsLeft !== 0} onClick={() => revealRoom(roomId)}><Sparkles /> {allReady ? 'Iedereen klaar: onthul' : secondsLeft === 0 ? 'Tijd voorbij: onthul' : 'Wachten op de laatste gok'}</button>{message && <p>{message}</p>}</section>}
@@ -784,8 +809,9 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     {room.status === 'revealed' && answer && <section className="room-reveal">
       <span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p>
       <div className="place-reveal-note"><Clock3 /><div><strong>{room.mode === 'digital' ? 'De app vult de tijdlijn aan' : 'Leg de kaart nu in de tijdlijn'}</strong><span>{room.mode === 'digital' ? `${answer.year || 'Het jaartal'} wordt automatisch op de juiste digitale plek gezet.` : `Zet ${answer.year || 'het jaartal'} op de juiste plek, van oud links naar nieuw rechts.`} Controleer daarna ieders keuze.</span></div></div>
-      {isHost ? <BaseRoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} timeline={room.mode === 'digital' ? room.timeline || [] : []} /> : room.mode === 'digital' ? <DigitalRoundResults players={players} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${roundScoreValue(scores[uid])} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}
-      {isHost && <button className="primary-button wide" disabled={room.mode === 'digital' && !allRoundScoresReady} onClick={() => { setMessage(''); nextRoomRound(roomId, room.round, players, answer, room.mode === 'digital') }}><ChevronRight /> {room.mode === 'digital' ? allRoundScoresReady ? 'Volgende digitale ronde' : 'Tussenstand berekenen…' : 'Kaart gelegd? Volgende ronde'}</button>}
+      {isHost ? <BaseRoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} timeline={room.mode === 'digital' ? room.timeline || [] : []} /> : room.mode === 'digital' ? <DigitalRoundResults players={players} scores={scores} currentUid={uid} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${roundScoreValue(scores[uid])} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}
+      {isHost && <button className="primary-button wide next-hit-button" disabled={startingNext || (room.mode === 'digital' && !allRoundScoresReady)} onClick={continueAfterReveal}><ChevronRight /> {room.mode === 'digital' ? !allRoundScoresReady ? 'Tussenstand berekenen…' : startingNext ? 'Volgende hit laden…' : 'Volgende hit starten' : 'Kaart gelegd? Volgende ronde'}</button>}
+      {isHost && message && <div className="next-track-status">{message}</div>}
     </section>}
   </main>
 }

@@ -375,13 +375,19 @@ const playbackTrack = async (state, playlist) => {
   }
 }
 
-const waitForPlaylistTrack = async (previousUri, playlist, allowRestart = false) => {
+const waitForPlaylistTrack = async (previousUri, playlist, { allowRestart = false, fallbackState = null } = {}) => {
   for (let tries = 0; tries < 30; tries += 1) {
     const state = await player?.getCurrentState().catch(() => null)
     const currentUri = state?.track_window?.current_track?.uri
     const restartedSameTrack = allowRestart && tries >= 2 && state?.paused === false
     if (currentUri && (currentUri !== previousUri || restartedSameTrack)) {
       const track = await playbackTrack(state, playlist)
+      if (track) return track
+    }
+    // Op mobiele browsers loopt de metadata soms achter terwijl Spotify al is
+    // doorgeschakeld. De SDK gaf vóór het skippen al aan welk nummer volgt.
+    if (fallbackState && tries >= 10) {
+      const track = await playbackTrack(fallbackState, playlist)
       if (track) return track
     }
     await new Promise(resolve => setTimeout(resolve, 200))
@@ -401,13 +407,18 @@ export async function startSpotifyPlaylist(playlist, onState) {
     method: 'PUT',
     body: JSON.stringify({ context_uri: playlist.uri, ...(offset ? { offset } : {}) }),
   })
-  return waitForPlaylistTrack(previousUri, playlist, true)
+  return waitForPlaylistTrack(previousUri, playlist, { allowRestart: true })
 }
 
 export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
-  const id = await prepareSpotifyPlayer(onState)
-  await spotifyFetch(`/me/player/next?device_id=${encodeURIComponent(id)}`, { method: 'POST' })
-  const track = await waitForPlaylistTrack(previousUri, playlist)
+  await prepareSpotifyPlayer(onState)
+  const before = await player.getCurrentState().catch(() => null)
+  const queued = before?.track_window?.next_tracks?.[0]
+  const fallbackState = queued ? { paused: false, track_window: { current_track: queued } } : null
+  // Dit bestuurt precies de Web Playback SDK op deze telefoon. Via de algemene
+  // Web API kon de opdracht op een ander Spotify-apparaat of te laat aankomen.
+  await player.nextTrack()
+  const track = await waitForPlaylistTrack(previousUri, playlist, { fallbackState })
   const state = await player.getCurrentState().catch(() => null)
   if (state?.paused) await player.resume()
   return track

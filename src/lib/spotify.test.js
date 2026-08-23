@@ -169,4 +169,37 @@ describe('Spotify playback', () => {
     const track = await startSpotifyPlaylist({ name: 'Testlijst', uri: 'spotify:playlist:test', total: 1 })
     expect(track).toMatchObject({ title: 'Zelfde nummer', year: '1999' })
   })
+
+  it('blijft op mobiel niet hangen als Spotify-metadata na volgende nog achterloopt', async () => {
+    vi.useFakeTimers()
+    const nextTrack = vi.fn(() => Promise.resolve())
+    const oldTrack = { id: 'old', uri: 'spotify:track:old', type: 'track', name: 'Oud', artists: [{ name: 'Oud' }] }
+    const queuedTrack = {
+      id: 'new', uri: 'spotify:track:new', type: 'track', name: 'Nieuwe hit', artists: [{ name: 'Nieuwe artiest' }],
+      album: { release_date: '2004', name: 'Nieuw album', images: [] },
+    }
+    class PlayerMock {
+      constructor() { this.listeners = {} }
+      addListener(name, callback) { this.listeners[name] = callback }
+      async connect() { this.listeners.ready({ device_id: 'phone-device' }); return true }
+      getCurrentState() { return Promise.resolve({ paused: false, track_window: { current_track: oldTrack, next_tracks: [queuedTrack] } }) }
+      nextTrack() { return nextTrack() }
+      resume() { return Promise.resolve() }
+    }
+    window.Spotify = { Player: PlayerMock }
+    localStorage.setItem('giftster.spotify.token.v1', JSON.stringify({
+      clientId: CLIENT_ID, accessToken: 'test-token', refreshToken: 'refresh-token', expiresAt: Date.now() + 3600000,
+    }))
+    globalThis.fetch = vi.fn(async url => String(url).includes('/tracks/new') ? ({
+      ok: true, status: 200, json: async () => ({ ...queuedTrack, artists: queuedTrack.artists, external_urls: {} }),
+    }) : ({ ok: true, status: 204 }))
+
+    const { nextSpotifyPlaylistTrack } = await import('./spotify.js')
+    const pending = nextSpotifyPlaylistTrack('spotify:track:old', { name: 'Testlijst' })
+    await vi.advanceTimersByTimeAsync(2500)
+    await expect(pending).resolves.toMatchObject({ title: 'Nieuwe hit', artist: 'Nieuwe artiest', year: '2004' })
+    expect(nextTrack).toHaveBeenCalledOnce()
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/me/player/next'), expect.anything())
+    vi.useRealTimers()
+  })
 })
