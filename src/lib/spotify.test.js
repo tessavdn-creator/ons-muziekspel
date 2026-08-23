@@ -136,4 +136,37 @@ describe('Spotify playback', () => {
     const { getSpotifyPlaylistAnchors } = await import('./spotify.js')
     await expect(getSpotifyPlaylistAnchors({ id: 'radio2', total: 2000 })).rejects.toThrow('SPOTIFY_PLAYLIST_ITEMS_BLOCKED')
   })
+
+  it('gaat door naar het spel als Spotify hetzelfde nummer opnieuw start', async () => {
+    class PlayerMock {
+      constructor() { this.listeners = {} }
+      addListener(name, callback) { this.listeners[name] = callback }
+      async connect() { this.listeners.ready({ device_id: 'phone-device' }); return true }
+      activateElement() { return Promise.resolve() }
+      getCurrentState() {
+        return Promise.resolve({ paused: false, track_window: { current_track: {
+          id: 'same-track', uri: 'spotify:track:same-track', type: 'track', name: 'Zelfde nummer', artists: [{ name: 'Testartiest' }],
+        } } })
+      }
+      resume() { return Promise.resolve() }
+      pause() { return Promise.resolve() }
+    }
+    window.Spotify = { Player: PlayerMock }
+    localStorage.setItem('giftster.spotify.token.v1', JSON.stringify({
+      clientId: CLIENT_ID,
+      accessToken: 'test-token',
+      refreshToken: 'refresh-token',
+      expiresAt: Date.now() + 3600000,
+    }))
+    globalThis.fetch = vi.fn(async url => String(url).includes('/tracks/same-track') ? ({
+      ok: true, status: 200, json: async () => ({
+        id: 'same-track', name: 'Zelfde nummer', uri: 'spotify:track:same-track', artists: [{ name: 'Testartiest' }],
+        album: { release_date: '1999', name: 'Testalbum', images: [] }, external_urls: {},
+      }),
+    }) : ({ ok: true, status: 204 }))
+
+    const { startSpotifyPlaylist } = await import('./spotify.js')
+    const track = await startSpotifyPlaylist({ name: 'Testlijst', uri: 'spotify:playlist:test', total: 1 })
+    expect(track).toMatchObject({ title: 'Zelfde nummer', year: '1999' })
+  })
 })

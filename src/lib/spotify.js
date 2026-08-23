@@ -374,11 +374,12 @@ const playbackTrack = async (state, playlist) => {
   }
 }
 
-const waitForPlaylistTrack = async (previousUri, playlist) => {
+const waitForPlaylistTrack = async (previousUri, playlist, allowRestart = false) => {
   for (let tries = 0; tries < 30; tries += 1) {
     const state = await player?.getCurrentState().catch(() => null)
     const currentUri = state?.track_window?.current_track?.uri
-    if (currentUri && currentUri !== previousUri) {
+    const restartedSameTrack = allowRestart && tries >= 2 && state?.paused === false
+    if (currentUri && (currentUri !== previousUri || restartedSameTrack)) {
       const track = await playbackTrack(state, playlist)
       if (track) return track
     }
@@ -399,7 +400,7 @@ export async function startSpotifyPlaylist(playlist, onState) {
     method: 'PUT',
     body: JSON.stringify({ context_uri: playlist.uri, ...(offset ? { offset } : {}) }),
   })
-  return waitForPlaylistTrack(previousUri, playlist)
+  return waitForPlaylistTrack(previousUri, playlist, true)
 }
 
 export async function nextSpotifyPlaylistTrack(previousUri, playlist, onState) {
