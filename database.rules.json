@@ -1,0 +1,44 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$room": {
+        "public": {
+          ".read": "auth != null",
+          ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)",
+          ".validate": "newData.hasChildren(['hostUid', 'code', 'status', 'round', 'expiresAt'])"
+        },
+        "players": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || newData.hasChildren(['name', 'role', 'ready', 'score'])"
+          }
+        },
+        "rounds": {
+          "$round": {
+            "answer": {
+              ".read": "auth != null && (root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid || root.child('rooms').child($room).child('public').child('revealed').val() === true)",
+              ".write": "auth != null && root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid"
+            },
+            "guesses": {
+              ".read": "auth != null && root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid",
+              "$uid": {
+                ".read": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid || root.child('rooms').child($room).child('public').child('revealed').val() === true)",
+                ".write": "auth != null && auth.uid === $uid && root.child('rooms').child($room).child('public').child('revealed').val() !== true",
+                ".validate": "newData.hasChildren(['title', 'artist', 'position', 'locked'])"
+              }
+            },
+            "scores": {
+              ".read": "auth != null",
+              "$uid": {
+                ".write": "auth != null && root.child('rooms').child($room).child('public').child('hostUid').val() === auth.uid"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

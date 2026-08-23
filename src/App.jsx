@@ -18,6 +18,11 @@ import {
 } from './lib/spotify.js'
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 import { answerMatches, clampPlayerCount, DUO_SCORE_KEY, duoRoundPoints, freshDuoMatch, loadDuoMatch } from './lib/duo.js'
+import {
+  closeRoom, createRoom, currentRoomUid, ensureRoomUser, joinRoom, leaveRoom, nextRoomRound, revealRoom,
+  roomIdFromUrl, roomInviteUrl, scoreRoomPlayer, setRoomTrack, submitRoomGuess, subscribeMyRoomGuess,
+  subscribeRoomPlayers, subscribeRoomPublic, subscribeRoundAnswer, subscribeRoundGuesses, subscribeRoundScores,
+} from './lib/rooms.js'
 
 const ADMIN_NAV = [
   { id: 'home', label: 'Overzicht', icon: Sparkles },
@@ -25,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.17.1 — TRACKBACK'
+const APP_VERSION = '0.18.0 — TRACKBACK LIVE'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -448,6 +453,140 @@ function SpotifyPlaylistPicker({ onStart }) {
   </div>
 }
 
+function RoomScoreBoard({ roomId, round, players, guesses, answer, scores }) {
+  const contestants = Object.entries(players)
+  const [timeline, setTimeline] = useState({})
+  const save = async (uid, guess) => {
+    const base = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist))
+    await scoreRoomPlayer(roomId, round, uid, base + (timeline[uid] ? 2 : 0))
+  }
+  return <section className="room-scoreboard">
+    <h2>Controleer de ronde</h2>
+    {contestants.map(([uid, player]) => {
+      const guess = guesses[uid]
+      const saved = scores[uid] !== undefined
+      if (!guess) return <article key={uid}><strong>{player.name}</strong><span>Geen antwoord</span></article>
+      const auto = Number(answerMatches(answer.title, guess.title)) + Number(answerMatches(answer.artist, guess.artist))
+      return <article key={uid} className={saved ? 'is-scored' : ''}>
+        <header><strong>{player.name}</strong><b>{saved ? `+${scores[uid]} punten` : `${auto} automatisch`}</b></header>
+        <p>Titel: {guess.title || '—'} · artiest: {guess.artist || '—'} · plek {guess.position}</p>
+        {!saved && <div><button className={timeline[uid] ? 'active' : ''} onClick={() => setTimeline(value => ({ ...value, [uid]: !value[uid] }))}><Clock3 /> Tijdlijn goed +2</button><button onClick={() => save(uid, guess)}><Check /> Punten opslaan</button></div>}
+      </article>
+    })}
+  </section>
+}
+
+function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
+  const [room, setRoom] = useState(null)
+  const [players, setPlayers] = useState({})
+  const [answer, setAnswer] = useState(null)
+  const [guesses, setGuesses] = useState({})
+  const [scores, setScores] = useState({})
+  const [uid, setUid] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [name, setName] = useState('')
+  const [guess, setGuess] = useState({ title: '', artist: '', position: 0 })
+  const [scanning, setScanning] = useState(false)
+  const [track, setTrack] = useState(null)
+  const [playing, setPlaying] = useState(false)
+  const [message, setMessage] = useState('')
+  const [playlistSession, setPlaylistSession] = useState(null)
+  const [liveRoomId, setLiveRoomId] = useState(roomIdFromUrl)
+  const invite = useMemo(() => roomInviteUrl(roomId), [roomId])
+  const isHost = Boolean(uid && room?.hostUid === uid)
+  const joined = Boolean(uid && players[uid])
+  const guests = Object.entries(players).filter(([, player]) => player.role !== 'host')
+
+  useEffect(() => {
+    let active = true
+    ensureRoomUser().then(user => active && setUid(user.uid)).catch(error => setMessage(error.message))
+    const stopRoom = subscribeRoomPublic(roomId, value => { if (active) { setRoom(value); setLoaded(true) } })
+    const stopPlayers = subscribeRoomPlayers(roomId, value => active && setPlayers(value))
+    return () => { active = false; stopRoom(); stopPlayers() }
+  }, [roomId])
+
+  useEffect(() => {
+    setAnswer(null); setGuesses({}); setScores({}); setGuess({ title: '', artist: '', position: 0 }); setTrack(null); setPlaying(false)
+    if (!room?.round || !uid) return undefined
+    const stops = [subscribeRoundScores(roomId, room.round, setScores)]
+    if (isHost || room.revealed) stops.push(subscribeRoundAnswer(roomId, room.round, value => { setAnswer(value); if (isHost && value) setTrack(value) }))
+    if (isHost) stops.push(subscribeRoundGuesses(roomId, room.round, setGuesses))
+    else stops.push(subscribeMyRoomGuess(roomId, room.round, uid, value => setGuesses(value ? { [uid]: value } : {})))
+    return () => stops.forEach(stop => stop())
+  }, [roomId, room?.round, room?.revealed, uid, isHost])
+
+  const playTrack = async selected => {
+    try {
+      activateSpotifyElement()?.catch(() => {})
+      if (selected.audioUrl) {
+        const audio = new Audio(selected.audioUrl)
+        await audio.play()
+      } else if (selected.spotifyUri && hasSpotifySession()) {
+        await prepareSpotifyPlayer()
+        await playSpotify(selected.spotifyUri)
+      } else if (selected.spotifyUri) {
+        setMessage('Koppel Spotify op de telefoon van de spelleider en tik daarna op afspelen.')
+        return
+      }
+      setPlaying(true); setMessage('Muziek speelt op de telefoon van de spelleider')
+    } catch (error) { setMessage(error.message); setPlaying(false) }
+  }
+  const selectTrack = async selected => {
+    setScanning(false); setTrack(selected); setAnswer(selected); setMessage('Ronde gestart')
+    await setRoomTrack(roomId, room.round, selected)
+    await playTrack(selected)
+  }
+  const parseScan = text => {
+    let id = text
+    try { id = new URL(text).searchParams.get('card') || text } catch { /* raw id */ }
+    const selected = resolveCard(id)
+    if (selected) selectTrack(selected)
+    else { setScanning(false); setMessage('Deze kaart hoort niet bij de gekozen editie.') }
+  }
+  const startPlaylist = async playlist => {
+    const selected = await startSpotifyPlaylist(playlist)
+    setPlaylistSession({ playlist, currentUri: selected.spotifyUri })
+    await selectTrack(normalizeTrack(selected))
+  }
+  const nextPlaylist = async () => {
+    const selected = await nextSpotifyPlaylistTrack(playlistSession.currentUri, playlistSession.playlist)
+    setPlaylistSession(value => ({ ...value, currentUri: selected.spotifyUri }))
+    await selectTrack(normalizeTrack(selected))
+  }
+  const stopPlaying = async () => { await pauseSpotify().catch(() => {}); setPlaying(false) }
+  const share = async () => {
+    if (navigator.share) await navigator.share({ title: 'Speel mee met TRACKBACK', text: `Kamer ${room.code}`, url: invite })
+    else { await navigator.clipboard.writeText(invite); setMessage('Uitnodigingslink gekopieerd') }
+  }
+  const exit = async () => {
+    if (isHost) await closeRoom(roomId)
+    else if (joined) await leaveRoom(roomId)
+    onLeave()
+  }
+
+  if (scanning) return <ScannerView onScan={parseScan} onClose={() => setScanning(false)} />
+  if (!loaded) return <main className="room-screen room-loading"><Music2 /><h1>Kamer openen…</h1></main>
+  if (!room) return <main className="room-screen room-loading"><X /><h1>Kamer niet gevonden</h1><p>Vraag de spelleider om een nieuwe QR-code.</p><button onClick={onLeave}>Terug naar TRACKBACK</button></main>
+  if (room.status === 'closed') return <main className="room-screen room-loading"><Music2 /><h1>Deze kamer is gesloten</h1><button onClick={onLeave}>Terug naar TRACKBACK</button></main>
+  if (!joined) {
+    const full = Object.keys(players).length >= Number(room.maxPlayers || 6)
+    return <main className="room-screen join-room"><div className="hero-brand"><div className="brand-mark"><Users /></div><span>TRACKBACK LIVE</span></div><section><span className="eyebrow">Kamer {room.code}</span><h1>Speel mee<br />op je eigen telefoon</h1><p>Geen Spotify-account nodig. De spelleider verzorgt de muziek; jouw antwoorden blijven geheim.</p><label><span>Jouw naam</span><input autoFocus value={name} onChange={event => setName(event.target.value)} placeholder="Bijvoorbeeld Nikki" /></label><button disabled={full || name.trim().length < 2} onClick={() => joinRoom(roomId, name).catch(error => setMessage(error.message))}>{full ? 'Kamer is vol' : 'Doe mee'} <ChevronRight /></button>{message && <div className="inline-error">{message}</div>}</section></main>
+  }
+
+  return <main className={`room-screen ${isHost ? 'host-room' : 'guest-room'} room-${room.status}`}>
+    <header className="room-top"><button className="round-button" onClick={exit}><ArrowLeft /></button><div><small>Kamer {room.code}</small><strong>Ronde {room.round}</strong></div><span>{Object.keys(players).length}/{room.maxPlayers} online</span></header>
+    {room.status === 'lobby' && isHost && <>
+      <section className="room-invite"><span className="eyebrow">Iedereen een eigen telefoon</span><h1>Laat je vrienden deze QR scannen</h1><CardQr value={invite} size={280} /><strong>{room.code}</strong><p>Gasten vullen alleen hun naam in. Ze hebben geen Spotify-login nodig.</p><button onClick={share}><QrCode /> Deel uitnodiging</button></section>
+      <section className="room-players"><h2>{guests.length ? 'Al aangesloten' : 'Wachten op spelers…'}</h2>{Object.entries(players).map(([id, player]) => <span key={id}><Users /> {player.name}{player.role === 'host' ? ' · spelleider' : ''}</span>)}</section>
+      <section className="room-start"><button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan eerste kaart</button>{playlistSession && <button className="secondary-button" onClick={nextPlaylist}><Play /> Volgend playlistnummer</button>}<details><summary>Zonder kaarten: kies een Spotify-playlist</summary><SpotifyPlaylistPicker onStart={startPlaylist} /></details></section>
+    </>}
+    {room.status === 'lobby' && !isHost && <section className="room-wait"><div className="record"><Music2 /><span /></div><span className="eyebrow">Je bent binnen, {players[uid]?.name}</span><h1>Wacht op het eerste nummer</h1><p>Leg je telefoon voor je neer. Je antwoorden verschijnen hier zodra de spelleider start.</p></section>}
+    {room.status === 'guessing' && isHost && <section className="room-host-round"><span className="eyebrow">Geheim nummer · ronde {room.round}</span><h1>Iedereen luistert en raadt</h1><div className="secret-art"><div className="record"><Music2 /><span /></div></div><button className="play-or-pause" onClick={() => playing ? stopPlaying() : playTrack(track)}>{playing ? <Pause /> : <Play />}</button>{!guesses[uid]?.locked ? <div className="host-own-guess"><strong>Jouw eigen geheime gok</strong><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Titel (mag leeg blijven)" /><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Artiest (mag leeg blijven)" /><label><span>Plek</span><input type="number" min="0" max="99" value={guess.position} onChange={event => setGuess(value => ({ ...value, position: event.target.value }))} /></label><button onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Vergrendel mijn gok</button></div> : <div className="host-own-guess is-locked"><Check /> Jouw gok is vergrendeld</div>}<div className="ready-list">{Object.entries(players).map(([id, player]) => <span className={player.ready ? 'ready' : ''} key={id}>{player.ready ? <Check /> : <Clock3 />}{player.name}</span>)}</div><button className="reveal-button" disabled={!Object.keys(players).length || !Object.values(players).every(player => player.ready)} onClick={() => revealRoom(roomId)}><Sparkles /> Onthul voor iedereen</button>{message && <p>{message}</p>}</section>}
+    {room.status === 'guessing' && !isHost && <section className="room-guess"><span className="eyebrow">Ronde {room.round}</span><h1>{guesses[uid]?.locked ? 'Gok vergrendeld!' : 'Wat hoor jij?'}</h1>{guesses[uid]?.locked ? <><div className="locked-answer"><Check /><p>De spelleider ziet alleen dat je klaar bent. Je antwoord blijft verborgen.</p></div><div className="sound-wave">{[1,2,3,4,5,6,7].map(i => <i key={i} />)}</div></> : <><label><span>Titel</span><input value={guess.title} onChange={event => setGuess(value => ({ ...value, title: event.target.value }))} placeholder="Mag leeg blijven" /></label><label><span>Artiest</span><input value={guess.artist} onChange={event => setGuess(value => ({ ...value, artist: event.target.value }))} placeholder="Mag leeg blijven" /></label><label><span>Plek in de gezamenlijke tijdlijn</span><input type="number" min="0" max="99" value={guess.position} onChange={event => setGuess(value => ({ ...value, position: event.target.value }))} /><small>0 = helemaal vooraan, 1 = na de eerste kaart, enzovoort.</small></label><button className="reveal-button" onClick={() => submitRoomGuess(roomId, room.round, guess)}><Check /> Vergrendel mijn gok</button></>}</section>}
+    {room.status === 'revealed' && answer && <section className="room-reveal"><span className="eyebrow">Het was…</span><div className="reveal-art">{answer.image ? <img src={answer.image} alt="" /> : <div><Music2 /></div>}<span className="year-stamp">{answer.year || '????'}</span></div><h1>{answer.title}</h1><p>{answer.artist}</p>{isHost ? <RoomScoreBoard roomId={roomId} round={room.round} players={players} guesses={guesses} answer={answer} scores={scores} /> : <div className="guest-round-result"><strong>{scores[uid] === undefined ? 'De spelleider controleert de tijdlijn…' : `+${scores[uid]} punten deze ronde`}</strong><span>Totaal: {players[uid]?.score || 0} punten</span></div>}{isHost && <button className="primary-button wide" onClick={() => nextRoomRound(roomId, room.round, players)}><ChevronRight /> Volgende ronde</button>}</section>}
+  </main>
+}
+
 function PlayerCountPicker({ value, onChange }) {
   return <section className="player-count-card">
     <div><Users /><span><strong>Met hoeveel spelen jullie?</strong><small>Iedereen krijgt een eigen gok en score.</small></span></div>
@@ -455,7 +594,7 @@ function PlayerCountPicker({ value, onChange }) {
   </section>
 }
 
-function PlayHome({ collection, onOpenTrack, onStartPlaylist, resolveCard, gameMode, setGameMode, playerCount, setPlayerCount }) {
+function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, resolveCard, gameMode, setGameMode, playerCount, setPlayerCount }) {
   const availableGames = collection.gameModes?.length
     ? GAME_MODES.filter(game => collection.gameModes.includes(game.id))
     : GAME_MODES
@@ -464,6 +603,7 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, resolveCard, gameM
   const [scanPlayerReady, setScanPlayerReady] = useState(!hasSpotifySession())
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [creatingRoom, setCreatingRoom] = useState(false)
   const activeGame = availableGames.find(game => game.id === gameMode) || availableGames[0] || GAME_MODES[0]
   const practiceTrack = useMemo(() => collection.tracks[Math.floor(Math.random() * collection.tracks.length)], [collection])
   const practiceReady = Boolean(practiceTrack?.audioUrl || getClientId())
@@ -485,9 +625,8 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, resolveCard, gameM
     <section className="play-hero">
       <span className="eyebrow">Klaar voor een ronde?</span>
       <h1>Luister.<br /><em>{gameMode === 'timeline' ? 'Leg de tijdlijn.' : `Speel ${activeGame.name}.`}</em></h1>
-      <p>Scan een kaart, luister zonder titel en speel samen op één telefoon.</p>
-      <button className="scan-button" disabled={!scanPlayerReady} onClick={() => { activateSpotifyElement()?.catch(() => {}); setError(''); setScanning(true) }}><span><ScanLine /></span>{scanPlayerReady ? 'Scan een kaart' : 'Spotify voorbereiden…'}</button>
-      <p className="one-phone-tip"><Check /> Eén telefoon is genoeg voor de hele groep</p>
+      <p>{gameMode === 'duo' ? 'Maak een kamer en laat iedereen met de QR-code op een eigen telefoon meedoen.' : 'Scan een kaart, luister zonder titel en speel direct.'}</p>
+      {gameMode !== 'duo' && <><button className="scan-button" disabled={!scanPlayerReady} onClick={() => { activateSpotifyElement()?.catch(() => {}); setError(''); setScanning(true) }}><span><ScanLine /></span>{scanPlayerReady ? 'Scan een kaart' : 'Spotify voorbereiden…'}</button><p className="one-phone-tip"><Check /> Eén telefoon is genoeg voor de hele groep</p></>}
       {availableGames.some(game => game.id === 'duo') && gameMode !== 'duo' && <button className="duo-invite" onClick={() => selectGame('duo')}><span><Users /></span><div><small>Met z’n tweeën of meer?</small><strong>Speel Samen</strong><p>Gezamenlijke tijdlijn · eigen gok · eigen score</p></div><ChevronRight /></button>}
       {availableGames.length > 1 && <div className="game-switch-bar"><span><activeGame.icon /><small>Gekozen spel</small><strong>{activeGame.name}</strong></span><button onClick={() => setShowAlternatives(value => !value)}>{showAlternatives ? 'Sluiten' : 'Ander spel'} <ChevronRight /></button></div>}
       {availableGames.length > 1 && showAlternatives && <div className="game-menu">
@@ -499,19 +638,15 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, resolveCard, gameM
       </div>}
       <button className="rules-toggle" onClick={() => setShowRules(value => !value)}><activeGame.icon /> Hoe speel je {activeGame.name}? <ChevronRight className={showRules ? 'is-open' : ''} /></button>
       {showRules && <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>In drie stappen</small><strong>{activeGame.name}</strong></div></div><div className="setup-tip"><b>Voor je begint</b>{activeGame.setup}</div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>}
-      {gameMode === 'duo' && <PlayerCountPicker value={playerCount} onChange={setPlayerCount} />}
+      {gameMode === 'duo' && <><PlayerCountPicker value={playerCount} onChange={setPlayerCount} /><section className="live-room-cta"><Users /><div><small>Iedereen op eigen telefoon</small><strong>Maak een live kamer</strong><p>Deel één QR-code. Antwoorden blijven privé en alle schermen onthullen tegelijk.</p></div><button disabled={creatingRoom} onClick={async () => { setCreatingRoom(true); try { await onCreateRoom(playerCount) } finally { setCreatingRoom(false) } }}>{creatingRoom ? 'Kamer maken…' : 'Maak kamer'} <ChevronRight /></button></section></>}
       {error && <div className="inline-error">{error}</div>}
     </section>
-    {gameMode === 'duo' && <section className="playlist-play-card">
-      <span className="eyebrow">Samen zonder kaarten</span><h2>Kies muziek op Spotify</h2><p>Zoek een onderwerp, kies een playlist en speel met {playerCount} spelers. TRACKBACK houdt titel, artiest en jaartal geheim tot de onthulling.</p>
-      <SpotifyPlaylistPicker onStart={onStartPlaylist} />
-    </section>}
-    <section className="quick-test practice-card">
+    {gameMode !== 'duo' && <section className="quick-test practice-card">
       <span>Nog geen kaarten bij de hand?</span>
       <h2>Probeer één oefenronde</h2>
       <p>{practiceReady ? 'Zo ontdek je zonder QR-kaart eerst rustig hoe luisteren en onthullen werkt.' : 'Scan eerst één geprinte TRACKBACK-kaart. Daarmee wordt deze telefoon automatisch voor Spotify ingesteld.'}</p>
       <button className="secondary-button" disabled={!practiceTrack || !practiceReady} onClick={() => { activateSpotifyElement()?.catch(() => {}); if (practiceTrack) onOpenTrack(practiceTrack) }}><Play /> {practiceReady ? 'Start oefenronde' : 'Eerst een kaart scannen'} <ChevronRight /></button>
-    </section>
+    </section>}
   </main>
 }
 
@@ -674,6 +809,22 @@ export default function App() {
     setPlayerCountState(count)
   }
   const setCollection = value => { setCollectionState(value); saveCollection(value) }
+  const openLiveRoom = id => {
+    const url = new URL(location.href)
+    url.searchParams.delete('card')
+    url.searchParams.set('room', id)
+    url.hash = 'play'
+    history.replaceState({}, '', url)
+    setLiveRoomId(id); setMode('play')
+  }
+  const createLiveRoom = async count => openLiveRoom(await createRoom({ maxPlayers: count }))
+  const leaveLiveRoom = () => {
+    const url = new URL(location.href)
+    url.searchParams.delete('room')
+    url.hash = 'play'
+    history.replaceState({}, '', url)
+    setLiveRoomId('')
+  }
   const openGift = async ref => {
     setGiftError(''); setGift({ loading: true, recipient: 'Jouw cadeau', editions: [] })
     try {
@@ -722,6 +873,7 @@ export default function App() {
     }
     const route = () => {
       setMode(location.hash === '#admin' ? 'admin' : 'play')
+      setLiveRoomId(roomIdFromUrl())
       const giftRef = giftRefFromHash()
       if (giftRef) openGift(giftRef)
     }
@@ -751,8 +903,9 @@ export default function App() {
 
   if (gift?.loading) return <main className="gift-loading"><Gift /><h1>Jouw cadeau wordt geopend…</h1></main>
   if (gift) return <GiftLanding gift={gift} onSelect={openEdition} onClose={() => { setGift(null); history.replaceState({}, '', `${location.pathname}#play`) }} />
+  if (liveRoomId) return <MultiplayerRoom roomId={liveRoomId} resolveCard={resolveCard} onLeave={leaveLiveRoom} />
   if (activeTrack) return <Player key={activeTrack.id} track={activeTrack} gameMode={gameMode} playerCount={playerCount} autoPlay={autoPlayTrackId === activeTrack.id} playlistMode={Boolean(playlistSession)} onBack={() => { setAutoPlayTrackId(''); setPlaylistSession(null); setActiveTrack(null); pauseSpotify().catch(() => {}) }} onNext={playlistSession ? nextPlaylistRound : () => { setAutoPlayTrackId(''); setActiveTrack(null) }} />
-  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={track => { setPlaylistSession(null); setAutoPlayTrackId(track.id); setActiveTrack(track) }} onStartPlaylist={startPlaylistGame} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} playerCount={playerCount} setPlayerCount={setPlayerCount} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
+  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={track => { setPlaylistSession(null); setAutoPlayTrackId(track.id); setActiveTrack(track) }} onStartPlaylist={startPlaylistGame} onCreateRoom={createLiveRoom} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} playerCount={playerCount} setPlayerCount={setPlayerCount} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TRACKBACK <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'home' && <StudioHome collection={collection} setTab={setTab} />}

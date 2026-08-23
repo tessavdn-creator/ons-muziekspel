@@ -74,7 +74,8 @@ export async function loginSpotify() {
   sessionStorage.setItem(VERIFIER_KEY, verifier)
   sessionStorage.setItem(STATE_KEY, state)
   sessionStorage.setItem(OAUTH_CLIENT_KEY, clientId)
-  sessionStorage.setItem(RETURN_HASH_KEY, location.hash === '#admin' ? '#admin' : '#play')
+  const activeRoom = new URLSearchParams(location.search).get('room')
+  sessionStorage.setItem(RETURN_HASH_KEY, `${activeRoom ? `?room=${encodeURIComponent(activeRoom)}` : ''}${location.hash === '#admin' ? '#admin' : '#play'}`)
   const redirectUri = `${location.origin}${location.pathname}`
   const scopes = ['streaming', 'user-read-email', 'user-read-private', 'user-modify-playback-state']
   if (location.hash === '#admin') scopes.push('playlist-read-private')
