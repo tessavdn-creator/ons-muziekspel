@@ -54,7 +54,7 @@ export const createRoom = async ({ hostName = 'Spelleider', maxPlayers = 2 } = {
     revealed: false, createdAt: now, expiresAt: now + 24 * 60 * 60 * 1000,
   })
   await set(ref(database, `rooms/${room.key}/players/${user.uid}`), {
-    name: safeName(hostName), role: 'host', ready: false, score: 0, joinedAt: now,
+    name: safeName(hostName), role: 'host', ready: false, score: 0, online: true, joinedAt: now,
   })
   return room.key
 }
@@ -62,11 +62,17 @@ export const createRoom = async ({ hostName = 'Spelleider', maxPlayers = 2 } = {
 export const joinRoom = async (roomId, name) => {
   const user = await ensureRoomUser()
   const playerRef = ref(database, `rooms/${roomId}/players/${user.uid}`)
-  await set(playerRef, {
-    name: safeName(name), role: 'guest', ready: false, score: 0, joinedAt: Date.now(),
-  })
-  await onDisconnect(playerRef).remove()
+  await update(playerRef, { name: safeName(name), role: 'guest', ready: false, online: true, joinedAt: Date.now() })
+  await runTransaction(ref(database, `rooms/${roomId}/players/${user.uid}/score`), score => score ?? 0)
+  await onDisconnect(playerRef).update({ online: false, lastSeen: Date.now() })
   return user.uid
+}
+
+export const reconnectRoom = async roomId => {
+  const user = await ensureRoomUser()
+  const playerRef = ref(database, `rooms/${roomId}/players/${user.uid}`)
+  await update(playerRef, { online: true, lastSeen: Date.now() })
+  await onDisconnect(playerRef).update({ online: false, lastSeen: Date.now() })
 }
 
 export const subscribeRoomPublic = (roomId, callback) => onValue(ref(database, `rooms/${roomId}/public`), snapshot => callback(snapshotValue(snapshot)))

@@ -19,7 +19,7 @@ import {
 import { clearSavedGiftRefs, giftRefFromHash, loadGift } from './lib/gifts.js'
 import { answerMatches, clampPlayerCount, DUO_SCORE_KEY, duoRoundPoints, freshDuoMatch, loadDuoMatch } from './lib/duo.js'
 import {
-  closeRoom, createRoom, currentRoomUid, ensureRoomUser, joinRoom, leaveRoom, nextRoomRound, revealRoom,
+  closeRoom, createRoom, currentRoomUid, ensureRoomUser, joinRoom, leaveRoom, nextRoomRound, reconnectRoom, revealRoom,
   roomIdFromUrl, roomInviteUrl, scoreRoomPlayer, setRoomTrack, submitRoomGuess, subscribeMyRoomGuess,
   subscribeRoomPlayers, subscribeRoomPublic, subscribeRoundAnswer, subscribeRoundGuesses, subscribeRoundScores,
 } from './lib/rooms.js'
@@ -510,7 +510,7 @@ function RoomScoreBoard({ roomId, round, players, guesses, answer, scores }) {
 
 function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   const [room, setRoom] = useState(null)
-  const [players, setPlayers] = useState({})
+  const [rawPlayers, setPlayers] = useState({})
   const [answer, setAnswer] = useState(null)
   const [guesses, setGuesses] = useState({})
   const [scores, setScores] = useState({})
@@ -525,8 +525,10 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   const [playlistSession, setPlaylistSession] = useState(null)
   const invite = useMemo(() => roomInviteUrl(roomId), [roomId])
   const isHost = Boolean(uid && room?.hostUid === uid)
-  const joined = Boolean(uid && players[uid])
-  const guests = Object.entries(players).filter(([, player]) => player.role !== 'host')
+  const joined = Boolean(uid && rawPlayers[uid])
+  const activePlayers = Object.fromEntries(Object.entries(rawPlayers).filter(([, player]) => player.online !== false))
+  const players = activePlayers
+  const guests = Object.entries(activePlayers).filter(([, player]) => player.role !== 'host')
 
   useEffect(() => {
     let active = true
@@ -541,6 +543,11 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
     }).catch(error => { if (active) { setMessage(error.message); setLoaded(true) } })
     return () => { active = false; stops.forEach(stop => stop()) }
   }, [roomId])
+
+  useEffect(() => {
+    if (!uid || !joined || rawPlayers[uid]?.online !== false) return
+    reconnectRoom(roomId).catch(error => setMessage(error.message))
+  }, [roomId, uid, joined, rawPlayers[uid]?.online])
 
   useEffect(() => {
     setAnswer(null); setGuesses({}); setScores({}); setGuess({ title: '', artist: '', position: null }); setTrack(null); setPlaying(false)
@@ -607,16 +614,16 @@ function MultiplayerRoom({ roomId, resolveCard, onLeave }) {
   if (!room) return <main className="room-screen room-loading"><X /><h1>Kamer niet gevonden</h1><p>Vraag de spelleider om een nieuwe QR-code.</p><button onClick={onLeave}>Terug naar TRACKBACK</button></main>
   if (room.status === 'closed') return <main className="room-screen room-loading"><Music2 /><h1>Deze kamer is gesloten</h1><button onClick={onLeave}>Terug naar TRACKBACK</button></main>
   if (!joined) {
-    const full = Object.keys(players).length >= Number(room.maxPlayers || 6)
+    const full = Object.keys(activePlayers).length >= Number(room.maxPlayers || 6)
     return <main className="room-screen join-room"><div className="hero-brand"><div className="brand-mark"><Users /></div><span>TRACKBACK LIVE</span></div><section><span className="eyebrow">Kamer {room.code}</span><h1>Speel mee<br />op je eigen telefoon</h1><p>Geen Spotify-account nodig. De spelleider verzorgt de muziek; jouw antwoorden blijven geheim.</p><label><span>Jouw naam</span><input autoFocus value={name} onChange={event => setName(event.target.value)} placeholder="Bijvoorbeeld Nikki" /></label><button disabled={full || name.trim().length < 2} onClick={() => joinRoom(roomId, name).catch(error => setMessage(error.message))}>{full ? 'Kamer is vol' : 'Doe mee'} <ChevronRight /></button>{message && <div className="inline-error">{message}</div>}</section></main>
   }
 
   return <main className={`room-screen ${isHost ? 'host-room' : 'guest-room'} room-${room.status}`}>
-    <header className="room-top"><button className="round-button" onClick={exit}><ArrowLeft /></button><div><small>Kamer {room.code}</small><strong>Ronde {room.round}</strong></div><span>{Object.keys(players).length}/{room.maxPlayers} online</span></header>
+    <header className="room-top"><button className="round-button" onClick={exit}><ArrowLeft /></button><div><small>Kamer {room.code}</small><strong>Ronde {room.round}</strong></div><span>{Object.keys(activePlayers).length}/{room.maxPlayers} online</span></header>
     {room.status === 'lobby' && isHost && Number(room.round) === 1 && <>
       <div className="room-guide"><span className="active"><b>1</b>Deel QR</span><span><b>2</b>Spelers</span><span><b>3</b>Startkaarten</span><span><b>4</b>Scan</span></div>
       <section className="room-invite"><span className="eyebrow">Stap 1 · iedereen een eigen telefoon</span><h1>Laat je vrienden deze QR scannen</h1><CardQr value={invite} size={280} /><strong>{room.code}</strong><p>Iedereen vult alleen een naam in. Alleen jij als spelleider koppelt Spotify.</p><button onClick={share}><QrCode /> Deel uitnodiging</button></section>
-      <section className="room-players"><h2>{guests.length ? 'Al aangesloten' : 'Wachten op spelers…'}</h2>{Object.entries(players).map(([id, player]) => <span key={id}><Users /> {player.name}{player.role === 'host' ? ' · jij' : ''}</span>)}</section>
+      <section className="room-players"><h2>{guests.length ? 'Al aangesloten' : 'Wachten op spelers…'}</h2>{Object.entries(activePlayers).map(([id, player]) => <span key={id}><Users /> {player.name}{player.role === 'host' ? ' · jij' : ''}</span>)}</section>
       <section className="room-setup"><Clock3 /><div><span className="eyebrow">Stap 3 · eenmalig</span><h2>Leg 2 startkaarten open op tafel</h2><p>Draai de jaartallen zichtbaar. Leg de <b>oudste links</b> en de <b>nieuwste rechts</b>. Hier tussen gaan jullie zo kiezen.</p></div></section>
       <section className="room-start"><div><span className="eyebrow">Stap 4</span><h2>Klaar? Start het eerste nummer</h2><p>Scan één nieuwe kaart zonder de achterkant te bekijken. De muziek speelt alleen op jouw telefoon.</p></div><button className="scan-button" onClick={() => setScanning(true)}><span><ScanLine /></span>Scan een kaart en start</button>{playlistSession && <button className="secondary-button" onClick={nextPlaylist}><Play /> Volgend playlistnummer</button>}<details><summary>Zonder kaarten: kies een Spotify-playlist</summary><SpotifyPlaylistPicker onStart={startPlaylist} /></details></section>
     </>}
