@@ -25,7 +25,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.17.0 — TRACKBACK'
+const APP_VERSION = '0.17.1 — TRACKBACK'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -34,6 +34,16 @@ if (resetSpotifyRequested) {
   history.replaceState({}, '', `${location.pathname}#play`)
 }
 const LEGACY_PRIVATE_EDITION_IDS = new Set(['hidden-corners-01', 'time-warp-01', 'after-dark-01'])
+const IRIS_EDITION_IDS = new Set([...LEGACY_PRIVATE_EDITION_IDS, 'iris-crowd-pleasers-01'])
+const loadCurrentCollection = () => {
+  const loaded = loadCollection()
+  if (IRIS_EDITION_IDS.has(loaded.id) && !loaded.gameModes?.includes('duo')) {
+    const migrated = { ...loaded, gameModes: ['timeline', 'duo'] }
+    saveCollection(migrated)
+    return migrated
+  }
+  return loaded
+}
 const assetUrl = path => `${import.meta.env.BASE_URL}${path}`
 const ARTIST_GIMMICKS = [
   { match: /little willie john/i, label: 'Little Willie John', image: 'assets/artists/iris/01-little-willie-john.png', kind: 'Artiest' },
@@ -646,7 +656,7 @@ function PageTitle({ eyebrow, title, description }) { return <header className="
 function Empty({ icon: Icon, title, text }) { return <div className="empty"><Icon /><h3>{title}</h3><p>{text}</p></div> }
 
 export default function App() {
-  const [collection, setCollectionState] = useState(loadCollection)
+  const [collection, setCollectionState] = useState(loadCurrentCollection)
   const [mode, setMode] = useState(location.hash === '#admin' ? 'admin' : 'play')
   const [tab, setTab] = useState('home')
   const [activeTrack, setActiveTrack] = useState(null)
