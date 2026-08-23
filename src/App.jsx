@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { id: 'collection', label: 'Muziek', icon: Library },
   { id: 'cards', label: 'Printen', icon: QrCode },
 ]
-const APP_VERSION = '0.24.0 — GEHEIME-MEDIA'
+const APP_VERSION = '0.25.0 — IRIS-UX'
 const GROUP_PLAYER_COUNT_KEY = 'trackback.group-player-count.v1'
 const resetSpotifyRequested = new URLSearchParams(location.search).get('resetSpotify') === '1'
 if (resetSpotifyRequested) {
@@ -206,7 +206,7 @@ function GiftLanding({ gift, onSelect, onClose }) {
     return <article key={edition.id || edition.name}>
       <div className="edition-art">{edition.tracks?.[0]?.image ? <img src={edition.tracks[0].image} alt="" /> : <Music2 />}{lineup.length > 0 && <span className="edition-lineup">{lineup.map((artist, artistIndex) => <img key={artist.image} src={assetUrl(artist.image)} alt="" style={{ '--i': artistIndex }} />)}</span>}<b>{String(index + 1).padStart(2, '0')}</b></div>
       <div className="edition-copy"><span>{edition.subtitle || fallbackSubtitle}</span><h3>{edition.name}</h3><p>{edition.description}</p><small>{edition.tracks?.length || 0} nummers {edition.difficulty === 'expert' ? '· Expert' : ''}</small></div>
-      <button className="primary-button" onClick={() => onSelect(edition)}>Kies editie <ChevronRight /></button>
+      <button className="primary-button" onClick={() => onSelect(edition)}>Speel met deze editie <ChevronRight /></button>
     </article>
   })}</div>
   return <main className="gift-landing">
@@ -219,7 +219,7 @@ function GiftLanding({ gift, onSelect, onClose }) {
         <h1 id="gift-congratulations">Gefeliciteerd,<br />{gift.recipient}!</h1>
         <p>{gift.celebrationMessage || 'Je hebt je eigen TRACKBACK-editie gekregen. Een persoonlijk muziekspel, speciaal voor jou samengesteld.'}</p>
         <button className="celebration-button" onClick={() => setCelebrating(false)}>Pak je cadeau uit <Sparkles /></button>
-        <small>Zet je geluid aan — hierna begint de muziek.</small>
+        <small>Hierna kies je eerst rustig een editie en spelvorm.</small>
       </div>
     </section>}
     <button className="round-button gift-close" onClick={onClose} aria-label="Terug"><ArrowLeft /></button>
@@ -832,7 +832,7 @@ function PlayerCountPicker({ value, onChange }) {
   </section>
 }
 
-function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, resolveCard, gameMode, setGameMode, playerCount, setPlayerCount }) {
+function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, onOpenGiftLibrary, resolveCard, gameMode, setGameMode, playerCount, setPlayerCount }) {
   const availableGames = collection.gameModes?.length
     ? GAME_MODES.filter(game => collection.gameModes.includes(game.id))
     : GAME_MODES
@@ -861,6 +861,7 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, reso
   if (scanning) return <ScannerView onScan={parseScan} onClose={() => setScanning(false)} />
   return <main className="play-home page public-play-home">
     <div className="hero-brand"><div className="brand-mark"><Music2 /></div><span>TRACKBACK</span></div>
+    <section className="play-edition-bar"><Music2 /><div><small>Gekozen editie</small><strong>{collection.name}</strong><span>{collection.tracks.length} kaarten</span></div>{onOpenGiftLibrary && <button onClick={onOpenGiftLibrary}>Wissel editie <ChevronRight /></button>}</section>
     <section className="play-hero">
       <span className="eyebrow">Klaar voor een ronde?</span>
       <h1>Luister.<br /><em>{gameMode === 'timeline' ? 'Leg de tijdlijn.' : `Speel ${activeGame.name}.`}</em></h1>
@@ -877,7 +878,7 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, reso
       </div>}
       <button className="rules-toggle" onClick={() => setShowRules(value => !value)}><activeGame.icon /> Hoe speel je {activeGame.name}? <ChevronRight className={showRules ? 'is-open' : ''} /></button>
       {showRules && <div className="game-explanation"><div className="explanation-title"><activeGame.icon /><div><small>In drie stappen</small><strong>{activeGame.name}</strong></div></div><div className="setup-tip"><b>Voor je begint</b>{activeGame.setup}</div><ol>{activeGame.steps.map((step, index) => <li key={step}><b>{index + 1}</b>{step}</li>)}</ol><p><Trophy /> {activeGame.score}</p></div>}
-      {gameMode === 'duo' && <><section className="play-format-card"><div className="play-format-heading"><Music2 /><span><strong>Hoe willen jullie spelen?</strong><small>Kies dit vóór je de kamer maakt.</small></span></div><div className="play-format-options"><button className={liveMode === 'digital' ? 'active' : ''} aria-pressed={liveMode === 'digital'} onClick={() => setLiveMode('digital')}><span>Digitaal</span><strong>Zonder kaarten</strong><small>Playlist kiezen; de app maakt de tijdlijn.</small></button><button className={liveMode === 'cards' ? 'active' : ''} aria-pressed={liveMode === 'cards'} onClick={() => setLiveMode('cards')}><span>Met kaarten</span><strong>Scannen en neerleggen</strong><small>Gebruik jullie geprinte QR-kaarten op tafel.</small></button></div></section><PlayerCountPicker value={playerCount} onChange={setPlayerCount} /><section className="live-room-cta"><Users /><div><small>{playerCount === 1 ? 'Solo · je eigen score' : liveMode === 'digital' ? 'Digitaal · geen kaarten nodig' : 'Met geprinte kaarten'}</small><strong>{playerCount === 1 ? 'Start een solospel' : 'Maak een live kamer'}</strong><p>{playerCount === 1 ? 'Geen kamer delen: kies muziek, raad titel en artiest en plaats iedere hit in je eigen tijdlijn.' : liveMode === 'digital' ? 'Deel één QR-code, kies daarna een Spotify-playlist en speel volledig via ieders telefoon.' : 'Deel één QR-code en scan de geprinte muziekkaarten met de telefoon van de spelleider.'}</p></div><button disabled={creatingRoom} onClick={async () => { setCreatingRoom(true); try { await onCreateRoom(playerCount, liveMode) } finally { setCreatingRoom(false) } }}>{creatingRoom ? 'Spel maken…' : playerCount === 1 ? 'Start solo' : liveMode === 'digital' ? 'Start zonder kaarten' : 'Start met kaarten'} <ChevronRight /></button></section></>}
+      {gameMode === 'duo' && <><section className="play-format-card"><div className="play-format-heading"><Music2 /><span><strong>Hoe willen jullie spelen?</strong><small>Kies dit vóór je de kamer maakt.</small></span></div><div className="play-format-options"><button className={liveMode === 'digital' ? 'active' : ''} aria-pressed={liveMode === 'digital'} onClick={() => setLiveMode('digital')}><span>Digitaal</span><strong>Vrije Spotify-playlist</strong><small>Zonder kaarten; kies straks een playlist in Spotify.</small></button><button className={liveMode === 'cards' ? 'active' : ''} aria-pressed={liveMode === 'cards'} onClick={() => setLiveMode('cards')}><span>Met kaarten</span><strong>{collection.name}</strong><small>Scan de geprinte kaarten van deze editie.</small></button></div></section><PlayerCountPicker value={playerCount} onChange={setPlayerCount} /><section className="live-room-cta"><Users /><div><small>{playerCount === 1 ? liveMode === 'digital' ? 'Solo · Spotify-playlist' : `Solo · ${collection.name}` : liveMode === 'digital' ? 'Digitaal · geen kaarten nodig' : `Met kaarten · ${collection.name}`}</small><strong>{playerCount === 1 ? 'Start een solospel' : 'Maak een live kamer'}</strong><p>{playerCount === 1 ? liveMode === 'digital' ? 'Kies muziek in Spotify, raad titel en artiest en bouw je eigen digitale tijdlijn.' : `Speel alleen met de QR-kaarten uit ${collection.name} en bouw je eigen tijdlijn.` : liveMode === 'digital' ? 'Deel één QR-code, kies daarna een Spotify-playlist en speel volledig via ieders telefoon.' : `Deel één QR-code en scan de geprinte kaarten uit ${collection.name} met de telefoon van de spelleider.`}</p></div><button disabled={creatingRoom} onClick={async () => { setCreatingRoom(true); try { await onCreateRoom(playerCount, liveMode) } finally { setCreatingRoom(false) } }}>{creatingRoom ? 'Spel maken…' : playerCount === 1 ? 'Start solo' : liveMode === 'digital' ? 'Start zonder kaarten' : 'Start met kaarten'} <ChevronRight /></button></section></>}
       {error && <div className="inline-error">{error}</div>}
     </section>
     {gameMode !== 'duo' && <section className="quick-test practice-card">
@@ -1038,6 +1039,7 @@ export default function App() {
   const [playlistSession, setPlaylistSession] = useState(null)
   const [liveRoomId, setLiveRoomId] = useState(roomIdFromUrl)
   const [gift, setGift] = useState(null)
+  const [giftLibrary, setGiftLibrary] = useState(null)
   const [giftError, setGiftError] = useState('')
   const [gameMode, setGameModeState] = useState(localStorage.getItem('timepop.game-mode') || 'timeline')
   const [playerCount, setPlayerCountState] = useState(() => clampPlayerCount(localStorage.getItem(GROUP_PLAYER_COUNT_KEY)))
@@ -1069,7 +1071,7 @@ export default function App() {
     setGiftError(''); setGift({ loading: true, recipient: 'Jouw cadeau', editions: [] })
     try {
       const loaded = await loadGift(ref)
-      setGift(loaded); setMode('play')
+      setGift(loaded); setGiftLibrary(loaded); setMode('play')
     } catch (error) { setGift(null); setGiftError(error.message) }
   }
   const openEdition = edition => {
@@ -1145,7 +1147,7 @@ export default function App() {
   if (gift) return <GiftLanding gift={gift} onSelect={openEdition} onClose={() => { setGift(null); history.replaceState({}, '', `${location.pathname}#play`) }} />
   if (liveRoomId) return <MultiplayerRoom roomId={liveRoomId} resolveCard={resolveCard} onLeave={leaveLiveRoom} />
   if (activeTrack) return <Player key={activeTrack.id} track={activeTrack} gameMode={gameMode} playerCount={playerCount} autoPlay={autoPlayTrackId === activeTrack.id} playlistMode={Boolean(playlistSession)} onBack={() => { setAutoPlayTrackId(''); setPlaylistSession(null); setActiveTrack(null); pauseSpotify().catch(() => {}) }} onNext={playlistSession ? nextPlaylistRound : () => { setAutoPlayTrackId(''); setActiveTrack(null) }} />
-  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={track => { setPlaylistSession(null); setAutoPlayTrackId(track.id); setActiveTrack(track) }} onStartPlaylist={startPlaylistGame} onCreateRoom={createLiveRoom} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} playerCount={playerCount} setPlayerCount={setPlayerCount} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
+  if (mode === 'play') return <><PlayHome collection={collection} onOpenTrack={track => { setPlaylistSession(null); setAutoPlayTrackId(track.id); setActiveTrack(track) }} onStartPlaylist={startPlaylistGame} onCreateRoom={createLiveRoom} onOpenGiftLibrary={giftLibrary ? () => setGift(giftLibrary) : null} resolveCard={resolveCard} gameMode={gameMode} setGameMode={setGameMode} playerCount={playerCount} setPlayerCount={setPlayerCount} />{giftError && <div className="toast error gift-error">{giftError}</div>}</>
   return <div className="app-shell">
     <header className="admin-topbar no-print"><a className="admin-logo" href="#admin"><span><Music2 /></span>TRACKBACK <small>STUDIO</small></a><a className="preview-link" href="#play"><Play /> Open play-app</a></header>
     {tab === 'home' && <StudioHome collection={collection} setTab={setTab} />}
