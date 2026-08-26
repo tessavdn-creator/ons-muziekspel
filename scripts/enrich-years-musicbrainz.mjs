@@ -25,7 +25,13 @@ for (let index = 0; index < tracks.length; index += 1) {
   const title = clean(track.title)
   const artist = track.artist.split(',')[0].trim()
   const query = `recording:"${title.replaceAll('"', '')}" AND artist:"${artist.replaceAll('"', '')}"`
-  const url = `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&fmt=json&limit=8`
+  // Beroemde nummers hebben in MusicBrainz tientallen tot honderden losse
+  // recording-records, één per verzamelaar of remaster. Die komen NIET op datum
+  // binnen maar op zoekscore. Met een kleine limiet zie je alleen heruitgaven en
+  // kies je een veel te laat jaar: Respect van Aretha Franklin werd zo 1992 in
+  // plaats van 1967. Ruim ophalen en daarna de vroegste nemen is de enige
+  // manier om de oorspronkelijke uitgave te pakken.
+  const url = `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&fmt=json&limit=100`
   try {
     const response = await fetch(url, { headers: { 'User-Agent': 'TimepopPrivateGame/0.5 (https://github.com/tessavdn-creator/ons-muziekspel)' } })
     if (response.status === 503) { await wait(2500); index -= 1; continue }

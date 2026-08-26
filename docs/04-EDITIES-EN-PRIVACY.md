@@ -33,6 +33,20 @@ Nikki heeft **Full Throttle**: 300 unieke kaarten, verspreid geselecteerd uit de
 
 De online cadeau-inhoud staat versleuteld in `public/gifts/g-m8q4v2zk.json`. Net als bij Iris staat de ontsleutelsleutel uitsluitend in Nikki's persoonlijke QR/link.
 
+## Persoonlijke editie van Lodewijk
+
+Lodewijk heeft **Lodewijk zijn Platenkast**: 300 kaarten met het zwaartepunt op de jaren 60, 70 en 80, aangevuld met een herkenbaar staartje uit de jaren 90 en 00. De nummers komen uit de publieke Spotify-decenniumlijsten en de top van de NPO Radio 2 Top 2000.
+
+Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4.
+
+De online cadeau-inhoud staat versleuteld in `public/gifts/g-5k9w3rt2.json`, met de sleutel uitsluitend in zijn persoonlijke QR/link.
+
+### Jaartallen
+
+Voor een tijdlijnspel is het jaartal de kern van de kaart, en juist daar zitten de valkuilen. Spotify geeft vaak de datum van een heruitgave: *Hit the Road Jack* van Ray Charles staat er als 2021. MusicBrainz heeft voor beroemde nummers honderden losse records, één per verzamelaar of remaster, en levert dan ook een veel te laat jaar.
+
+Beide bronnen falen dezelfde kant op: een heruitgave is altijd **later** dan het origineel. Daarom neemt `build-lodewijk-edition.mjs` de vroegste van de twee, en toetst die aan het decennium van de bronlijst. Wat daarna nog uiteenloopt, komt in `.private/lodewijk-jaartallen-controleren.csv` voor handmatige controle.
+
 Beide uitnodigings-QR's openen eerst een persoonlijke felicitatie met confetti. Daarna verschijnt de privébibliotheek. Gewone speelkaart-QR's slaan deze cadeau-onthulling over.
 
 ## Privébronbestanden

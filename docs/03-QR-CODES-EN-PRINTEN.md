@@ -44,7 +44,11 @@ De losse cadeau-uitnodigingen staan in `Documenten/TRACKBACK QR-codes/Persoonlij
 
 ## Printadvies
 
-- De speelkaarten zijn vierkant: 89 × 89 mm, zes kaarten per A4-vel.
+- De speelkaarten zijn vierkant. Er zijn twee rasters, in te stellen met `TRACKBACK_CARD_MM`:
+  - **60 mm**, 12 per A4, met 3 mm tussenruimte en snijhoekjes per kaart. Dit is de standaard en het formaat van Iris en Nikki.
+  - **50 mm**, 20 per A4, zonder tussenruimte. Snijden gaat hier op de ticks in de papiermarge: iedere snede is exact 50 mm, wat op een hefboomsnijmachine één instelling van de aanleg betekent.
+- Kleiner dan 50 mm kan niet. De QR moet de kaart-ID, Spotify-link, titel, artiest, jaar en Client ID dragen; bij 45 mm zakt de modulegrootte onder 0,40 mm en gaan kaarten met lange titels stil weigeren. Gemeten inktvloei-tolerantie: 0,20 mm bij 60 mm, 0,16 mm bij 50 mm, tegen 0,05 tot 0,10 mm die een inkjet op 100 tot 120 g/m² in de praktijk geeft.
+- Controleer na het genereren met `node scripts/verify-printed-cards.mjs KAARTEN.pdf EDITIE.json`. Die leest iedere QR uit de PDF terug en vergelijkt de inhoud met de editie, zodat niet alleen het eerste en laatste vel gecontroleerd zijn.
 - Iedere persoonlijke set heeft een eigen basiskleur; genreaccenten maken rock, disco, electronic, soul, Nederlands en classics extra herkenbaar.
 - Print QR-codes met een volledig witte rand.
 - Laat de printer niet automatisch extreem verkleinen.

@@ -3,6 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 const irisEditions = JSON.parse(await readFile('.private/iris-three-editions-300.json', 'utf8'))
 const crowdSource = JSON.parse(await readFile('.private/iris-crowd-pleasers.json', 'utf8'))
 const nikkiEdition = JSON.parse(await readFile('.private/nikki-edition.json', 'utf8'))
+const lodewijkEdition = JSON.parse(await readFile('.private/lodewijk-edition.json', 'utf8'))
 const crowdPleasers = {
   ...crowdSource,
   id: 'iris-crowd-pleasers-01',
@@ -36,7 +37,19 @@ const nikki = {
   editions: [nikkiEdition],
 }
 
+const lodewijk = {
+  v: 3,
+  recipient: 'Lodewijk',
+  title: 'Lodewijk zijn Platenkast',
+  celebrationMessage: 'Driehonderd kaarten uit de tijd dat de platen nog draaiden. Jouw jaren 60, 70 en 80, in een eigen muziekspel.',
+  message: 'De grote hits waar jij mee opgroeide, met genoeg uit de jaren 90 en 00 erbij zodat iedereen aan tafel mee kan leggen.',
+  taste: ['jaren 60', 'jaren 70', 'jaren 80', 'Top 2000', 'meezingers'],
+  editions: [lodewijkEdition],
+}
+
+await writeFile('.private/lodewijk-manifest.json', `${JSON.stringify(lodewijk, null, 2)}\n`)
 await writeFile('.private/iris-manifest.json', `${JSON.stringify(iris, null, 2)}\n`)
 await writeFile('.private/nikki-manifest.json', `${JSON.stringify(nikki, null, 2)}\n`)
 console.log(`Iris: ${iris.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)
 console.log(`Nikki: ${nikki.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)
+console.log(`Lodewijk: ${lodewijk.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)

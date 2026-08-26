@@ -89,6 +89,7 @@ const EDITION_LINEUPS = {
   'after-dark-01': [ARTIST_GIMMICKS[7], ARTIST_GIMMICKS[28], ARTIST_GIMMICKS[29], ARTIST_GIMMICKS[30]],
   'iris-crowd-pleasers-01': [ARTIST_GIMMICKS[16], ARTIST_GIMMICKS[17], ARTIST_GIMMICKS[18], ARTIST_GIMMICKS[19]],
   'nikki-full-throttle-01': [ARTIST_GIMMICKS[11], ARTIST_GIMMICKS[24], ARTIST_GIMMICKS[25], ARTIST_GIMMICKS[26]],
+  'lodewijk-platenkast-01': [ARTIST_GIMMICKS[8], ARTIST_GIMMICKS[9], ARTIST_GIMMICKS[10], ARTIST_GIMMICKS[12]],
   'guilty-pleasures': [ARTIST_GIMMICKS[20], ARTIST_GIMMICKS[21], ARTIST_GIMMICKS[22], ARTIST_GIMMICKS[23]],
 }
 const artistGimmick = track => ARTIST_GIMMICKS.find(gimmick => gimmick.match.test(track?.artist || ''))
@@ -170,6 +171,7 @@ const editionTheme = collection => {
   if (/after dark/.test(value)) return 'set-after-dark'
   if (/top 2000|greatest hits|crowd pleasers/.test(value)) return 'set-crowd'
   if (/nikki|full throttle/.test(value)) return 'set-nikki'
+  if (/lodewijk|platenkast/.test(value)) return 'set-lodewijk'
   return 'set-original'
 }
 
