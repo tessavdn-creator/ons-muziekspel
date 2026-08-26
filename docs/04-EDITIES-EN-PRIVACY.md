@@ -35,7 +35,9 @@ De online cadeau-inhoud staat versleuteld in `public/gifts/g-m8q4v2zk.json`. Net
 
 ## Persoonlijke editie van Lodewijk
 
-Lodewijk heeft **Lodewijk zijn Platenkast**: 300 kaarten met het zwaartepunt op de jaren 60, 70 en 80, aangevuld met een herkenbaar staartje uit de jaren 90 en 00. De nummers komen uit de publieke Spotify-decenniumlijsten en de top van de NPO Radio 2 Top 2000.
+Lodewijk heeft **Lodewijk zijn Platenkast**: 300 kaarten met het zwaartepunt op de jaren 60, 70 en 80, aangevuld met een herkenbaar staartje uit de jaren 90 en 00. Daarvan zijn er 26 Nederlandstalig of Nederpop.
+
+De bronnen zijn de publieke Spotify-decenniumlijsten, de top van de NPO Radio 2 Top 2000 en vier Nederlandse lijsten. Die laatste zijn nodig omdat de internationale lijsten vrijwel geen Nederlands repertoire bevatten, terwijl dat voor een Nederlandse Top 2000-liefhebber juist de herkenbaarste kaarten zijn. Het Nederlandse quotum werkt twee kanten op: zonder bovengrens vulden die lijsten de jaren 70 en 80 bijna helemaal, want ze leveren honderden hoog noterende kandidaten.
 
 Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4.
 
@@ -43,9 +45,23 @@ De online cadeau-inhoud staat versleuteld in `public/gifts/g-5k9w3rt2.json`, met
 
 ### Jaartallen
 
-Voor een tijdlijnspel is het jaartal de kern van de kaart, en juist daar zitten de valkuilen. Spotify geeft vaak de datum van een heruitgave: *Hit the Road Jack* van Ray Charles staat er als 2021. MusicBrainz heeft voor beroemde nummers honderden losse records, één per verzamelaar of remaster, en levert dan ook een veel te laat jaar.
+Voor een tijdlijnspel is het jaartal de kern van de kaart, en juist daar zitten de valkuilen. Geen enkele publieke bron heeft dit repertoire goed genoeg.
 
-Beide bronnen falen dezelfde kant op: een heruitgave is altijd **later** dan het origineel. Daarom neemt `build-lodewijk-edition.mjs` de vroegste van de twee, en toetst die aan het decennium van de bronlijst. Wat daarna nog uiteenloopt, komt in `.private/lodewijk-jaartallen-controleren.csv` voor handmatige controle.
+Er stemmen daarom vijf signalen mee, die op verschillende manieren falen:
+
+| signaal | faalt hoe |
+| --- | --- |
+| MusicBrainz recording | te laat, honderden losse records per beroemd nummer |
+| MusicBrainz release-group | te laat bij een verzamelaar, soms te vroeg |
+| Spotify releasedatum | te laat bij een remaster: *Hit the Road Jack* staat er als 2021 |
+| iTunes, vroegste treffer | te vroeg bij een gelijknamig nummer: *Billie Jean* uit 1966 |
+| iTunes, meest genoemde jaar | meestal de echte uitgave |
+
+De **meest genoemde** waarde wint, met de mediaan als gelijkspelbreker. Gemeten op 27 met de hand nagekeken nummers: 24 exact en alle 27 binnen een jaar, tegen 17 exact en bijna drie jaar gemiddelde afwijking toen alleen de mediaan van drie bronnen werd gebruikt.
+
+Daarna volgt een zeef op de periode van de bronlijst, met twee jaar marge. Die volgorde is belangrijk: zeef je eerst, dan knip je juist het goede antwoord weg. *Enjoy the Silence* staat in All Out 80s maar is van 1990, en dan blijft alleen het foute 1985 over. Een bron die twee decennia beslaat krijgt een bereik in plaats van één decennium; zonder dat glipte *Sound Of The Screaming Day* van Golden Earring erdoor op 2008 terwijl het van 1968 is.
+
+Blijft een nummer onbevestigd, dan komt het in `.private/lodewijk-jaartallen-controleren.csv`. Dat bestand heeft de kolommen om meteen als `.private/lodewijk-jaartallen-handmatig.csv` terug te voeren; handmatige jaartallen krijgen voorrang op alle bronnen.
 
 Beide uitnodigings-QR's openen eerst een persoonlijke felicitatie met confetti. Daarna verschijnt de privébibliotheek. Gewone speelkaart-QR's slaan deze cadeau-onthulling over.
 

@@ -15,6 +15,21 @@ const normalize = value => clean(value)
   .trim()
   .toLowerCase()
 
+// Node's fetch heeft geen tijdslimiet. Een verbinding die blijft hangen legt het
+// hele script stil zonder ooit een fout te geven. Deze wikkel breekt af en
+// probeert opnieuw, zodat een enkele slechte verbinding een run van een uur niet
+// laat stranden.
+const haalOp = async (url, opties = {}, pogingen = 3) => {
+  for (let poging = 1; poging <= pogingen; poging += 1) {
+    try {
+      return await fetch(url, { ...opties, signal: AbortSignal.timeout(20000) })
+    } catch (error) {
+      if (poging === pogingen) throw new Error(`geen antwoord na ${pogingen} pogingen: ${error.message}`)
+      await new Promise(resolve => setTimeout(resolve, 2000 * poging))
+    }
+  }
+}
+
 for (let index = 0; index < tracks.length; index += 1) {
   const track = tracks[index]
   if (track.yearSource === 'MusicBrainz first release' || track.yearSource === 'Handmatig gecontroleerd') {
@@ -33,7 +48,7 @@ for (let index = 0; index < tracks.length; index += 1) {
   // manier om de oorspronkelijke uitgave te pakken.
   const url = `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&fmt=json&limit=100`
   try {
-    const response = await fetch(url, { headers: { 'User-Agent': 'TimepopPrivateGame/0.5 (https://github.com/tessavdn-creator/ons-muziekspel)' } })
+    const response = await haalOp(url, { headers: { 'User-Agent': 'TimepopPrivateGame/0.5 (https://github.com/tessavdn-creator/ons-muziekspel)' } })
     if (response.status === 503) { await wait(2500); index -= 1; continue }
     if (!response.ok) throw new Error(String(response.status))
     const data = await response.json()

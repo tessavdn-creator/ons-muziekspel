@@ -20,6 +20,21 @@ const clean = value => value
   .trim()
 const normalize = value => clean(value).normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/gi, ' ').trim().toLowerCase()
 
+// Node's fetch heeft geen tijdslimiet. Een verbinding die blijft hangen legt het
+// hele script stil zonder ooit een fout te geven. Deze wikkel breekt af en
+// probeert opnieuw, zodat een enkele slechte verbinding een run van een uur niet
+// laat stranden.
+const haalOp = async (url, opties = {}, pogingen = 3) => {
+  for (let poging = 1; poging <= pogingen; poging += 1) {
+    try {
+      return await fetch(url, { ...opties, signal: AbortSignal.timeout(20000) })
+    } catch (error) {
+      if (poging === pogingen) throw new Error(`geen antwoord na ${pogingen} pogingen: ${error.message}`)
+      await new Promise(resolve => setTimeout(resolve, 2000 * poging))
+    }
+  }
+}
+
 for (let index = 0; index < tracks.length; index += 1) {
   const track = tracks[index]
   if (track.releaseGroupYear !== undefined) { process.stdout.write(`\r${index + 1}/${tracks.length}`); continue }
@@ -28,7 +43,7 @@ for (let index = 0; index < tracks.length; index += 1) {
   const query = `releasegroup:"${title.replaceAll('"', '')}" AND artist:"${artist.replaceAll('"', '')}"`
   const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=50`
   try {
-    const response = await fetch(url, { headers: { 'User-Agent': 'TrackbackPrivateGame/0.6 (https://github.com/tessavdn-creator/ons-muziekspel)' } })
+    const response = await haalOp(url, { headers: { 'User-Agent': 'TrackbackPrivateGame/0.6 (https://github.com/tessavdn-creator/ons-muziekspel)' } })
     if (response.status === 503) { await wait(2500); index -= 1; continue }
     if (!response.ok) throw new Error(String(response.status))
     const data = await response.json()

@@ -11,6 +11,17 @@ const SOURCES = [
   { id: '37i9dQZF1DXbTxeAdrVG2l', label: 'All Out 90s', decade: 1990 },
   { id: '37i9dQZF1DX4o1oenSJRJd', label: 'All Out 2000s', decade: 2000 },
   { id: '1DTzz7Nh2rJBnyFbjsH1Mh', label: 'NPO Radio 2 Top 2000', decade: 0 },
+  // Nederlandstalig en Nederpop. De internationale decenniumlijsten leveren daar
+  // vrijwel niets van, terwijl het voor een Nederlandse Top 2000-liefhebber juist
+  // de herkenbaarste kaarten zijn. Alleen lijsten met Top 2000-repertoire; de
+  // levenslied-lijsten zijn bewust overgeslagen.
+  { id: '37i9dQZF1DWVXT3RJ6KlMl', label: "70's Nederlandstalig", decade: 1970, dutch: true },
+  { id: '32q3ESMN38guDPjZfNZj39', label: 'Nederlandstalig jaren 80', decade: 1980, dutch: true },
+  // Deze twee beslaan twee decennia. Zonder bereik zou er helemaal geen zeef op
+  // staan, en dan glipt een nummer waarvan alleen heruitgaven in de catalogi
+  // staan er met een veel te laat jaar doorheen.
+  { id: '0TBMW48OYBbAD1YvQQiv81', label: 'Nederpop classics 70/80', decade: 0, from: 1970, to: 1989, dutch: true },
+  { id: '1BPAXk4WYb9Tv52sI2mOqw', label: 'Nederpop jaren 60 en 70', decade: 0, from: 1960, to: 1979, dutch: true },
 ]
 
 const cacheDirectory = '.private/spotify-embed-cache'
@@ -67,12 +78,15 @@ for (const source of SOURCES) {
   const tracks = (playlist.trackList || []).filter(track => track.entityType === 'track' || track.uri?.startsWith('spotify:track:'))
   for (const [position, track] of tracks.entries()) {
     const existing = candidates.get(track.uri)
-    if (existing) { existing.sources.push(source.label); continue }
+    if (existing) { existing.sources.push(source.label); existing.dutch = existing.dutch || Boolean(source.dutch); continue }
     candidates.set(track.uri, {
       spotifyUri: track.uri,
       title: nette(track.title),
       artist: nette(track.subtitle),
       sourceDecade: source.decade,
+      sourceFrom: source.from || (source.decade || 0),
+      sourceTo: source.to || (source.decade ? source.decade + 9 : 0),
+      dutch: Boolean(source.dutch),
       sourcePosition: position + 1,
       sources: [source.label],
     })
@@ -111,5 +125,24 @@ await Promise.all(Array.from({ length: 3 }, async () => {
 }))
 
 const usable = pool.filter(track => !track.error && track.spotifyYear)
+
+// Jaartallen uit MusicBrainz en iTunes kosten ruim een uur om op te halen en
+// worden hier bewaard. Zonder deze samenvoeging gooit een nieuwe bron in de
+// lijst hierboven al dat werk weg, want de pool wordt vanaf nul opgebouwd.
+let bewaard = 0
+try {
+  const vorige = JSON.parse(await readFile(output, 'utf8')).tracks || []
+  const perUri = new Map(vorige.map(track => [track.spotifyUri, track]))
+  for (const track of usable) {
+    const oud = perUri.get(track.spotifyUri)
+    if (!oud) continue
+    for (const veld of ['year', 'yearSource', 'yearMatchScore', 'releaseGroupYear', 'releaseGroupError', 'itunesYear', 'itunesModalYear', 'itunesHits', 'itunesError']) {
+      if (oud[veld] !== undefined) { track[veld] = oud[veld]; }
+    }
+    bewaard += 1
+  }
+} catch { /* nog geen eerdere pool */ }
+
 await writeFile(output, `${JSON.stringify({ id: 'lodewijk-pool', name: 'Lodewijk kandidatenpool', tracks: usable }, null, 2)}\n`)
+if (bewaard) console.log(`Eerder opgehaalde jaartallen behouden voor ${bewaard} nummers.`)
 console.log(`\n${usable.length} bruikbare kandidaten in ${output} (${failed} mislukt, ${pool.length - usable.length - failed} zonder jaartal)`)

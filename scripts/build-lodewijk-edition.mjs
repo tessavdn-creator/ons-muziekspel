@@ -13,6 +13,13 @@ const QUOTA = { 1960: 70, 1970: 85, 1980: 85, 1990: 40, 2000: 20 }
 const TOTAL = Object.values(QUOTA).reduce((sum, value) => sum + value, 0)
 const MAX_PER_ARTIST = 4
 
+// De internationale decenniumlijsten leveren nauwelijks Nederlands repertoire,
+// terwijl dat voor een Nederlandse Top 2000-liefhebber juist de herkenbaarste
+// kaarten zijn. Per decennium wordt daarom eerst een vast aantal Nederlandse
+// kaarten gevuld, zwaarder in de jaren waarin de Nederpop bloeide. Wat daarna
+// nog uit een Nederlandse lijst in de gewone ronde komt, telt er bovenop.
+const NEDERLANDS_QUOTA = { 1960: 3, 1970: 9, 1980: 9, 1990: 3, 2000: 1 }
+
 // Op 50 mm is de QR 31 mm. Versie 13 (69 modules) haalde in de proef nog 0,16 mm
 // inktvloei; daarboven wordt de marge te dun. Langere titels kosten modules, dus
 // de selectie geeft voorrang aan kaarten die ruim binnen die grens blijven.
@@ -45,9 +52,11 @@ const SOUL = /aretha|marvin gaye|otis redding|stevie wonder|temptations|four top
 const ROCK = /the beatles|rolling stones|led zeppelin|pink floyd|the who\b|deep purple|black sabbath|\bqueen\b|ac\/dc|eagles|dire straits|fleetwood mac|creedence|jimi hendrix|the doors|springsteen|van halen|guns n|\bu2\b|the police|the clash|ramones|lynyrd|steppenwolf|santana|thin lizzy|scorpions|\bkansas\b|\btoto\b|journey|foreigner|bon jovi|nirvana|pearl jam|metallica|the kinks|the animals|\bcream\b|ten years after|\bfree\b|the beach boys|the byrds|buffalo springfield|the monkees|the turtles|simon & garfunkel|bob dylan|david bowie|neil young|crosby|jefferson airplane|velvet underground|t\.? ?rex|roxy music|the cure|the smiths|r\.e\.m\.|talking heads|blondie|joan jett|pat benatar|\bheart\b|\bboston\b|\bstyx\b|\brush\b|cheap trick|the pretenders|the jam\b|elvis costello|tom petty|mellencamp|bryan adams|def leppard|aerosmith|\bkiss\b|alice cooper|meat loaf|supertramp|genesis|\byes\b|moody blues|procol harum|status quo|bad company|bachman|grand funk|zz top|doobie brothers|steely dan|little feat|allman|chicago|the yardbirds|manfred mann|the troggs|the hollies|the searchers|small faces|the zombies|canned heat|jethro tull|emerson|king crimson|uriah heep|nazareth|slade|wishbone|golden earring|dr\. hook|10cc|electric light orchestra|\belo\b|the stranglers|joy division|siouxsie|the b-52|devo|the knack|survivor|europe|whitesnake|dio|iron maiden|judas priest|motorhead|the eagles/i
 const CLASSIC = /elvis presley|chuck berry|buddy holly|little richard|jerry lee lewis|everly brothers|roy orbison|frank sinatra|dean martin|nat king cole|ella fitzgerald|louis armstrong|bill haley|fats domino|the platters|connie francis|brenda lee|patsy cline|johnny cash|frankie valli|four seasons|paul anka|neil sedaka|bobby darin|the tokens|skeeter davis|the shadows|cliff richard|tom jones|engelbert|\bthe drifters\b|sam the sham|del shannon|gene pitney|dion\b|ricky nelson|the ventures|duane eddy|nancy sinatra/i
 
-const genreFor = (artist, year) => {
+const genreFor = (artist, year, uitNederlandseLijst = false) => {
   const value = String(artist)
-  if (NEDERLANDS.test(value)) return 'nederlands'
+  // Uit een Nederlandse bronlijst is een betrouwbaarder signaal dan een
+  // namenlijst: Q65, Catapult en Toontje Lager staan daar niet in.
+  if (uitNederlandseLijst || NEDERLANDS.test(value)) return 'nederlands'
   if (ELECTRONIC.test(value)) return 'electronic'
   if (DISCO.test(value)) return 'disco'
   if (SOUL.test(value)) return 'soul'
@@ -116,8 +125,13 @@ for (const track of pool) {
     dated.push({ ...track, year: overrides.get(track.spotifyUri), yearSource: 'handmatig gecontroleerd', yearConfidence: 'handmatig' })
     continue
   }
-  const decade = track.sourceDecade
-  const inDecade = year => !decade || (year >= decade && year <= decade + 9)
+  // Een bron dekt een periode: een decenniumlijst een decennium, een lijst die
+  // twee decennia beslaat navenant meer. Buiten die periode plus een kleine
+  // marge is een jaartal onzin.
+  const vanaf = Number(track.sourceFrom) || (track.sourceDecade || 0)
+  const totEn = Number(track.sourceTo) || (track.sourceDecade ? track.sourceDecade + 9 : 0)
+  const heeftBereik = vanaf > 0 && totEn >= vanaf
+  const inDecade = year => !heeftBereik || (year >= vanaf && year <= totEn)
   const bronnen = {
     opname: track.yearSource === 'MusicBrainz first release' ? Number(track.year) || 0 : 0,
     uitgave: Number(track.releaseGroupYear) || 0,
@@ -136,10 +150,10 @@ for (const track of pool) {
   // alleen nog in bij echte onzin, zoals Spotify dat Hit the Road Jack op 2021 zet.
   let bruikbaar = alle
   let year = stemming(alle)
-  const ruim = jaar => !decade || (jaar >= decade - 2 && jaar <= decade + 11)
+  const ruim = jaar => !heeftBereik || (jaar >= vanaf - 2 && jaar <= totEn + 2)
   if (!ruim(year)) {
     const binnen = alle.filter(inDecade)
-    if (!binnen.length) { rejected.push({ ...track, reason: `geen jaartal binnen ${decade}s (${toon})` }); continue }
+    if (!binnen.length) { rejected.push({ ...track, reason: `geen jaartal tussen ${vanaf} en ${totEn} (${toon})` }); continue }
     bruikbaar = binnen
     year = stemming(binnen)
   }
@@ -168,7 +182,7 @@ for (const track of dated) {
 // 3. QR-dichtheid meten per kandidaat.
 const candidates = []
 for (const track of unique.values()) {
-  const card = { ...track, id: 'lodewijk-000-000000', album: '', audioUrl: '', genre: genreFor(track.artist, track.year), tags: [] }
+  const card = { ...track, id: 'lodewijk-000-000000', album: '', audioUrl: '', genre: genreFor(track.artist, track.year, track.dutch), tags: [] }
   const url = `${baseUrl}/?card=${encodeCard(card, clientId)}#play`
   const modules = QRCode.create(url, { errorCorrectionLevel: 'M' }).modules.size
   if (modules > QR_LIMIT) { rejected.push({ ...track, reason: `QR te dicht (${modules} modules)` }); continue }
@@ -179,6 +193,7 @@ for (const track of unique.values()) {
 const artistCount = new Map()
 const selected = []
 const shortfall = []
+const shortfallNl = []
 const relaxed = []
 for (const [decade, wanted] of Object.entries(QUOTA)) {
   const bucket = candidates
@@ -200,16 +215,35 @@ for (const [decade, wanted] of Object.entries(QUOTA)) {
   // decennium anders niet volloopt.
   let taken = 0
   const genomen = new Set()
+  const neem = track => {
+    const artist = normalize(primaryArtist(track.artist))
+    artistCount.set(artist, (artistCount.get(artist) || 0) + 1)
+    selected.push(track)
+    genomen.add(track.spotifyUri)
+    taken += 1
+  }
+  // Eerst het Nederlandse deel van dit decennium.
+  const nlWens = NEDERLANDS_QUOTA[decade] || 0
+  let nlTaken = 0
+  for (const track of bucket) {
+    if (nlTaken >= nlWens || taken >= wanted) break
+    if (!track.dutch || genomen.has(track.spotifyUri)) continue
+    if ((artistCount.get(normalize(primaryArtist(track.artist))) || 0) >= MAX_PER_ARTIST) continue
+    neem(track)
+    nlTaken += 1
+  }
+  if (nlTaken < nlWens) shortfallNl.push(`${decade}s: ${nlTaken} van ${nlWens} Nederlandse kaarten`)
   for (const cap of [MAX_PER_ARTIST, MAX_PER_ARTIST + 2, Infinity]) {
     for (const track of bucket) {
       if (taken >= wanted) break
       if (genomen.has(track.spotifyUri)) continue
+      // Het quotum is ook een BOVENgrens. De vier Nederlandse bronlijsten leveren
+      // honderden kandidaten die hoog noteren, en zonder deze rem vulden die de
+      // jaren 70 en 80 bijna helemaal: 115 Nederlandse kaarten in plaats van 25.
+      if (track.dutch && nlTaken >= nlWens) continue
       const artist = normalize(primaryArtist(track.artist))
       if ((artistCount.get(artist) || 0) >= cap) continue
-      artistCount.set(artist, (artistCount.get(artist) || 0) + 1)
-      selected.push(track)
-      genomen.add(track.spotifyUri)
-      taken += 1
+      neem(track)
     }
     if (taken >= wanted) break
     if (cap !== Infinity) relaxed.push(`${decade}s had een ruimere artiestenlimiet nodig dan ${cap}`)
@@ -271,6 +305,7 @@ tracks.forEach(track => { zekerheden[track.yearConfidence] = (zekerheden[track.y
 console.log(`Pool: ${pool.length} nummers, ${dated.length} met een betrouwbaar jaartal, ${unique.size} uniek, ${candidates.length} met een scanbare QR.`)
 console.log(`Gekozen: ${tracks.length} kaarten.`)
 console.log(`Per decennium: ${Object.entries(perDecade).sort().map(([decade, count]) => `${decade} ${count}`).join(', ')}`)
+if (shortfallNl.length) console.log(`Nederlands quotum niet gehaald: ${shortfallNl.join('; ')}`)
 console.log(`Per genre: ${Object.entries(perGenre).sort((left, right) => right[1] - left[1]).map(([genre, count]) => `${genre} ${count}`).join(', ')}`)
 console.log(`Zekerheid jaartal: ${Object.entries(zekerheden).sort((left, right) => right[1] - left[1]).map(([label, count]) => `${count} ${label}`).join(', ')}.`)
 console.log(`Ruime QR (<= ${QR_COMFORTABLE} modules): ${tracks.filter(track => track.qrModules <= QR_COMFORTABLE).length} van ${tracks.length}; drukste kaart ${Math.max(...tracks.map(track => track.qrModules))} modules.`)

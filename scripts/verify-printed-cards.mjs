@@ -41,7 +41,10 @@ try {
   const fronts = pages.filter((_, index) => index % 2 === 0)
   for (const page of fronts) {
     let stdout = ''
-    try { ({ stdout } = await run('zbarimg', ['--quiet', '--raw', '-Sqrcode.enable', join(temp, page)])) }
+    // Eerst alle symbologieen uit, dan alleen QR aan. Zonder -Sdisable blijven de
+    // streepjescode-lezers actief en die zien in een QR-patroon soms een
+    // Interleaved 2 of 5 met zestien cijfers, wat als onleesbare kaart binnenkomt.
+    try { ({ stdout } = await run('zbarimg', ['--quiet', '--raw', '-Sdisable', '-Sqrcode.enable', join(temp, page)])) }
     catch (error) { stdout = error.stdout || '' }
     const urls = stdout.split('\n').map(line => line.trim()).filter(Boolean)
     if (!urls.length) problemen.push(`${page}: geen enkele QR gelezen`)
