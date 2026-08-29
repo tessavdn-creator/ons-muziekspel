@@ -44,6 +44,21 @@ const lodewijk = {
   celebrationMessage: 'Driehonderd kaarten uit de tijd dat de platen nog draaiden. Jouw jaren 60, 70 en 80, in een eigen muziekspel.',
   message: 'De grote hits waar jij mee opgroeide, met genoeg uit de jaren 90 en 00 erbij zodat iedereen aan tafel mee kan leggen.',
   taste: ['jaren 60', 'jaren 70', 'jaren 80', 'Top 2000', 'meezingers'],
+  // Guilty Pleasures hoort niet bij zijn cadeau, dus de algemene bibliotheek blijft verborgen.
+  showPublicEditions: false,
+  // Alleen Tijdlijn, met Samen als expliciete extra keuze. Bij Tijdlijn hoef je
+  // niets in te typen: scannen, luisteren, kaart neerleggen, onthullen. Typen komt
+  // alleen voor bij Samen en bij Raad de hit, en die laatste laten we weg.
+  gameModes: ['timeline', 'duo'],
+  howTo: [
+    'Eén telefoon is de dj. Die scant de kaarten en speelt de muziek.',
+    'Koppel Spotify op die telefoon. Dat hoeft maar één keer.',
+    'Iedere speler krijgt één kaart met het jaartal naar boven. Dat is het begin van je tijdlijn.',
+    'De dj scant een nieuwe kaart. Je hoort het nummer, maar ziet titel noch jaartal.',
+    'Leg de kaart in je eigen rij: vóór, ná of tussen de kaarten die je al hebt.',
+    'De dj onthult. Ligt hij goed, dan houd je hem. Zo niet, dan gaat hij terug.',
+    'Wie als eerste tien kaarten op een rij heeft, wint.',
+  ],
   editions: [lodewijkEdition],
 }
 

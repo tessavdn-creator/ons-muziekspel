@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import QRCode from 'qrcode'
 import { encodeCard } from '../src/lib/collection.js'
+import { bepaalJaar, bronnenVan, toonBronnen } from './lib-release-year.mjs'
 
 const [input = '.private/lodewijk-pool.json', output = '.private/lodewijk-edition.json'] = process.argv.slice(2)
 const clientId = String(process.env.SPOTIFY_CLIENT_ID || '3cdd431703234d9081c53217dd1b3b2c').trim()
@@ -97,28 +98,6 @@ try {
 const rejected = []
 const dated = []
 const review = []
-const mediaan = values => [...values].sort((left, right) => left - right)[Math.floor(values.length / 2)]
-
-// Vijf jaartalsignalen die onafhankelijk van elkaar falen:
-//   opname       MusicBrainz recording, te LAAT bij veel heruitgaven
-//   uitgave      MusicBrainz release-group, te LAAT bij een verzamelaar
-//   spotify      releasedatum, te LAAT bij een remaster
-//   itunesVroeg  vroegste iTunes-treffer, te VROEG bij een gelijknamig nummer
-//   itunesVaak   meest voorkomende iTunes-jaar, meestal de echte uitgave
-//
-// Niet de mediaan maar de MEEST GENOEMDE waarde wint, met de mediaan als
-// gelijkspelbreker. Gemeten op 27 met de hand nagekeken nummers: 24 exact goed
-// en alle 27 binnen een jaar, tegen 17 exact en gemiddeld bijna drie jaar
-// afwijking toen alleen de mediaan van drie bronnen werd gebruikt.
-const stemming = years => {
-  const tally = new Map()
-  years.forEach(year => tally.set(year, (tally.get(year) || 0) + 1))
-  const hoogste = Math.max(...tally.values())
-  const kandidaten = [...tally.entries()].filter(([, count]) => count === hoogste).map(([year]) => year)
-  if (kandidaten.length === 1) return kandidaten[0]
-  const midden = mediaan(years)
-  return kandidaten.reduce((best, year) => (Math.abs(year - midden) < Math.abs(best - midden) ? year : best))
-}
 
 for (const track of pool) {
   if (overrides.has(track.spotifyUri)) {
@@ -126,46 +105,20 @@ for (const track of pool) {
     continue
   }
   // Een bron dekt een periode: een decenniumlijst een decennium, een lijst die
-  // twee decennia beslaat navenant meer. Buiten die periode plus een kleine
-  // marge is een jaartal onzin.
+  // twee decennia beslaat navenant meer.
   const vanaf = Number(track.sourceFrom) || (track.sourceDecade || 0)
   const totEn = Number(track.sourceTo) || (track.sourceDecade ? track.sourceDecade + 9 : 0)
-  const heeftBereik = vanaf > 0 && totEn >= vanaf
-  const inDecade = year => !heeftBereik || (year >= vanaf && year <= totEn)
-  const bronnen = {
-    opname: track.yearSource === 'MusicBrainz first release' ? Number(track.year) || 0 : 0,
-    uitgave: Number(track.releaseGroupYear) || 0,
-    spotify: Number(track.spotifyYear) || 0,
-    itunesVroeg: Number(track.itunesYear) || 0,
-    itunesVaak: Number(track.itunesModalYear) || 0,
+  const bronnen = bronnenVan(track)
+  const toon = toonBronnen(bronnen)
+  const uitslag = bepaalJaar(bronnen, { vanaf, totEn })
+  if (!uitslag) {
+    rejected.push({ ...track, reason: vanaf ? `geen jaartal tussen ${vanaf} en ${totEn} (${toon})` : `geen bruikbaar jaartal (${toon})` })
+    continue
   }
-  const toon = `opname ${bronnen.opname || '-'} / uitgave ${bronnen.uitgave || '-'} / Spotify ${bronnen.spotify || '-'} / iTunes ${bronnen.itunesVroeg || '-'}, ${bronnen.itunesVaak || '-'}`
-  const alle = Object.values(bronnen).filter(year => year >= 1940)
-  if (!alle.length) { rejected.push({ ...track, reason: `geen bruikbaar jaartal (${toon})` }); continue }
-
-  // De stemming gaat VOOR de decenniumzeef. Andersom knipt de zeef juist het
-  // goede antwoord weg: Enjoy the Silence staat in All Out 80s maar is van 1990,
-  // en dan blijft alleen het foute 1985 over. Een decenniumlijst is de keuze van
-  // een samensteller, geen harde grens, dus er zit marge omheen. De zeef grijpt
-  // alleen nog in bij echte onzin, zoals Spotify dat Hit the Road Jack op 2021 zet.
-  let bruikbaar = alle
-  let year = stemming(alle)
-  const ruim = jaar => !heeftBereik || (jaar >= vanaf - 2 && jaar <= totEn + 2)
-  if (!ruim(year)) {
-    const binnen = alle.filter(inDecade)
-    if (!binnen.length) { rejected.push({ ...track, reason: `geen jaartal tussen ${vanaf} en ${totEn} (${toon})` }); continue }
-    bruikbaar = binnen
-    year = stemming(binnen)
+  if (uitslag.eens < 2) {
+    review.push({ spotifyUri: track.spotifyUri, artiest: track.artist, titel: track.title, opname: bronnen.opname || '', uitgave: bronnen.uitgave || '', spotify: bronnen.spotify || '', itunes: [bronnen.itunesVroeg, bronnen.itunesVaak].filter(Boolean).join(' / '), gekozen: uitslag.jaar, zekerheid: uitslag.zekerheid, bron: track.sources.join(' + ') })
   }
-
-  const eens = bruikbaar.filter(jaar => Math.abs(jaar - year) <= 1).length
-  const confidence = eens >= 3 ? 'drie of meer bronnen eens'
-    : eens === 2 ? 'twee bronnen eens'
-    : 'geen enkele bevestiging'
-  if (eens < 2) {
-    review.push({ spotifyUri: track.spotifyUri, artiest: track.artist, titel: track.title, opname: bronnen.opname || '', uitgave: bronnen.uitgave || '', spotify: bronnen.spotify || '', itunes: [bronnen.itunesVroeg, bronnen.itunesVaak].filter(Boolean).join(' / '), gekozen: year, zekerheid: confidence, bron: track.sources.join(' + ') })
-  }
-  dated.push({ ...track, year: String(year), yearSource: toon, yearConfidence: confidence })
+  dated.push({ ...track, year: String(uitslag.jaar), yearSource: toon, yearConfidence: uitslag.zekerheid })
 }
 
 // 2. Ontdubbelen op titel plus hoofdartiest, want dezelfde hit staat vaak in

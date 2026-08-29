@@ -228,6 +228,11 @@ function GiftLanding({ gift, onSelect, onClose }) {
     <div className="gift-stars" aria-hidden="true"><i /><i /><i /><i /><i /></div>
     <header><div className="gift-seal"><Gift /></div><strong className="gift-brand">TRACKBACK</strong><span className="eyebrow">Speciaal samengesteld voor</span><h1>{gift.recipient}</h1><p>{gift.message}</p></header>
     {gift.taste?.length > 0 && <div className="taste-tags">{gift.taste.map(tag => <span key={tag}>{tag}</span>)}</div>}
+    {gift.howTo?.length > 0 && <section className="gift-howto">
+      <h2>Zo speel je het</h2>
+      <ol>{gift.howTo.map((stap, index) => <li key={index}>{stap}</li>)}</ol>
+      <p>Bij Tijdlijn hoef je niets in te typen. Alleen scannen, luisteren en de kaart neerleggen.</p>
+    </section>}
     <section className="edition-shelf"><div className="edition-heading"><div><span className="eyebrow">Alleen voor jou</span><h2>Persoonlijke edities</h2></div><small>{gift.editions.length} {gift.editions.length === 1 ? 'editie' : 'edities'}</small></div>
       {editionGrid(gift.editions, 'Persoonlijke mix')}
       <p className="edition-update"><Sparkles /> Nieuwe persoonlijke edities verschijnen automatisch achter dezelfde QR.</p>
@@ -844,7 +849,10 @@ function PlayHome({ collection, onOpenTrack, onStartPlaylist, onCreateRoom, onOp
   const [showAlternatives, setShowAlternatives] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const [creatingRoom, setCreatingRoom] = useState(false)
-  const [liveMode, setLiveMode] = useState('digital')
+  // TRACKBACK is in de kern een kaartspel: wie hier komt heeft meestal net een
+  // doosje met geprinte kaarten gekregen. Spelen zonder kaarten is de uitwijk,
+  // niet het uitgangspunt, dus 'cards' staat voor.
+  const [liveMode, setLiveMode] = useState('cards')
   const activeGame = availableGames.find(game => game.id === gameMode) || availableGames[0] || GAME_MODES[0]
   const practiceTrack = useMemo(() => collection.tracks[Math.floor(Math.random() * collection.tracks.length)], [collection])
   const practiceReady = Boolean(practiceTrack?.audioUrl || getClientId())
