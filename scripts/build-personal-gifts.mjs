@@ -4,6 +4,7 @@ const irisEditions = JSON.parse(await readFile('.private/iris-three-editions-300
 const crowdSource = JSON.parse(await readFile('.private/iris-crowd-pleasers.json', 'utf8'))
 const nikkiEdition = JSON.parse(await readFile('.private/nikki-edition.json', 'utf8'))
 const lodewijkEdition = JSON.parse(await readFile('.private/lodewijk-edition.json', 'utf8'))
+const tessaEdition = JSON.parse(await readFile('.private/tessa-edition.json', 'utf8'))
 const crowdPleasers = {
   ...crowdSource,
   id: 'iris-crowd-pleasers-01',
@@ -62,9 +63,26 @@ const lodewijk = {
   editions: [lodewijkEdition],
 }
 
+const tessa = {
+  v: 3,
+  recipient: 'Tessa',
+  title: 'Alles Door Elkaar',
+  celebrationMessage: 'Jouw drie playlists zijn door elkaar geschud tot één muziekspel van driehonderd kaarten. HotGirlsSummer, Guilty Pleasures en Ahrtal, op tafel.',
+  message: 'Driehonderd kaarten uit je eigen lijsten, alles door elkaar, aangevuld met het bekendste werk van precies dezelfde artiesten.',
+  taste: ['guilty pleasures', 'jaren 90', 'jaren 00', 'meezingers', 'r&b'],
+  // De algemene bibliotheek bevat Guilty Pleasures, en dat is dezelfde playlist
+  // waar haar eigen kaarten deels uit komen. Twee keer hetzelfde in één app zou
+  // alleen maar verwarren, dus die blijft verborgen.
+  showPublicEditions: false,
+  gameModes: ['timeline', 'duo'],
+  editions: [tessaEdition],
+}
+
+await writeFile('.private/tessa-manifest.json', `${JSON.stringify(tessa, null, 2)}\n`)
 await writeFile('.private/lodewijk-manifest.json', `${JSON.stringify(lodewijk, null, 2)}\n`)
 await writeFile('.private/iris-manifest.json', `${JSON.stringify(iris, null, 2)}\n`)
 await writeFile('.private/nikki-manifest.json', `${JSON.stringify(nikki, null, 2)}\n`)
 console.log(`Iris: ${iris.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)
 console.log(`Nikki: ${nikki.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)
 console.log(`Lodewijk: ${lodewijk.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)
+console.log(`Tessa: ${tessa.editions.reduce((sum, edition) => sum + edition.tracks.length, 0)} kaarten`)

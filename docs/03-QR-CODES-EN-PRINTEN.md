@@ -46,7 +46,7 @@ De losse cadeau-uitnodigingen staan in `Documenten/TRACKBACK QR-codes/Persoonlij
 
 - De speelkaarten zijn vierkant. Er zijn twee rasters, in te stellen met `TRACKBACK_CARD_MM`:
   - **60 mm**, 12 per A4, met 3 mm tussenruimte en snijhoekjes per kaart. Dit is de standaard en het formaat van Iris en Nikki.
-  - **50 mm**, 20 per A4, zonder tussenruimte. Snijden gaat hier op de ticks in de papiermarge: iedere snede is exact 50 mm, wat op een hefboomsnijmachine één instelling van de aanleg betekent.
+  - **50 mm**, 20 per A4, zonder tussenruimte. Dit is het formaat van Lodewijk en Tessa. Snijden gaat hier op de ticks in de papiermarge: iedere snede is exact 50 mm, wat op een hefboomsnijmachine één instelling van de aanleg betekent.
 - Kleiner dan 50 mm kan niet. De QR moet de kaart-ID, Spotify-link, titel, artiest, jaar en Client ID dragen; bij 45 mm zakt de modulegrootte onder 0,40 mm en gaan kaarten met lange titels stil weigeren. Gemeten inktvloei-tolerantie: 0,20 mm bij 60 mm, 0,16 mm bij 50 mm, tegen 0,05 tot 0,10 mm die een inkjet op 100 tot 120 g/m² in de praktijk geeft.
 - Controleer na het genereren met `node scripts/verify-printed-cards.mjs KAARTEN.pdf EDITIE.json`. Die leest iedere QR uit de PDF terug, vergelijkt de inhoud met de editie, en toetst per vakje of de achterkant bij de juiste voorkant hoort na het omslaan. Voor het 60 mm-raster: `VERIFY_CARD_MM=60 VERIFY_COLUMNS=3 VERIFY_ROWS=4 VERIFY_GAP_MM=3`.
 

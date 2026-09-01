@@ -91,6 +91,7 @@ const giftSpecs = [
   { id: 'g-7n4p2d8k', keyFile: '.private/gifts/iris.key', owner: 'Iris' },
   { id: 'g-m8q4v2zk', keyFile: '.private/gifts/nikki.key', owner: 'Nikki' },
   { id: 'g-5k9w3rt2', keyFile: '.private/gifts/lodewijk.key', owner: 'Lodewijk' },
+  { id: 'g-t7k2m9wq', keyFile: '.private/gifts/tessa.key', owner: 'Tessa' },
 ]
 
 const EDITION_ORDER = {
@@ -100,6 +101,7 @@ const EDITION_ORDER = {
   'iris-crowd-pleasers-01': '04 Crowd Pleasers',
   'nikki-full-throttle-01': '01 Full Throttle',
   'lodewijk-platenkast-01': '01 Lodewijk zijn Platenkast',
+  'tessa-alles-door-elkaar-01': '01 Alles Door Elkaar',
   'guilty-pleasures': '01 Guilty Pleasures',
 }
 
@@ -110,6 +112,7 @@ const EDITION_THEME = {
   'iris-crowd-pleasers-01': ['#ff6b24', '#ffd51f', '#35180c'],
   'nikki-full-throttle-01': ['#ff3131', '#ff9c32', '#321013'],
   'lodewijk-platenkast-01': ['#f5a623', '#e0453c', '#2a1008'],
+  'tessa-alles-door-elkaar-01': ['#ff4fa3', '#ffd51f', '#2b0a3d'],
   'guilty-pleasures': ['#00ddec', '#b64cff', '#10263b'],
 }
 

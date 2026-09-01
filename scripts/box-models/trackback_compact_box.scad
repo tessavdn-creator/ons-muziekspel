@@ -2,11 +2,12 @@
   TRACKBACK COMPACT — cards + 24 coins in one box
   Bambu Lab A1 mini safe: largest Iris lid is about 168 x 72 mm.
 
-  Export with -D 'edition="iris"', 'edition="nikki"' or 'edition="lodewijk"'
+  Export with -D 'edition="iris"', 'edition="nikki"', 'edition="lodewijk"'
+  or 'edition="tessa"'
   and -D 'part="box"', 'part="lid"' or 'part="fit_test"'.
 
-  Lodewijk's cards are 50 mm instead of 60, so pass -D card_size=50 with that
-  edition. Every wall thickness is a parameter as well, which is how the frugal
+  Lodewijk's and Tessa's cards are 50 mm instead of 60, so pass -D card_size=50
+  with those editions. Every wall thickness is a parameter as well, which is how the frugal
   variant is built: less plastic without redrawing the model.
 */
 
@@ -46,7 +47,7 @@ lid_top = 2.2;
 lid_skirt = 9;
 
 deck_count = edition == "iris" ? 4 : 3;
-edition_name = edition == "iris" ? "IRIS" : edition == "lodewijk" ? "LODEWIJK" : "NIKKI";
+edition_name = edition == "iris" ? "IRIS" : edition == "lodewijk" ? "LODEWIJK" : edition == "tessa" ? "TESSA" : "NIKKI";
 coin_total = coins_per_well * 2;
 edition_subtitle = edition == "iris"
     ? str("4 EDITIES + ", coin_total, " MUNTEN")
@@ -60,6 +61,10 @@ nikki_bottom = ["TOT 100", "TOT 200", "TOT 300"];
 // vakjes worden op kaartnummer gelabeld net als bij Nikki.
 lodewijk_top = ["KAART 001", "KAART 101", "KAART 201"];
 lodewijk_bottom = ["TOT 100", "TOT 200", "TOT 300"];
+// Tessa's doosje is dat van Lodewijk met een andere naam op het deksel: zelfde
+// 50 mm-kaarten, zelfde drie vakjes, zelfde nummering.
+tessa_top = lodewijk_top;
+tessa_bottom = lodewijk_bottom;
 
 inner_width = card_size + 2 * card_clearance;
 inner_height = card_size + 3;
@@ -135,8 +140,8 @@ module compact_box() {
         if (box_labels) for (i = [0 : deck_count - 1]) {
             x = wall + deck_depth / 2 + i * (deck_depth + divider);
             label_cut(
-                edition == "iris" ? iris_top[i] : edition == "lodewijk" ? lodewijk_top[i] : nikki_top[i],
-                edition == "iris" ? iris_bottom[i] : edition == "lodewijk" ? lodewijk_bottom[i] : nikki_bottom[i],
+                edition == "iris" ? iris_top[i] : edition == "lodewijk" ? lodewijk_top[i] : edition == "tessa" ? tessa_top[i] : nikki_top[i],
+                edition == "iris" ? iris_bottom[i] : edition == "lodewijk" ? lodewijk_bottom[i] : edition == "tessa" ? tessa_bottom[i] : nikki_bottom[i],
                 x
             );
         }

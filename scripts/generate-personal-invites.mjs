@@ -9,6 +9,7 @@ const gifts = [
   { name: 'Iris', id: 'g-7n4p2d8k', keyFile: '.private/gifts/iris.key', title: 'Iris haar platenkast', subtitle: '4 persoonlijke edities · 400 kaarten' },
   { name: 'Nikki', id: 'g-m8q4v2zk', keyFile: '.private/gifts/nikki.key', title: 'Full Throttle', subtitle: 'Nikki’s Auto Classics · 300 kaarten' },
   { name: 'Lodewijk', id: 'g-5k9w3rt2', keyFile: '.private/gifts/lodewijk.key', title: 'Lodewijk zijn Platenkast', subtitle: 'Zijn jaren 60, 70 en 80 · 300 kaarten' },
+  { name: 'Tessa', id: 'g-t7k2m9wq', keyFile: '.private/gifts/tessa.key', title: 'Alles Door Elkaar', subtitle: 'Haar drie playlists op één stapel · 300 kaarten' },
 ]
 
 for (const gift of gifts) {

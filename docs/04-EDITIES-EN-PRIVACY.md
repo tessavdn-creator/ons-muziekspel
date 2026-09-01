@@ -43,6 +43,29 @@ Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4.
 
 De online cadeau-inhoud staat versleuteld in `public/gifts/g-5k9w3rt2.json`, met de sleutel uitsluitend in zijn persoonlijke QR/link.
 
+## Persoonlijke editie van Tessa
+
+Tessa heeft **Alles Door Elkaar**: 300 kaarten uit haar drie eigen playlists door elkaar. 209 kaarten komen rechtstreeks uit HotGirlsSummer, Guilty Pleasures en Ahrtal; de overige 91 komen uit de publieke top van precies dezelfde artiesten.
+
+Die aanvulling was nodig omdat de publieke embed-pagina van Spotify nooit meer dan 100 nummers per playlist prijsgeeft, en twee van haar lijsten zijn langer (329 en 175). Zonder eigen Spotify-login zijn 223 van haar 532 nummers zichtbaar. De aanvulling uit haar eigen artiesten is een beter antwoord dan nummers verzinnen: dezelfde smaak, en het hoogst genoteerde werk van een artiest is per definitie het herkenbaarste.
+
+Wil je de volledige lijsten alsnog: importeer ze in Studio met een Spotify-login, download per lijst de JSON-back-up, zet die in `.private/tessa-bronnen/` en draai `build-tessa-pool.mjs` opnieuw. Een bestand daar wint van de embed.
+
+Een artiestentop is wel een momentopname, en daar staan drie soorten nummers in die niet op een kaart horen. `build-tessa-edition.mjs` zeeft ze eruit:
+
+| wat | voorbeeld dat er in de eerste ronde doorheen kwam |
+| --- | --- |
+| remix of heruitgave van een nummer dat al in het deck zit | Chipz — 1001 Arabian Nights (Hak op de Tak Remix) |
+| cover van een nummer dat al in het deck zit | Kygo — What's Love Got to Do with It, naast die van Tina Turner |
+| dezelfde plaat, andere schrijfwijze | KISS — I Was Made For Lovin' You naast I Was Made for Loving You |
+| splinternieuwe single die nog niemand kent | Kanye West — I CAN'T WAIT (2026) |
+
+Aanvullingen van na 2023 vallen daarom af. Haar eigen nummers vallen buiten die zeef: die heeft zij zelf gekozen, hoe nieuw of hoe geremixt ook.
+
+Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4, in hetzelfde doosje als dat van Lodewijk.
+
+De online cadeau-inhoud staat versleuteld in `public/gifts/g-t7k2m9wq.json`, met de sleutel uitsluitend in haar persoonlijke link.
+
 ### Jaartallen
 
 Voor een tijdlijnspel is het jaartal de kern van de kaart, en juist daar zitten de valkuilen. Geen enkele publieke bron heeft dit repertoire goed genoeg.
@@ -61,12 +84,14 @@ De **meest genoemde** waarde wint, met de mediaan als gelijkspelbreker. Gemeten 
 
 Daarna volgt een zeef op de periode van de bronlijst, met twee jaar marge. Die volgorde is belangrijk: zeef je eerst, dan knip je juist het goede antwoord weg. *Enjoy the Silence* staat in All Out 80s maar is van 1990, en dan blijft alleen het foute 1985 over. Een bron die twee decennia beslaat krijgt een bereik in plaats van één decennium; zonder dat glipte *Sound Of The Screaming Day* van Golden Earring erdoor op 2008 terwijl het van 1968 is.
 
+Voor Tessa's editie draait dezelfde weging, maar **zonder de periodezeef**: haar bronnen zijn playlists die niets over een jaar zeggen, terwijl Lodewijks decenniumlijsten dat wel deden. Twaalf kaarten zijn daar met de hand gecorrigeerd in `.private/tessa-jaartallen-handmatig.csv`, waaronder KISS — I Was Made for Lovin' You (de bronnen zagen alleen heruitgaven en kozen 2022 in plaats van 1979) en Las Ketchup — The Ketchup Song (2000 in plaats van 2002).
+
 Blijft een nummer onbevestigd, dan komt het in `.private/lodewijk-jaartallen-controleren.csv`. Dat bestand heeft de kolommen om meteen als `.private/lodewijk-jaartallen-handmatig.csv` terug te voeren; handmatige jaartallen krijgen voorrang op alle bronnen.
 
 Beide uitnodigings-QR's openen eerst een persoonlijke felicitatie met confetti. Daarna verschijnt de privébibliotheek. Gewone speelkaart-QR's slaan deze cadeau-onthulling over.
 
 ## Privébronbestanden
 
-De map `.private/` bevat de onversleutelde bron-, sleutel- en curatiebestanden van Iris en Nikki. Deze bestanden zijn alleen voor beheer en mogen niet op een publieke website, in een openbare repository of in een gedeeld downloadpakket terechtkomen.
+De map `.private/` bevat de onversleutelde bron-, sleutel- en curatiebestanden van Iris, Nikki, Lodewijk en Tessa. Deze bestanden zijn alleen voor beheer en mogen niet op een publieke website, in een openbare repository of in een gedeeld downloadpakket terechtkomen.
 
 De gewone play-app toont persoonlijke edities nooit automatisch. Ze openen uitsluitend via hun unieke cadeaulink.
