@@ -38,6 +38,14 @@ const QR_LIMIT = 77
 const DERIVATIEF = /\b(remix|rework|bootleg|mashup|edit|versie|version|\d\.0|re-?recorded|sped ?up|slowed|instrumental|karaoke|acoustic|unplugged|live|cover)\b/i
 const NIEUWSTE_AANVULLING = 2023
 
+// Handmatig geweigerde kaarten. Haar eigen lijsten gaan verder ongemoeid; dit is
+// alleen voor wat aan tafel niet uit te leggen valt. Twee coverartiesten spelen
+// hetzelfde nummer van Prince, en dan liggen er twee kaarten met dezelfde titel
+// en een verschil van negentien jaar.
+const UITGESLOTEN = new Map([
+  ['spotify:track:2VrJiJV9RahxDgTmbV24k7', 'Fairy Scapes - The Most Beautiful Girl in the World: zelfde nummer als de versie van Purple die al in het deck zit'],
+])
+
 const dropSuffix = /\s+-\s+.*\b(remaster(ed)?|mono|stereo|single version|single remix|album version|radio edit|radio version|re-?recorded|version|mix|edit|take \d+|live at|from ["“]).*$/i
 // Alleen haakjes weghalen die puur technisch zijn. Betekenisvolle haakjes blijven
 // staan: (I've Had) The Time Of My Life en Damn (I Think I Love You) horen voluit
@@ -76,7 +84,7 @@ const genreFor = (artist, year) => {
   return Number(year) < 1965 ? 'classic' : 'pop'
 }
 
-const pool = JSON.parse(await readFile(input, 'utf8')).tracks
+const pool = JSON.parse(await readFile(input, 'utf8')).tracks.filter(track => !UITGESLOTEN.has(track.spotifyUri))
 
 // Handmatig gecontroleerde jaartallen krijgen voorrang op alle geautomatiseerde
 // bronnen. Geen enkele publieke bron heeft dit repertoire volledig goed, en deze
@@ -166,17 +174,92 @@ const neem = track => {
 }
 const ruimteVoor = (track, limiet) => (artistCount.get(normalize(primaryArtist(track.artist))) || 0) < limiet
 
-const eigen = bruikbareExtras.filter(track => !track.extra).sort((links, rechts) => {
-  // Ruime QR eerst, dan de volgorde waarin ze zelf in de playlist stonden, en
-  // daarna een vaste maar willekeurig ogende sleutel zodat het deck bij gelijke
-  // stand niet alfabetisch oogt.
-  const comfort = track => (track.modules <= QR_COMFORTABLE ? 0 : 1)
-  return comfort(links) - comfort(rechts) || links.sourcePosition - rechts.sourcePosition || hash(links.spotifyUri) - hash(rechts.spotifyUri)
-})
-for (const track of eigen) {
-  if (selected.length >= TOTAL) break
-  if (ruimteVoor(track, MAX_PER_ARTIST)) neem(track)
+// Haar drie lijsten leveren samen meer dan 300 bruikbare kandidaten, dus er moet
+// gekozen worden. Twee regels bepalen dat.
+//
+// Ten eerste de verdeling OVER de lijsten. Zuiver naar rato zou HotGirlsSummer
+// (28 nummers) op zestien kaarten uitkomen en dan is die lijst nauwelijks
+// vertegenwoordigd. Een lijst die kleiner is dan zijn evenredige deel gaat er
+// daarom in zijn geheel in; wat overblijft wordt over de rest naar rato verdeeld.
+//
+// Ten tweede de keuze BINNEN een lijst. De eerste zoveel nummers pakken zou de
+// oudste helft van een playlist overslaan, want Spotify bewaart de volgorde
+// waarin ze zijn toegevoegd. De lijst wordt daarom in evenveel vakjes geknipt
+// als er kaarten nodig zijn, en uit ieder vakje komt er een. Zo loopt de selectie
+// van begin tot eind door de hele playlist.
+const perLijst = new Map()
+for (const track of bruikbareExtras.filter(track => !track.extra)) {
+  const lijst = track.sources[0] || 'onbekend'
+  if (!perLijst.has(lijst)) perLijst.set(lijst, [])
+  perLijst.get(lijst).push(track)
 }
+for (const tracks of perLijst.values()) tracks.sort((links, rechts) => links.sourcePosition - rechts.sourcePosition)
+
+const verdeel = (lijsten, teVerdelen) => {
+  const toewijzing = new Map()
+  let rest = teVerdelen
+  let open = [...lijsten]
+  let veranderd = true
+  while (veranderd) {
+    veranderd = false
+    const totaal = open.reduce((som, [, tracks]) => som + tracks.length, 0)
+    for (const [naam, tracks] of open) {
+      if (tracks.length <= Math.floor(rest * tracks.length / totaal) || tracks.length * open.length <= rest) {
+        // Deze lijst is kleiner dan zijn evenredige deel: helemaal meenemen.
+        toewijzing.set(naam, tracks.length)
+        rest -= tracks.length
+        open = open.filter(([andere]) => andere !== naam)
+        veranderd = true
+        break
+      }
+    }
+  }
+  const totaal = open.reduce((som, [, tracks]) => som + tracks.length, 0)
+  let uitgedeeld = 0
+  open.forEach(([naam, tracks], index) => {
+    const deel = index === open.length - 1 ? rest - uitgedeeld : Math.round(rest * tracks.length / totaal)
+    toewijzing.set(naam, deel)
+    uitgedeeld += deel
+  })
+  return toewijzing
+}
+
+const quota = verdeel([...perLijst.entries()], TOTAL)
+const genomen = new Set()
+for (const [lijst, tracks] of perLijst) {
+  const wens = quota.get(lijst) || 0
+  const beschikbaar = tracks.filter(track => !genomen.has(track.spotifyUri))
+  for (let vakje = 0; vakje < wens; vakje += 1) {
+    const van = Math.floor(vakje * beschikbaar.length / wens)
+    const tot = Math.max(van + 1, Math.floor((vakje + 1) * beschikbaar.length / wens))
+    const keuzes = beschikbaar.slice(van, tot).filter(track => !genomen.has(track.spotifyUri))
+    if (!keuzes.length) continue
+    // Binnen een vakje wint een ruime QR, daarna een artiest die nog weinig
+    // kaarten heeft, en bij gelijke stand een vaste maar willekeurig ogende sleutel.
+    keuzes.sort((links, rechts) => {
+      const comfort = track => (track.modules <= QR_COMFORTABLE ? 0 : 1)
+      const druk = track => artistCount.get(normalize(primaryArtist(track.artist))) || 0
+      return comfort(links) - comfort(rechts) || druk(links) - druk(rechts) || hash(links.spotifyUri) - hash(rechts.spotifyUri)
+    })
+    const keuze = keuzes.find(track => ruimteVoor(track, MAX_PER_ARTIST)) || null
+    if (!keuze) continue
+    neem(keuze)
+    genomen.add(keuze.spotifyUri)
+  }
+  console.log(`${lijst.padEnd(18)} ${selected.filter(track => (track.sources[0] || '') === lijst).length} van ${wens} kaarten uit ${tracks.length} kandidaten`)
+}
+
+// Vakjes die leegbleven doordat de artiestenlimiet in de weg zat, alsnog vullen
+// uit de rest van haar eigen lijsten.
+for (const tracks of perLijst.values()) {
+  for (const track of tracks) {
+    if (selected.length >= TOTAL) break
+    if (genomen.has(track.spotifyUri) || !ruimteVoor(track, MAX_PER_ARTIST)) continue
+    neem(track)
+    genomen.add(track.spotifyUri)
+  }
+}
+
 const eigenAantal = selected.length
 
 // 5. Aanvullen uit de artiestentops. Een tijdlijnspel wordt saai als bijna alle
@@ -189,13 +272,13 @@ const perDecennium = () => {
   selected.forEach(track => telling.set(track.decade, (telling.get(track.decade) || 0) + 1))
   return telling
 }
-const extras = bruikbareExtras.filter(track => track.extra)
+const extras = bruikbareExtras.filter(track => track.extra && !genomen.has(track.spotifyUri))
 const relaxed = []
 for (const limiet of [MAX_PER_ARTIST_EXTRA, MAX_PER_ARTIST_EXTRA + 2, MAX_PER_ARTIST]) {
   while (selected.length < TOTAL) {
     const telling = perDecennium()
-    const gekozen = new Set(selected.map(track => track.spotifyUri))
-    const beschikbaar = extras.filter(track => !gekozen.has(track.spotifyUri) && ruimteVoor(track, limiet))
+    const alGekozen = new Set(selected.map(track => track.spotifyUri))
+    const beschikbaar = extras.filter(track => !alGekozen.has(track.spotifyUri) && ruimteVoor(track, limiet))
     if (!beschikbaar.length) break
     beschikbaar.sort((links, rechts) => {
       const schaarste = track => telling.get(track.decade) || 0
@@ -236,7 +319,7 @@ const deck = {
   name: 'Alles Door Elkaar',
   recipient: 'Tessa',
   subtitle: 'Haar drie playlists op één stapel',
-  description: 'Driehonderd kaarten uit haar eigen playlists, alles door elkaar: de meezingers, de guilty pleasures en de nummers waar de avond op losgaat, aangevuld met de bekendste werk van precies dezelfde artiesten.',
+  description: 'Driehonderd kaarten uit haar eigen playlists, alles door elkaar: de meezingers, de guilty pleasures en de nummers waar de avond op losgaat. Gekozen van begin tot eind uit alle drie de lijsten, zodat geen enkele hoek wordt overgeslagen.',
   difficulty: 'normal',
   tracks,
 }

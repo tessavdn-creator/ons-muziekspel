@@ -1,10 +1,26 @@
 // Kandidatenpool voor Tessa's eigen editie.
 //
-// Bronnen zijn haar drie playlists, door elkaar. Twee daarvan zijn langer dan
-// 100 nummers en de publieke embed-pagina van Spotify geeft er nooit meer dan
-// 100 terug. Volledige lijsten komen daarom uit TRACKBACK Studio: importeren,
-// JSON-back-up downloaden, bestand in .private/tessa-bronnen/ zetten. Staat daar
-// een bestand voor een playlist, dan wint dat van de embed.
+// Bronnen zijn haar drie playlists, door elkaar, VOLLEDIG.
+//
+// De embed-pagina van Spotify geeft nooit meer dan 100 nummers per playlist, en
+// twee van haar lijsten zijn langer (329 en 175). De Web API zou het oplossen
+// maar die weigert de anonieme token uit die embedpagina met 429 QUOTA_EXCEEDED.
+//
+// De webplayer zelf gebruikt een derde ingang, api-partner.spotify.com, en die
+// ACCEPTEERT diezelfde anonieme token wel. Er hoort een vaste query-hash bij die
+// in de webplayer-bundel staat; verandert die hash, dan is hij daar opnieuw uit
+// te halen:
+//
+//   curl -s https://open.spotify.com/playlist/<id> | grep -o 'web-player\.[a-f0-9]*\.js'
+//   curl -s https://open.spotifycdn.com/cdn/build/web-player/<bestand> \
+//     | grep -o 'fetchPlaylist","query","[a-f0-9]\{64\}'
+//
+// Deze ingang levert per pagina van 100 meteen titel, alle artiesten, album,
+// uitgavedatum en hoes, dus er hoeft geen losse trackpagina meer opgehaald te
+// worden. Faalt hij, dan valt het script terug op de embed en zegt dat luid.
+//
+// Een JSON-back-up uit TRACKBACK Studio in .private/tessa-bronnen/ wint nog
+// altijd van allebei.
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -15,6 +31,7 @@ const SOURCES = [
 ]
 
 const cacheDirectory = '.private/spotify-embed-cache'
+const PATHFINDER_HASH = '86dde7b9d9356e2369414647cf6950cfed96e778e129cfdfc99aea6c1613b3b0'
 const bronDirectory = '.private/tessa-bronnen'
 const output = process.argv[2] || '.private/tessa-pool.json'
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -58,6 +75,60 @@ async function entity(type, id) {
   throw new Error(`Spotify blijft verzoeken begrenzen voor ${type}/${id}`)
 }
 
+// De volledige playlist via de webplayer-ingang. Eerst de anonieme token uit de
+// embedpagina, daarna pagineren op totalCount.
+async function volledigePlaylist(id) {
+  const cacheFile = join(cacheDirectory, `playlist-volledig-${id}.json`)
+  try { return JSON.parse(await readFile(cacheFile, 'utf8')) } catch { /* nog niet gecachet */ }
+  const embed = await fetch(`https://open.spotify.com/embed/playlist/${id}`, { signal: AbortSignal.timeout(20000) })
+  if (!embed.ok) throw new Error(`${embed.status} voor de embedpagina van ${id}`)
+  const token = (await embed.text()).match(/"accessToken":"([^"]+)"/)?.[1]
+  if (!token) throw new Error(`Geen anonieme token op de embedpagina van ${id}`)
+
+  const pagina = async (offset) => {
+    const variables = { uri: `spotify:playlist:${id}`, offset, limit: 100, enableWatchFeedEntrypoint: false }
+    const extensions = { persistedQuery: { version: 1, sha256Hash: PATHFINDER_HASH } }
+    const url = `https://api-partner.spotify.com/pathfinder/v1/query?operationName=fetchPlaylist&variables=${encodeURIComponent(JSON.stringify(variables))}&extensions=${encodeURIComponent(JSON.stringify(extensions))}`
+    for (let poging = 0; poging < 5; poging += 1) {
+      const response = await fetch(url, { headers: { authorization: `Bearer ${token}`, 'app-platform': 'WebPlayer', accept: 'application/json' }, signal: AbortSignal.timeout(20000) })
+      if (response.ok) {
+        const body = await response.json()
+        if (body.errors?.length) throw new Error(body.errors[0].message)
+        return body.data.playlistV2
+      }
+      if (response.status !== 429) throw new Error(`${response.status} voor playlist ${id} op offset ${offset}`)
+      await wait((Number(response.headers.get('retry-after')) || 4 + poging * 3) * 1000)
+    }
+    throw new Error(`Spotify blijft verzoeken begrenzen voor playlist ${id}`)
+  }
+
+  const eerste = await pagina(0)
+  const totaal = eerste.content?.totalCount ?? eerste.content?.items?.length ?? 0
+  const items = [...(eerste.content?.items || [])]
+  while (items.length < totaal) {
+    items.push(...((await pagina(items.length)).content?.items || []))
+    await wait(300)
+  }
+  const resultaat = {
+    name: eerste.name || '',
+    totaal,
+    tracks: items.map(item => item.itemV2?.data).filter(data => data?.__typename === 'Track' && data.uri).map(data => ({
+      spotifyUri: data.uri,
+      title: data.name || '',
+      // Alle artiesten los aangeleverd, dus geen gegok met komma's zoals bij de
+      // ld+json van een trackpagina, waar "Earth, Wind & Fire" in tweeen brak.
+      artist: (data.artists?.items || []).map(artist => artist.profile?.name).filter(Boolean).join(', '),
+      album: data.albumOfTrack?.name || '',
+      spotifyYear: String(data.albumOfTrack?.date?.isoString || '').slice(0, 4),
+      image: (data.albumOfTrack?.coverArt?.sources || []).slice().sort((links, rechts) => (rechts.width || 0) - (links.width || 0))[0]?.url || '',
+      externalUrl: `https://open.spotify.com/track/${data.uri.split(':').pop()}`,
+    })),
+  }
+  await mkdir(cacheDirectory, { recursive: true })
+  await writeFile(cacheFile, `${JSON.stringify(resultaat)}\n`)
+  return resultaat
+}
+
 // Spotify zet in playlist-subtitles een harde spatie (U+00A0) na de komma. Die
 // telt dubbel in de UTF-8 van de QR-payload en levert onzichtbare verschillen op
 // bij vergelijken, dus alle witruimte wordt gewoon gemaakt.
@@ -90,6 +161,16 @@ for (const source of SOURCES) {
     }
     console.log(`${source.label.padEnd(18)} ${studio.tracks.length} tracks uit Studio, pool nu ${candidates.size}`)
     continue
+  }
+  try {
+    const volledig = await volledigePlaylist(source.id)
+    for (const [positie, track] of volledig.tracks.entries()) {
+      voegToe(track.spotifyUri, { title: nette(track.title), artist: nette(track.artist), album: nette(track.album), image: track.image, spotifyYear: track.spotifyYear, externalUrl: track.externalUrl }, source.label, positie + 1)
+    }
+    console.log(`${source.label.padEnd(18)} ${volledig.tracks.length} van ${volledig.totaal} tracks volledig opgehaald, pool nu ${candidates.size}`)
+    continue
+  } catch (error) {
+    console.log(`LET OP: ${source.label} kon niet volledig opgehaald worden (${error.message}). Terugval op de embed, die stopt bij 100.`)
   }
   const playlist = await entity('playlist', source.id)
   const tracks = (playlist.trackList || []).filter(track => track.uri?.startsWith('spotify:track:'))

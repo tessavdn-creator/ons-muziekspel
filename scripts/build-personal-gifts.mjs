@@ -68,7 +68,7 @@ const tessa = {
   recipient: 'Tessa',
   title: 'Alles Door Elkaar',
   celebrationMessage: 'Jouw drie playlists zijn door elkaar geschud tot één muziekspel van driehonderd kaarten. HotGirlsSummer, Guilty Pleasures en Ahrtal, op tafel.',
-  message: 'Driehonderd kaarten uit je eigen lijsten, alles door elkaar, aangevuld met het bekendste werk van precies dezelfde artiesten.',
+  message: 'Driehonderd kaarten uit je eigen lijsten, alles door elkaar. Van begin tot eind gekozen uit alle drie de playlists, dus ook de nummers die je er lang geleden in zette.',
   taste: ['guilty pleasures', 'jaren 90', 'jaren 00', 'meezingers', 'r&b'],
   // De algemene bibliotheek bevat Guilty Pleasures, en dat is dezelfde playlist
   // waar haar eigen kaarten deels uit komen. Twee keer hetzelfde in één app zou
