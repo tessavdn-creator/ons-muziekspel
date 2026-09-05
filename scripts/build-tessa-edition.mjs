@@ -224,7 +224,16 @@ const verdeel = (lijsten, teVerdelen) => {
   return toewijzing
 }
 
-const quota = verdeel([...perLijst.entries()], TOTAL)
+// Naar rato zou Guilty Pleasures met 326 kandidaten 185 van de 300 kaarten
+// pakken, en dat is precies de lijst die het minst Nederlands (9%) en het minst
+// recent is (8% van na 2005). Ahrtal en HotGirlsSummer zijn andersom: 24% en 64%
+// Nederlands, 30% en 64% van na 2005. Een vaste verdeling zet die twee zwaarder
+// aan, zodat het deck niet in de jaren 80 en 90 blijft hangen.
+const LIJST_QUOTA = Object.fromEntries((process.env.TESSA_LIJST_QUOTA || 'HotGirlsSummer=28,Ahrtal=135,Guilty Pleasures=137')
+  .split(',').map(regel => { const [naam, aantal] = regel.split('='); return [naam.trim(), Number(aantal)] }))
+const quota = Object.keys(LIJST_QUOTA).length === perLijst.size
+  ? new Map([...perLijst.keys()].map(naam => [naam, Math.min(LIJST_QUOTA[naam] ?? 0, perLijst.get(naam).length)]))
+  : verdeel([...perLijst.entries()], TOTAL)
 const genomen = new Set()
 for (const [lijst, tracks] of perLijst) {
   const wens = quota.get(lijst) || 0
@@ -235,11 +244,17 @@ for (const [lijst, tracks] of perLijst) {
     const keuzes = beschikbaar.slice(van, tot).filter(track => !genomen.has(track.spotifyUri))
     if (!keuzes.length) continue
     // Binnen een vakje wint een ruime QR, daarna een artiest die nog weinig
-    // kaarten heeft, en bij gelijke stand een vaste maar willekeurig ogende sleutel.
+    // kaarten heeft. Blijft het gelijk, dan gaat een Nederlandstalig of recenter
+    // nummer voor: het deck hing zwaar in de jaren 80 en 90 en was maar voor een
+    // zevende Nederlands, terwijl juist die kaarten aan tafel het hardst
+    // meegezongen worden. Dit breekt alleen een gelijkspel binnen hetzelfde
+    // vakje, dus de selectie loopt nog steeds van de eerste tot de laatste
+    // toevoeging van de playlist.
     keuzes.sort((links, rechts) => {
       const comfort = track => (track.modules <= QR_COMFORTABLE ? 0 : 1)
       const druk = track => artistCount.get(normalize(primaryArtist(track.artist))) || 0
-      return comfort(links) - comfort(rechts) || druk(links) - druk(rechts) || hash(links.spotifyUri) - hash(rechts.spotifyUri)
+      const voorkeur = track => (track.genre === 'nederlands' ? 0 : 1) + (Number(track.year) >= 2005 ? 0 : 1)
+      return comfort(links) - comfort(rechts) || druk(links) - druk(rechts) || voorkeur(links) - voorkeur(rechts) || hash(links.spotifyUri) - hash(rechts.spotifyUri)
     })
     const keuze = keuzes.find(track => ruimteVoor(track, MAX_PER_ARTIST)) || null
     if (!keuze) continue

@@ -71,12 +71,17 @@ De variabelen zijn `{uri, offset, limit, enableWatchFeedEntrypoint}`; die laatst
 
 ### Kiezen uit 511 nummers
 
-Twee regels, allebei tegen een scheve stapel:
+Drie regels, allemaal tegen een scheve stapel:
 
-- **Over de lijsten.** Zuiver naar rato zou HotGirlsSummer met zijn 28 nummers op zestien kaarten uitkomen. Een lijst die kleiner is dan zijn evenredige deel gaat er daarom in zijn geheel in; de rest wordt naar rato verdeeld. Uitkomst: 28 + 185 + 87.
+- **Over de lijsten.** Naar rato zou Guilty Pleasures met 326 kandidaten 185 van de 300 kaarten pakken, en dat is nu net de lijst die het minst Nederlands is (9%) en het minst recent (8% van na 2005). Ahrtal en HotGirlsSummer staan er precies andersom in: 24% en 64% Nederlands, 30% en 64% van na 2005. De verdeling ligt daarom vast op **28 + 135 + 137**, in te stellen met `TESSA_LIJST_QUOTA`.
+
+  Ahrtal verder leegtrekken helpt niet: bij 158 in plaats van 135 blijft het aantal Nederlandse kaarten gelijk op 53 en komen er drie recente bij. De winst zit in de eerste stap, niet in de laatste.
+
 - **Binnen een lijst.** De eerste zoveel nummers pakken zou de oudste helft overslaan, want Spotify bewaart de volgorde van toevoegen. De lijst wordt in evenveel vakjes geknipt als er kaarten nodig zijn en uit ieder vakje komt er een.
 
-Hooguit vijf kaarten per artiest. Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4, in hetzelfde doosje als dat van Lodewijk.
+- **Binnen een vakje.** Ruime QR eerst, dan de artiest met de minste kaarten, en dan gaat een Nederlandstalig of recenter nummer voor. Dit breekt alleen een gelijkspel binnen hetzelfde vakje, dus de selectie loopt nog steeds van de eerste tot de laatste toevoeging.
+
+Hooguit vijf kaarten per artiest; in de praktijk komt er geen artiest boven vier uit. Deze editie wordt op 50 × 50 mm gedrukt, 20 kaarten per A4, in hetzelfde doosje als dat van Lodewijk.
 
 De online cadeau-inhoud staat versleuteld in `public/gifts/g-t7k2m9wq.json`, met de sleutel uitsluitend in haar persoonlijke link.
 
